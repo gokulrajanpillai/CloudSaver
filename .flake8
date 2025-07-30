@@ -1,0 +1,12 @@
+[flake8]
+# Maximum allowed line length for code
+max-line-length = 100
+
+# Ignore specific warnings/errors:
+# E203: Whitespace before ':', ignored because Black's formatting conflicts with this rule
+# E501: Line too long, ignored since we set our own max-line-length above
+# W503: Line break before binary operator, ignored because Black prefers this style
+ignore = E203, E501, W503
+
+# Exclude these directories from linting
+exclude = .git,__pycache__,output
