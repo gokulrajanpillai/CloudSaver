@@ -13,7 +13,7 @@
 			]
 		}
 	},
-	"postCreateCommand": "pip install -r requirements.txt",
+	"postCreateCommand": "pip install -r requirements.txt && pre-commit install && pre-commit autoupdate",
 	"mounts": [
 		"source=${localWorkspaceFolder}/credentials.json,target=/workspace/credentials.json,type=bind"
 	]
