@@ -5,7 +5,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
-
+OUTPUT_DIR = "output"
 
 def authenticate():
     if os.path.exists("token.json"):
@@ -66,7 +66,12 @@ def fetch_media_files(service):
 
 
 def export_to_json_file(data, filename):
-    with open("output\\" + filename, "w") as f:
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    filename = os.path.join(OUTPUT_DIR, filename)
+    if not data:
+        print("❌ No data to export.")
+        return
+    with open(filename, "w") as f:
         json.dump(data, f, indent=2)
     print(f"✅ JSON saved to {filename}")
 
