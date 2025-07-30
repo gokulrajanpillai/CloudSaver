@@ -1,6 +1,9 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
+# Output files
+output/
+
 # Google Drive Auth Credentials
 credentials.json
 token.json
