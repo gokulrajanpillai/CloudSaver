@@ -3,7 +3,7 @@
 {
 	"name": "CloudSaver DevContainer",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/python:1-3.12-bullseye",
+	"image": "docker.io/gokulrajanpillai/cloudsaver-pybox:202507-001",
 
 	"customizations": {
 		"vscode": {
@@ -13,7 +13,7 @@
 			]
 		}
 	},
-	"postCreateCommand": "pip install -r requirements.txt && pre-commit install && pre-commit autoupdate",
+	"postCreateCommand": "pre-commit install && pre-commit autoupdate",
 	"mounts": [
 		"source=${localWorkspaceFolder}/credentials.json,target=/workspace/credentials.json,type=bind"
 	]
