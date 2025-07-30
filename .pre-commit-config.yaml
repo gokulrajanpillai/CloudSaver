@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace        # Removes trailing whitespace
+      - id: end-of-file-fixer         # Ensures files end with a newline
+      - id: check-yaml                # Validates YAML files
+      - id: check-added-large-files   # Prevents large files from being added
+      - id: check-merge-conflict      # Detects merge conflict markers
+      - id: check-case-conflict       # Checks for case conflicts in filenames
