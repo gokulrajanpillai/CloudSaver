@@ -18,17 +18,6 @@ def authenticate():
     return build('drive', 'v3', credentials=creds)
 
 
-def human_readable_size(size_in_bytes):
-    if not size_in_bytes:
-        return "Unknown"
-    size_in_bytes = int(size_in_bytes)
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-        if size_in_bytes < 1024:
-            return f"{size_in_bytes:.2f} {unit}"
-        size_in_bytes /= 1024
-    return f"{size_in_bytes:.2f} PB"
-
-
 def fetch_media_files(service):
     query = "mimeType contains 'image/' or mimeType contains 'video/'"
     page_token = None
