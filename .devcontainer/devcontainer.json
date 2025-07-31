@@ -3,7 +3,7 @@
 {
 	"name": "CloudSaver DevContainer",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "docker.io/gokulrajanpillai/cloudsaver-pybox:202507-001",
+	"image": "docker.io/gokulrajanpillai/cloudsaver-pybox:202507-002",
 
 	"customizations": {
 		"vscode": {
@@ -18,3 +18,7 @@
 		"source=${localWorkspaceFolder}/credentials.json,target=/workspace/credentials.json,type=bind"
 	]
 }
+
+// git commit -am "7 added unit tests for cloudsaver" -m "Added pytest to Dockerimage and recreated new image" -m "Updated precommit to run tests pre commit"
+// git config --global user.email "gokulrajanpillai@gmail.com"
+// git config --global user.name "gokulrajanpillai"
