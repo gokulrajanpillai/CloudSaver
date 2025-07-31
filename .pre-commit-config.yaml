@@ -8,3 +8,10 @@ repos:
       - id: check-added-large-files   # Prevents large files from being added
       - id: check-merge-conflict      # Detects merge conflict markers
       - id: check-case-conflict       # Checks for case conflicts in filenames
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run pytest before commit
+        entry: bash -c "PYTHONPATH=src pytest"
+        language: python
+        types: [python]
