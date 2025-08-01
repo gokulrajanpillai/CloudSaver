@@ -8,6 +8,7 @@ from src.cloudsaver import (
     OUTPUT_DIR,
 )
 
+
 # Test: export_to_json_file_creates_file
 # This test checks that export_to_json_file creates a JSON file with the correct data in the output directory.
 def test_export_to_json_file_creates_file(tmp_path):
@@ -23,6 +24,7 @@ def test_export_to_json_file_creates_file(tmp_path):
             saved = json.load(f)
         assert saved == data
 
+
 # Test: export_to_json_file_no_data
 # This test ensures that export_to_json_file prints an error message when given empty data.
 def test_export_to_json_file_no_data(capsys, tmp_path):
@@ -33,6 +35,7 @@ def test_export_to_json_file_no_data(capsys, tmp_path):
         export_to_json_file([], filename)
         captured = capsys.readouterr()
         assert "No data to export" in captured.out
+
 
 # Test: fetch_media_files_returns_files
 # This test mocks the Google Drive API service and verifies that fetch_media_files returns the expected file info.
