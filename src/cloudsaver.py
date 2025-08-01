@@ -42,7 +42,7 @@ def fetch_media_files(service):
         response = service.files().list(
             q=query,
             spaces='drive',
-            fields='nextPageToken, files(id, name, mimeType, size)',
+            fields='nextPageToken, files(id, name, mimeType, size, ownedByMe)',
             pageToken=page_token
         ).execute()
 
@@ -52,7 +52,8 @@ def fetch_media_files(service):
                 "name": file.get('name'),
                 "path": f"https://drive.google.com/file/d/{file.get('id')}/view",  # Using sharable path
                 "size_bytes": int(file.get('size', 0)),
-                "mimeType": file.get('mimeType')
+                "mimeType": file.get('mimeType'),
+                "ownedByMe": file.get('ownedByMe')
             }
             all_files.append(file_info)
             count += 1
@@ -97,17 +98,19 @@ def reduce_image_to_1080p(input_path, output_path):
     print(f"   Path: {output_path}")
     print(f"   Size before: {human_readable_size(before_size)}")
     print(f"   Size after:  {human_readable_size(after_size)}")
+    return before_size, after_size
 
 
-def download_and_reduce_images(service, files, min_size_mb):
+def download_and_reduce_images(service, files, min_size_mb, number_of_files):
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     os.makedirs(REDUCED_DIR, exist_ok=True)
+    total_bytes_saved = 0
     min_size_bytes = min_size_mb * 1024 * 1024
-    image_files = [f for f in files if f['mimeType'].startswith('image/') and f['size_bytes'] > min_size_bytes]
+    image_files = [f for f in files if f.get('mimeType', '').startswith('image/') and f.get('size_bytes', 0) > min_size_bytes and f.get('ownedByMe') is True]
     if not image_files:
         print("❌ No image files found above the specified size.")
         return
-    selected_files = image_files[:5]
+    selected_files = image_files[:number_of_files]
     reduced_paths = []
     for file in selected_files:
         print(f"⬇️ Downloading {file['name']} ({human_readable_size(file['size_bytes'])})")
@@ -126,13 +129,19 @@ def download_and_reduce_images(service, files, min_size_mb):
                 out_file.write(fh.read())
             print(f"✅ Saved to {local_path}")
             reduced_path = os.path.join(REDUCED_DIR, file['name'])
-            reduce_image_to_1080p(local_path, reduced_path)
-            reduced_paths.append((file, reduced_path))
+            try:
+                before, after = reduce_image_to_1080p(local_path, reduced_path)
+                total_bytes_saved += (before - after)
+                reduced_paths.append((file, reduced_path))
+            except Exception as img_err:
+                print(f"⚠️ Skipped corrupted image {file['name']}: {img_err}")
+                continue
         except Exception as e:
             print(f"❌ Failed to download/reduce {file['name']}: {e}")
 
     # Optionally ask user to replace files in Google Drive
     if reduced_paths:
+        print(f"\n💾 After replacement you will have saved: {human_readable_size(total_bytes_saved)}")
         answer = input("❓ Do you want to replace the original files in Google Drive with their reduced versions? [y/N]: ").strip().lower()
         if answer == "y":
             for file, reduced_path in reduced_paths:
@@ -152,6 +161,7 @@ def download_and_reduce_images(service, files, min_size_mb):
                     print(f"🔄 Uploaded reduced version of {file['name']} to Google Drive.")
                 except Exception as e:
                     print(f"❌ Failed to replace {file['name']} in Google Drive: {e}")
+        print(f"\n💾 Total space saved: {human_readable_size(total_bytes_saved)}")
 
 
 def main():
@@ -163,7 +173,7 @@ def main():
         print("\n🎮 Choose an option:")
         print("1. Export all image/video file info to JSON")
         print("2. Export only files larger than X MB to JSON")
-        print("3. Download first 5 images above X MB and reduce to 1080p")
+        print("3. Replace first X images above X MB and reduce to 1080p")
         print("4. Exit")
 
         choice = input("👉 Enter choice [1-4]: ").strip()
@@ -188,12 +198,13 @@ def main():
                 print("❌ Invalid number entered.")
 
         elif choice == "3":
-            threshold_str = input("📏 Enter minimum image file size in MB: ").strip()
+            number_of_files = 0
             try:
-                threshold_mb = float(threshold_str)
+                number_of_files = int(input("🔢 Enter the number of files you want to compress: ").strip())
+                threshold_mb = float(input("📏 Enter minimum image file size in MB: ").strip())
                 if not media_files:
                     media_files = fetch_media_files(service)
-                download_and_reduce_images(service, media_files, threshold_mb)
+                download_and_reduce_images(service, media_files, threshold_mb, number_of_files)
             except ValueError:
                 print("❌ Invalid number entered.")
 
