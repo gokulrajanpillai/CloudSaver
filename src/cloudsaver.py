@@ -6,11 +6,12 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from PIL import Image
 
-#SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+# SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
 SCOPES = ['https://www.googleapis.com/auth/drive']
 OUTPUT_DIR = "output"
 DOWNLOAD_DIR = os.path.join(OUTPUT_DIR, "downloaded")
 REDUCED_DIR = os.path.join(OUTPUT_DIR, "reduced")
+
 
 def human_readable_size(size_bytes):
     # Converts bytes to human-readable format
@@ -19,6 +20,7 @@ def human_readable_size(size_bytes):
             return f"{size_bytes:.2f} {unit}"
         size_bytes /= 1024
     return f"{size_bytes:.2f} PB"
+
 
 def authenticate():
     if os.path.exists("token.json"):
@@ -39,12 +41,16 @@ def fetch_media_files(service):
 
     print("📦 Scanning Drive for media files (this may take a while)...")
     while True:
-        response = service.files().list(
-            q=query,
-            spaces='drive',
-            fields='nextPageToken, files(id, name, mimeType, size, ownedByMe)',
-            pageToken=page_token
-        ).execute()
+        response = (
+            service.files()
+            .list(
+                q=query,
+                spaces='drive',
+                fields='nextPageToken, files(id, name, mimeType, size, ownedByMe)',
+                pageToken=page_token,
+            )
+            .execute()
+        )
 
         files = response.get('files', [])
         for file in files:
@@ -53,7 +59,7 @@ def fetch_media_files(service):
                 "path": f"https://drive.google.com/file/d/{file.get('id')}/view",  # Using sharable path
                 "size_bytes": int(file.get('size', 0)),
                 "mimeType": file.get('mimeType'),
-                "ownedByMe": file.get('ownedByMe')
+                "ownedByMe": file.get('ownedByMe'),
             }
             all_files.append(file_info)
             count += 1
@@ -106,7 +112,13 @@ def download_and_reduce_images(service, files, min_size_mb, number_of_files):
     os.makedirs(REDUCED_DIR, exist_ok=True)
     total_bytes_saved = 0
     min_size_bytes = min_size_mb * 1024 * 1024
-    image_files = [f for f in files if f.get('mimeType', '').startswith('image/') and f.get('size_bytes', 0) > min_size_bytes and f.get('ownedByMe') is True]
+    image_files = [
+        f
+        for f in files
+        if f.get('mimeType', '').startswith('image/')
+        and f.get('size_bytes', 0) > min_size_bytes
+        and f.get('ownedByMe') is True
+    ]
     if not image_files:
         print("❌ No image files found above the specified size.")
         return
@@ -119,6 +131,7 @@ def download_and_reduce_images(service, files, min_size_mb, number_of_files):
         fh = io.BytesIO()
         try:
             from googleapiclient.http import MediaIoBaseDownload
+
             downloader = MediaIoBaseDownload(fh, request)
             done = False
             while not done:
@@ -131,7 +144,7 @@ def download_and_reduce_images(service, files, min_size_mb, number_of_files):
             reduced_path = os.path.join(REDUCED_DIR, file['name'])
             try:
                 before, after = reduce_image_to_1080p(local_path, reduced_path)
-                total_bytes_saved += (before - after)
+                total_bytes_saved += before - after
                 reduced_paths.append((file, reduced_path))
             except Exception as img_err:
                 print(f"⚠️ Skipped corrupted image {file['name']}: {img_err}")
@@ -141,8 +154,16 @@ def download_and_reduce_images(service, files, min_size_mb, number_of_files):
 
     # Optionally ask user to replace files in Google Drive
     if reduced_paths:
-        print(f"\n💾 After replacement you will have saved: {human_readable_size(total_bytes_saved)}")
-        answer = input("❓ Do you want to replace the original files in Google Drive with their reduced versions? [y/N]: ").strip().lower()
+        print(
+            f"\n💾 After replacement you will have saved: {human_readable_size(total_bytes_saved)}"
+        )
+        answer = (
+            input(
+                "❓ Do you want to replace the original files in Google Drive with their reduced versions? [y/N]: "
+            )
+            .strip()
+            .lower()
+        )
         if answer == "y":
             for file, reduced_path in reduced_paths:
                 try:
@@ -152,12 +173,16 @@ def download_and_reduce_images(service, files, min_size_mb, number_of_files):
                     print(f"🗑️ Moved original {file['name']} to trash in Google Drive.")
                     # Upload reduced file as a new file
                     from googleapiclient.http import MediaFileUpload
-                    media_body = MediaFileUpload(reduced_path, mimetype=file['mimeType'], resumable=True)
-                    new_file_metadata = {
-                        'name': file['name'],
-                        'mimeType': file['mimeType']
-                    }
-                    new_file = service.files().create(body=new_file_metadata, media_body=media_body).execute()
+
+                    media_body = MediaFileUpload(
+                        reduced_path, mimetype=file['mimeType'], resumable=True
+                    )
+                    new_file_metadata = {'name': file['name'], 'mimeType': file['mimeType']}
+                    new_file = (
+                        service.files()
+                        .create(body=new_file_metadata, media_body=media_body)
+                        .execute()
+                    )
                     print(f"🔄 Uploaded reduced version of {file['name']} to Google Drive.")
                 except Exception as e:
                     print(f"❌ Failed to replace {file['name']} in Google Drive: {e}")
@@ -193,14 +218,18 @@ def main():
                 if not large_files:
                     print("❌ No files found above the specified size.")
                 else:
-                    export_to_json_file(large_files, f"media_files_above_{int(threshold_mb)}MB.json")
+                    export_to_json_file(
+                        large_files, f"media_files_above_{int(threshold_mb)}MB.json"
+                    )
             except ValueError:
                 print("❌ Invalid number entered.")
 
         elif choice == "3":
             number_of_files = 0
             try:
-                number_of_files = int(input("🔢 Enter the number of files you want to compress: ").strip())
+                number_of_files = int(
+                    input("🔢 Enter the number of files you want to compress: ").strip()
+                )
                 threshold_mb = float(input("📏 Enter minimum image file size in MB: ").strip())
                 if not media_files:
                     media_files = fetch_media_files(service)
