@@ -15,6 +15,7 @@
 	},
 	"postCreateCommand": "./.devcontainer/post-create.sh",
 	"mounts": [
-		"source=${localWorkspaceFolder}/credentials.json,target=/workspace/credentials.json,type=bind"
+		"source=${localWorkspaceFolder}/credentials.json,target=/workspace/credentials.json,type=bind",
+		"source=${localWorkspaceFolder}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
 	]
 }
