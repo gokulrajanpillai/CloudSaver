@@ -1,23 +1,44 @@
 import os
 import json
 import io
+from dataclasses import asdict, dataclass
+from typing import Iterable, List
+
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from PIL import Image
 
 # SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
-SCOPES = ['https://www.googleapis.com/auth/drive']
+SCOPES = ["https://www.googleapis.com/auth/drive"]
+
+MEDIA_QUERY = "mimeType contains 'image/' or mimeType contains 'video/'"
+LIST_FIELDS = "nextPageToken, files(id, name, mimeType, size, ownedByMe)"
+
 OUTPUT_DIR = "output"
 DOWNLOAD_DIR = os.path.join(OUTPUT_DIR, "downloaded")
 REDUCED_DIR = os.path.join(OUTPUT_DIR, "reduced")
 
 QUERY_MEDIA_FILES = "(mimeType contains 'image/' or mimeType contains 'video/') and 'me' in owners and trashed = false"
 QUERY_ALL_FILES = "'me' in owners and trashed = false"
+HD_RESOLUTION = (1920, 1080)
 
-def human_readable_size(size_bytes):
-    # Converts bytes to human-readable format
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+
+@dataclass
+class MediaFile:
+    """Simplified representation of a Google Drive media file."""
+
+    name: str
+    path: str
+    size_bytes: int
+    mimeType: str
+    ownedByMe: bool
+
+
+def human_readable_size(size_bytes: int) -> str:
+    """Convert byte counts into a human-readable string."""
+
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size_bytes < 1024:
             return f"{size_bytes:.2f} {unit}"
         size_bytes /= 1024
@@ -35,7 +56,9 @@ def regenerate_token_and_credentials():
     return creds
 
 
-def authenticate():
+def authenticate() -> object:
+    """Authenticate using OAuth and return a Drive service client."""
+
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
         if not creds or not creds.valid or creds.expired:
@@ -45,9 +68,11 @@ def authenticate():
     return build('drive', 'v3', credentials=creds)
 
 
-def fetch_files(service, query):
+def fetch_files(service, query) -> List[dict]:
+    """Retrieve metadata for all image and video files in Drive."""
+
     page_token = None
-    all_files = []
+    all_files: List[dict] = []
     count = 0
 
     print("📦 Scanning Drive for media files (this may take a while)...")
@@ -56,23 +81,22 @@ def fetch_files(service, query):
             service.files()
             .list(
                 q=query,
-                spaces='drive',
-                fields='nextPageToken, files(id, name, mimeType, size, ownedByMe)',
+                spaces="drive",
+                fields=LIST_FIELDS,
                 pageToken=page_token,
             )
             .execute()
         )
 
-        files = response.get('files', [])
-        for file in files:
-            file_info = {
-                "name": file.get('name'),
-                "path": f"https://drive.google.com/file/d/{file.get('id')}/view",  # Using sharable path
-                "size_bytes": int(file.get('size', 0)),
-                "mimeType": file.get('mimeType'),
-                "ownedByMe": file.get('ownedByMe'),
-            }
-            all_files.append(file_info)
+        for file in response.get("files", []):
+            media = MediaFile(
+                name=file.get("name"),
+                path=f"https://drive.google.com/file/d/{file.get('id')}/view",
+                size_bytes=int(file.get("size", 0)),
+                mimeType=file.get("mimeType"),
+                ownedByMe=file.get("ownedByMe"),
+            )
+            all_files.append(asdict(media))
             count += 1
             if count % 50 == 0:
                 print(f"   ...{count} files scanned")
@@ -88,28 +112,29 @@ def fetch_files(service, query):
     return all_files
 
 
-def export_to_json_file(data, filename):
+def export_to_json_file(data: Iterable[dict], filename: str) -> None:
+    """Serialize ``data`` to ``OUTPUT_DIR/filename`` as JSON."""
+
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     filename = os.path.join(OUTPUT_DIR, filename)
     if not data:
         print("❌ No data to export.")
         return
+
     with open(filename, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump(list(data), f, indent=2)
+
     print(f"✅ JSON saved to {filename}")
 
 
-def reduce_image_to_1080p(input_path, output_path):
-    """
-    Reduces the image at input_path to HD 1080p (1920x1080) and saves to output_path.
-    Maintains aspect ratio; does not upscale smaller images.
-    Prints file name, path, before and after file size.
-    """
+def reduce_image_to_1080p(input_path: str, output_path: str) -> tuple[int, int]:
+    """Reduce ``input_path`` to ``HD_RESOLUTION`` and write the result."""
+
     before_size = os.path.getsize(input_path)
     with Image.open(input_path) as img:
-        max_size = (1920, 1080)
-        img.thumbnail(max_size, Image.LANCZOS)
+        img.thumbnail(HD_RESOLUTION, Image.LANCZOS)
         img.save(output_path)
+
     after_size = os.path.getsize(output_path)
     print(f"🖼️ Reduced: {os.path.basename(input_path)}")
     print(f"   Path: {output_path}")
@@ -118,7 +143,11 @@ def reduce_image_to_1080p(input_path, output_path):
     return before_size, after_size
 
 
-def download_and_reduce_images(service, files, min_size_mb, number_of_files):
+def download_and_reduce_images(
+    service: object, files: Iterable[dict], min_size_mb: float, number_of_files: int
+) -> None:
+    """Download and compress images meeting ``min_size_mb``."""
+
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     os.makedirs(REDUCED_DIR, exist_ok=True)
     total_bytes_saved = 0
@@ -126,9 +155,9 @@ def download_and_reduce_images(service, files, min_size_mb, number_of_files):
     image_files = [
         f
         for f in files
-        if f.get('mimeType', '').startswith('image/')
-        and f.get('size_bytes', 0) > min_size_bytes
-        and f.get('ownedByMe') is True
+        if f.get("mimeType", "").startswith("image/")
+        and f.get("size_bytes", 0) > min_size_bytes
+        and f.get("ownedByMe") is True
     ]
     if not image_files:
         print("❌ No image files found above the specified size.")
