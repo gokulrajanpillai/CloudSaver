@@ -4,8 +4,9 @@ import pytest
 from unittest.mock import patch, MagicMock
 from src.cloudsaver import (
     export_to_json_file,
-    fetch_media_files,
+    fetch_files,
     OUTPUT_DIR,
+    QUERY_ALL_FILES
 )
 
 
@@ -37,9 +38,9 @@ def test_export_to_json_file_no_data(capsys, tmp_path):
         assert "No data to export" in captured.out
 
 
-# Test: fetch_media_files_returns_files
-# This test mocks the Google Drive API service and verifies that fetch_media_files returns the expected file info.
-def test_fetch_media_files_returns_files():
+# Test: fetch_files_returns_files
+# This test mocks the Google Drive API service and verifies that fetch_files returns the expected file info.
+def test_fetch_files_returns_files():
     mock_service = MagicMock()
     mock_service.files().list().execute.side_effect = [
         {
@@ -50,7 +51,9 @@ def test_fetch_media_files_returns_files():
             "nextPageToken": None,
         }
     ]
-    files = fetch_media_files(mock_service)
+    files = fetch_files(QUERY_ALL_FILES, mock_service)
     assert len(files) == 2
+    print(files)
+    assert files[0]["id"] == "1"
     assert files[0]["name"] == "img.png"
     assert files[1]["mimeType"]
