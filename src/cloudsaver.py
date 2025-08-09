@@ -12,6 +12,8 @@ OUTPUT_DIR = "output"
 DOWNLOAD_DIR = os.path.join(OUTPUT_DIR, "downloaded")
 REDUCED_DIR = os.path.join(OUTPUT_DIR, "reduced")
 
+QUERY_MEDIA_FILES = "(mimeType contains 'image/' or mimeType contains 'video/') and 'me' in owners and trashed = false"
+QUERY_ALL_FILES = "'me' in owners and trashed = false"
 
 def human_readable_size(size_bytes):
     # Converts bytes to human-readable format
@@ -22,19 +24,28 @@ def human_readable_size(size_bytes):
     return f"{size_bytes:.2f} PB"
 
 
+def regenerate_token_and_credentials():
+    flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+    creds = flow.run_local_server(port=0)
+    os.remove("token.json") if os.path.exists("token.json") else None
+    # Save the credentials for the next run
+    with open("token.json", "w") as token:
+        token.write(creds.to_json())
+        print("🔑 Token regenerated and saved to token.json")
+    return creds
+
+
 def authenticate():
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+        if not creds or not creds.valid or creds.expired:
+            creds = regenerate_token_and_credentials()
     else:
-        flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-        creds = flow.run_local_server(port=0)
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
+        creds = regenerate_token_and_credentials()
     return build('drive', 'v3', credentials=creds)
 
 
-def fetch_media_files(service):
-    query = "mimeType contains 'image/' or mimeType contains 'video/'"
+def fetch_files(service, query):
     page_token = None
     all_files = []
     count = 0
@@ -71,9 +82,9 @@ def fetch_media_files(service):
             break
 
     if not all_files:
-        print("❌ No media files found in Google Drive.")
+        print("❌ No files matching the query found in Google Drive.")
     else:
-        print(f"✅ Found {len(all_files)} media files.\n")
+        print(f"✅ Found {len(all_files)} files matching the query.\n")
     return all_files
 
 
@@ -189,32 +200,70 @@ def download_and_reduce_images(service, files, min_size_mb, number_of_files):
         print(f"\n💾 Total space saved: {human_readable_size(total_bytes_saved)}")
 
 
+def find_duplicates(service, files):
+    from collections import defaultdict
+
+    print("🔍 Scanning for duplicate files by name and size...")
+    grouped = defaultdict(list)
+    for file in files:
+        key = (file['name'], file['size_bytes'])
+        grouped[key].append(file)
+
+    duplicates_to_delete = []
+    total_bytes_savable = 0
+
+    for group in grouped.values():
+        if len(group) > 1:
+            # Keep the first, mark the rest as duplicates
+            duplicates_to_delete.extend(group[1:])
+            total_bytes_savable += sum(f['size_bytes'] for f in group[1:])
+
+    if not duplicates_to_delete:
+        print("✅ No duplicate files found.")
+        return
+
+    print(f"⚠️ Found {len(duplicates_to_delete)} duplicate files.")
+    print(f"💾 Estimated space that can be saved: {human_readable_size(total_bytes_savable)}")
+    confirm = input("❓ Do you want to move these duplicates to trash? [y/N]: ").strip().lower()
+    if confirm == 'y':
+        for file in duplicates_to_delete:
+            try:
+                file_id = file['path'].split('/')[-2]
+                service.files().update(fileId=file_id, body={'trashed': True}).execute()
+                print(f"🗑️ Trashed duplicate: {file['name']} - {file['path']}")
+            except Exception as e:
+                print(f"❌ Failed to trash {file['name']}: {e}")
+    else:
+        print("🚫 No files were deleted.")
+
+
 def main():
     print("🔐 Authenticating with Google Drive...")
     service = authenticate()
-    media_files = []
+    gdrive_files = []
 
     while True:
         print("\n🎮 Choose an option:")
         print("1. Export all image/video file info to JSON")
         print("2. Export only files larger than X MB to JSON")
         print("3. Replace first X images above X MB and reduce to 1080p")
-        print("4. Exit")
+        print("4. Find duplicate files by name and size")
+        print("5. Exit")
 
-        choice = input("👉 Enter choice [1-4]: ").strip()
+        choice = input("👉 Enter choice [1-5]: ").strip()
 
         if choice == "1":
-            media_files = fetch_media_files(service)
-            export_to_json_file(media_files, "all_media_files.json")
+            gdrive_files = fetch_files(service, QUERY_MEDIA_FILES)
+            export_to_json_file(gdrive_files, "all_media_files.json")
 
         elif choice == "2":
             threshold_str = input("📏 Enter minimum file size in MB: ").strip()
             try:
                 threshold_mb = float(threshold_str)
                 threshold_bytes = threshold_mb * 1024 * 1024
-                if not media_files:
-                    media_files = fetch_media_files(service)
-                large_files = [f for f in media_files if f['size_bytes'] > threshold_bytes]
+                if not gdrive_files:
+                    gdrive_files = fetch_files(service, QUERY_ALL_FILES)
+                large_files = [f for f in gdrive_files if f['size_bytes'] > threshold_bytes]
                 if not large_files:
                     print("❌ No files found above the specified size.")
                 else:
@@ -231,13 +280,16 @@ def main():
                     input("🔢 Enter the number of files you want to compress: ").strip()
                 )
                 threshold_mb = float(input("📏 Enter minimum image file size in MB: ").strip())
-                if not media_files:
-                    media_files = fetch_media_files(service)
-                download_and_reduce_images(service, media_files, threshold_mb, number_of_files)
+                gdrive_files = fetch_files(service, QUERY_MEDIA_FILES)
+                download_and_reduce_images(service, gdrive_files, threshold_mb, number_of_files)
             except ValueError:
                 print("❌ Invalid number entered.")
 
         elif choice == "4":
+            gdrive_files = fetch_files(service, QUERY_ALL_FILES)
+            find_duplicates(service, gdrive_files)
+
+        elif choice == "5":
             print("👋 Exiting.")
             break
 
