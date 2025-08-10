@@ -1,5 +1,6 @@
 # CloudSaver
 Save cloud costs by reducing picture and video quality of files uploaded to the cloud.
+Identifies files with same name and size and moves duplicates to Trash
 
 ## Google Drive OAuth Setup
 
