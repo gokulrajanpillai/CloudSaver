@@ -3,7 +3,7 @@
 {
 	"name": "CloudSaver DevContainer",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "docker.io/gokulrajanpillai/cloudsaver-pybox:202507-003",
+	"image": "docker.io/gokulrajanpillai/cloudsaver-pybox:202507-004",
 
 	"customizations": {
 		"vscode": {
