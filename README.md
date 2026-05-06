@@ -1,5 +1,7 @@
 # CloudSaver
 
+![CI](https://github.com/nandananair/CloudSaver/workflows/CI/badge.svg)
+
 CloudSaver audits and optimizes storage in a local or mounted folder. It works with any
 folder your operating system can see, including synced cloud folders, external drives, NAS
 mounts, and local directories.
