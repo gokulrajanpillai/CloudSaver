@@ -18,11 +18,13 @@ cleanup plus image optimization.
 ## Features
 
 - Scan any local or mounted folder
+- Use the local web UI to choose a drive or enter a specific path
 - Export all file metadata to JSON
 - Export files larger than a selected size
 - Generate an HTML storage dashboard
 - Find duplicate candidates by file name and size
 - Create reduced 1080p copies of large images in `output/reduced`
+- Estimate per-file and selected-file size reductions before processing
 
 CloudSaver does not delete files during duplicate scanning. Review the generated audit before
 removing files manually.
@@ -33,6 +35,18 @@ Install dependencies:
 
 ```bash
 python3 -m pip install -r requirements.txt
+```
+
+Run the web UI:
+
+```bash
+python3 -m src.cloudsaver_web
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8765
 ```
 
 Run the CLI:
