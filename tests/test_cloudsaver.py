@@ -1,18 +1,16 @@
-import os
 import json
-from unittest.mock import patch, MagicMock
+import os
+from unittest.mock import patch
+
 from src.cloudsaver import (
-    build_storage_audit,
-    export_to_json_file,
-    export_storage_audit_dashboard,
-    fetch_files,
     OUTPUT_DIR,
-    QUERY_ALL_FILES,
+    build_storage_audit,
+    export_storage_audit_dashboard,
+    export_to_json_file,
+    scan_local_folder,
 )
 
 
-# Test: export_to_json_file_creates_file
-# This test checks that export_to_json_file creates a JSON file with the correct data in the output directory.
 def test_export_to_json_file_creates_file(tmp_path):
     data = [{"name": "file1", "size_bytes": 123}]
     filename = "test.json"
@@ -27,8 +25,6 @@ def test_export_to_json_file_creates_file(tmp_path):
         assert saved == data
 
 
-# Test: export_to_json_file_no_data
-# This test ensures that export_to_json_file prints an error message when given empty data.
 def test_export_to_json_file_no_data(capsys, tmp_path):
     filename = "empty.json"
     output_dir = tmp_path / OUTPUT_DIR
@@ -39,69 +35,53 @@ def test_export_to_json_file_no_data(capsys, tmp_path):
         assert "No data to export" in captured.out
 
 
-# Test: fetch_files_returns_files
-# This test mocks the Google Drive API service and verifies that fetch_files returns the expected file info.
-def test_fetch_files_returns_files():
-    mock_service = MagicMock()
-    mock_service.files().list().execute.side_effect = [
-        {
-            "files": [
-                {
-                    "id": "1",
-                    "name": "img.png",
-                    "mimeType": "image/png",
-                    "size": "2048",
-                    "ownedByMe": True,
-                    "parents": ["folder-a"],
-                },
-                {
-                    "id": "2",
-                    "name": "vid.mp4",
-                    "mimeType": "video/mp4",
-                    "size": "4096",
-                    "ownedByMe": True,
-                    "parents": ["folder-b"],
-                },
-            ],
-            "nextPageToken": None,
-        }
-    ]
-    files = fetch_files(mock_service, QUERY_ALL_FILES)
+def test_scan_local_folder_returns_file_metadata(tmp_path):
+    nested_dir = tmp_path / "photos"
+    nested_dir.mkdir()
+    image_path = nested_dir / "image.jpg"
+    document_path = tmp_path / "notes.txt"
+    image_path.write_bytes(b"image-content")
+    document_path.write_text("hello")
+
+    files = scan_local_folder(str(tmp_path))
+
     assert len(files) == 2
-    assert files[0]["id"] == "1"
-    assert files[0]["name"] == "img.png"
-    assert files[1]["mimeType"]
+    by_name = {file["name"]: file for file in files}
+    assert by_name["image.jpg"]["id"] == "photos/image.jpg"
+    assert by_name["image.jpg"]["parents"] == ["photos"]
+    assert by_name["image.jpg"]["mimeType"] == "image/jpeg"
+    assert by_name["notes.txt"]["parents"] == ["root"]
 
 
 def test_build_storage_audit_summarizes_opportunities():
     one_mb = 1024 * 1024
     files = [
         {
-            "id": "1",
+            "id": "photos/photo.jpg",
             "name": "photo.jpg",
-            "path": "https://drive.google.com/file/d/1/view",
+            "path": "/mounted/photos/photo.jpg",
             "size_bytes": 10 * one_mb,
             "mimeType": "image/jpeg",
-            "ownedByMe": True,
-            "parents": ["folder-a"],
+            "included": True,
+            "parents": ["photos"],
         },
         {
-            "id": "2",
+            "id": "backup/photo.jpg",
             "name": "photo.jpg",
-            "path": "https://drive.google.com/file/d/2/view",
+            "path": "/mounted/backup/photo.jpg",
             "size_bytes": 10 * one_mb,
             "mimeType": "image/jpeg",
-            "ownedByMe": True,
-            "parents": ["folder-a"],
+            "included": True,
+            "parents": ["backup"],
         },
         {
-            "id": "3",
+            "id": "videos/video.mp4",
             "name": "video.mp4",
-            "path": "https://drive.google.com/file/d/3/view",
+            "path": "/mounted/videos/video.mp4",
             "size_bytes": 150 * one_mb,
             "mimeType": "video/mp4",
-            "ownedByMe": True,
-            "parents": ["folder-b"],
+            "included": True,
+            "parents": ["videos"],
         },
     ]
 
@@ -114,20 +94,20 @@ def test_build_storage_audit_summarizes_opportunities():
     assert audit["opportunities"]["duplicate_bytes"] == 10 * one_mb
     assert audit["opportunities"]["image_optimization_count"] == 1
     assert audit["opportunities"]["large_file_count"] == 1
-    assert audit["top_folders"][0]["folder_id"] == "folder-b"
+    assert audit["top_folders"][0]["folder_id"] == "videos"
 
 
 def test_export_storage_audit_dashboard_creates_json_and_html(tmp_path):
     output_dir = tmp_path / OUTPUT_DIR
     files = [
         {
-            "id": "1",
+            "id": "report.pdf",
             "name": "report.pdf",
-            "path": "https://drive.google.com/file/d/1/view",
+            "path": str(tmp_path / "report.pdf"),
             "size_bytes": 2048,
             "mimeType": "application/pdf",
-            "ownedByMe": True,
-            "parents": ["folder-a"],
+            "included": True,
+            "parents": ["root"],
         }
     ]
 

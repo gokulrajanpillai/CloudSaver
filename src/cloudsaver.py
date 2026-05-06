@@ -1,27 +1,17 @@
-import os
 import json
-import io
+import mimetypes
+import os
 from dataclasses import asdict, dataclass
 from html import escape
+from pathlib import Path
 from typing import Iterable, List
 
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
 from PIL import Image
 
-# SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
-SCOPES = ["https://www.googleapis.com/auth/drive"]
-
-MEDIA_QUERY = "mimeType contains 'image/' or mimeType contains 'video/'"
-LIST_FIELDS = "nextPageToken, files(id, name, mimeType, size, ownedByMe, parents)"
 
 OUTPUT_DIR = "output"
-DOWNLOAD_DIR = os.path.join(OUTPUT_DIR, "downloaded")
 REDUCED_DIR = os.path.join(OUTPUT_DIR, "reduced")
 
-QUERY_MEDIA_FILES = "(mimeType contains 'image/' or mimeType contains 'video/') and 'me' in owners and trashed = false"
-QUERY_ALL_FILES = "'me' in owners and trashed = false"
 HD_RESOLUTION = (1920, 1080)
 DEFAULT_AUDIT_TOP_N = 10
 LARGE_FILE_THRESHOLD_BYTES = 100 * 1024 * 1024
@@ -29,15 +19,15 @@ IMAGE_OPTIMIZATION_SAVINGS_RATE = 0.35
 
 
 @dataclass
-class MediaFile:
-    """Simplified representation of a Google Drive media file."""
+class LocalFile:
+    """Simplified representation of a local or mounted filesystem file."""
 
     id: str
     name: str
     path: str
     size_bytes: int
     mimeType: str
-    ownedByMe: bool
+    included: bool
     parents: List[str]
 
 
@@ -51,73 +41,58 @@ def human_readable_size(size_bytes: int) -> str:
     return f"{size_bytes:.2f} PB"
 
 
-def regenerate_token_and_credentials():
-    flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    creds = flow.run_local_server(port=0)
-    os.remove("token.json") if os.path.exists("token.json") else None
-    # Save the credentials for the next run
-    with open("token.json", "w") as token:
-        token.write(creds.to_json())
-        print("🔑 Token regenerated and saved to token.json")
-    return creds
+def guess_mime_type(path: Path) -> str:
+    """Infer a MIME type from a local file path."""
+
+    mime_type, _ = mimetypes.guess_type(path)
+    return mime_type or "application/octet-stream"
 
 
-def authenticate() -> object:
-    """Authenticate using OAuth and return a Drive service client."""
+def scan_local_folder(root_path: str) -> List[dict]:
+    """Scan a local or mounted folder and return file metadata for audits."""
 
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-        if not creds or not creds.valid or creds.expired:
-            creds = regenerate_token_and_credentials()
-    else:
-        creds = regenerate_token_and_credentials()
-    return build('drive', 'v3', credentials=creds)
+    root = Path(root_path).expanduser().resolve()
+    if not root.exists():
+        raise FileNotFoundError(f"Folder does not exist: {root}")
+    if not root.is_dir():
+        raise NotADirectoryError(f"Path is not a folder: {root}")
 
-
-def fetch_files(service, query) -> List[dict]:
-    """Retrieve metadata for all image and video files in Drive."""
-
-    page_token = None
-    all_files: List[dict] = []
+    files: List[dict] = []
     count = 0
+    print(f"📦 Scanning local folder: {root}")
+    for current_root, _, filenames in os.walk(root):
+        current_dir = Path(current_root)
+        for filename in filenames:
+            path = current_dir / filename
+            try:
+                stat = path.stat()
+            except OSError as error:
+                print(f"⚠️ Skipped unreadable file {path}: {error}")
+                continue
+            if not path.is_file():
+                continue
 
-    print("📦 Scanning Drive for media files (this may take a while)...")
-    while True:
-        response = (
-            service.files()
-            .list(
-                q=query,
-                spaces="drive",
-                fields=LIST_FIELDS,
-                pageToken=page_token,
+            relative_path = path.relative_to(root)
+            parent = str(relative_path.parent) if str(relative_path.parent) != "." else "root"
+            local_file = LocalFile(
+                id=str(relative_path),
+                name=path.name,
+                path=str(path),
+                size_bytes=stat.st_size,
+                mimeType=guess_mime_type(path),
+                included=True,
+                parents=[parent],
             )
-            .execute()
-        )
-
-        for file in response.get("files", []):
-            media = MediaFile(
-                id=file.get("id"),
-                name=file.get("name"),
-                path=f"https://drive.google.com/file/d/{file.get('id')}/view",
-                size_bytes=int(file.get("size", 0)),
-                mimeType=file.get("mimeType"),
-                ownedByMe=file.get("ownedByMe"),
-                parents=file.get("parents", []),
-            )
-            all_files.append(asdict(media))
+            files.append(asdict(local_file))
             count += 1
             if count % 50 == 0:
                 print(f"   ...{count} files scanned")
 
-        page_token = response.get('nextPageToken', None)
-        if not page_token:
-            break
-
-    if not all_files:
-        print("❌ No files matching the query found in Google Drive.")
+    if not files:
+        print("❌ No files found in the selected folder.")
     else:
-        print(f"✅ Found {len(all_files)} files matching the query.\n")
-    return all_files
+        print(f"✅ Found {len(files)} files.\n")
+    return files
 
 
 def export_to_json_file(data: Iterable[dict], filename: str) -> None:
@@ -125,12 +100,13 @@ def export_to_json_file(data: Iterable[dict], filename: str) -> None:
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     filename = os.path.join(OUTPUT_DIR, filename)
+    data = list(data)
     if not data:
         print("❌ No data to export.")
         return
 
     with open(filename, "w") as f:
-        json.dump(list(data), f, indent=2)
+        json.dump(data, f, indent=2)
 
     print(f"✅ JSON saved to {filename}")
 
@@ -164,10 +140,6 @@ def file_category(mime_type: str) -> str:
         "application/x-tar",
     }:
         return "archive"
-    if mime_type == "application/vnd.google-apps.folder":
-        return "folder"
-    if mime_type.startswith("application/vnd.google-apps."):
-        return "google_workspace"
     return "other"
 
 
@@ -186,12 +158,13 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
                 "size_bytes": size_bytes,
                 "mimeType": mime_type,
                 "category": file_category(mime_type),
+                "included": file.get("included", file.get("ownedByMe", True)),
                 "parents": file.get("parents") or ["root"],
             }
         )
 
     total_bytes = sum(file["size_bytes"] for file in normalized_files)
-    owned_bytes = sum(file["size_bytes"] for file in normalized_files if file.get("ownedByMe"))
+    included_bytes = sum(file["size_bytes"] for file in normalized_files if file.get("included"))
 
     by_category = {}
     for file in normalized_files:
@@ -253,7 +226,7 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
         for file in normalized_files
         if file["category"] == "image"
         and file["size_bytes"] >= 1024 * 1024
-        and file.get("ownedByMe") is True
+        and file.get("included") is True
         and (file.get("id") or file.get("path")) not in duplicate_extra_ids
     ]
     image_optimization_bytes = int(
@@ -279,9 +252,9 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
         "summary": {
             "file_count": len(normalized_files),
             "total_bytes": total_bytes,
-            "owned_bytes": owned_bytes,
+            "included_bytes": included_bytes,
             "total_human": human_readable_size(total_bytes),
-            "owned_human": human_readable_size(owned_bytes),
+            "included_human": human_readable_size(included_bytes),
         },
         "by_category": by_category,
         "top_files": top_files,
@@ -362,7 +335,7 @@ def render_storage_audit_html(audit: dict) -> str:
         [
             _render_metric("Files scanned", str(summary["file_count"])),
             _render_metric("Total storage", summary["total_human"]),
-            _render_metric("Owned storage", summary["owned_human"]),
+            _render_metric("Included storage", summary["included_human"]),
             _render_metric("Estimated recoverable", opportunities["estimated_recoverable_human"]),
             _render_metric("Duplicate candidates", opportunities["duplicate_human"]),
             _render_metric("Image optimization", opportunities["image_optimization_human"]),
@@ -409,7 +382,7 @@ def render_storage_audit_html(audit: dict) -> str:
     </section>
     <section>
       <h2>Largest Folders</h2>
-      <table><thead><tr><th>Folder ID</th><th>Files</th><th>Storage</th></tr></thead><tbody>{folder_rows}</tbody></table>
+      <table><thead><tr><th>Folder</th><th>Files</th><th>Storage</th></tr></thead><tbody>{folder_rows}</tbody></table>
     </section>
     <section>
       <h2>Duplicate Candidates</h2>
@@ -465,187 +438,127 @@ def reduce_image_to_1080p(input_path: str, output_path: str) -> tuple[int, int]:
     return before_size, after_size
 
 
-def download_and_reduce_images(
-    service: object, files: Iterable[dict], min_size_mb: float, number_of_files: int
-) -> None:
-    """Download and compress images meeting ``min_size_mb``."""
+def export_large_files(files: Iterable[dict], threshold_mb: float) -> None:
+    """Export local files larger than ``threshold_mb`` to JSON."""
 
-    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    threshold_bytes = threshold_mb * 1024 * 1024
+    large_files = [file for file in files if file["size_bytes"] > threshold_bytes]
+    if not large_files:
+        print("❌ No files found above the specified size.")
+        return
+    export_to_json_file(large_files, f"files_above_{int(threshold_mb)}MB.json")
+
+
+def reduce_local_images(files: Iterable[dict], min_size_mb: float, number_of_files: int) -> None:
+    """Create reduced copies of local images in ``REDUCED_DIR``."""
+
     os.makedirs(REDUCED_DIR, exist_ok=True)
-    total_bytes_saved = 0
     min_size_bytes = min_size_mb * 1024 * 1024
     image_files = [
-        f
-        for f in files
-        if f.get("mimeType", "").startswith("image/")
-        and f.get("size_bytes", 0) > min_size_bytes
-        and f.get("ownedByMe") is True
+        file
+        for file in files
+        if file.get("mimeType", "").startswith("image/")
+        and file.get("size_bytes", 0) > min_size_bytes
     ]
     if not image_files:
         print("❌ No image files found above the specified size.")
         return
-    selected_files = image_files[:number_of_files]
-    reduced_paths = []
-    for file in selected_files:
-        print(f"⬇️ Downloading {file['name']} ({human_readable_size(file['size_bytes'])})")
-        print(f"   Google Drive Path: {file['path']}")
-        request = service.files().get_media(fileId=file['path'].split('/')[-2])
-        fh = io.BytesIO()
+
+    total_bytes_saved = 0
+    for file in image_files[:number_of_files]:
+        source_path = file["path"]
+        relative_id = file.get("id") or file["name"]
+        output_path = os.path.join(REDUCED_DIR, relative_id)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         try:
-            from googleapiclient.http import MediaIoBaseDownload
+            before, after = reduce_image_to_1080p(source_path, output_path)
+            total_bytes_saved += max(before - after, 0)
+        except Exception as error:
+            print(f"⚠️ Skipped image {source_path}: {error}")
 
-            downloader = MediaIoBaseDownload(fh, request)
-            done = False
-            while not done:
-                status, done = downloader.next_chunk()
-            fh.seek(0)
-            local_path = os.path.join(DOWNLOAD_DIR, file['name'])
-            with open(local_path, 'wb') as out_file:
-                out_file.write(fh.read())
-            print(f"✅ Saved to {local_path}")
-            reduced_path = os.path.join(REDUCED_DIR, file['name'])
-            try:
-                before, after = reduce_image_to_1080p(local_path, reduced_path)
-                total_bytes_saved += before - after
-                reduced_paths.append((file, reduced_path))
-            except Exception as img_err:
-                print(f"⚠️ Skipped corrupted image {file['name']}: {img_err}")
-                continue
-        except Exception as e:
-            print(f"❌ Failed to download/reduce {file['name']}: {e}")
+    print(f"\n💾 Estimated space saved by reduced copies: {human_readable_size(total_bytes_saved)}")
 
-    # Optionally ask user to replace files in Google Drive
-    if reduced_paths:
+
+def find_duplicates(files: Iterable[dict]) -> dict:
+    """Find duplicate candidates by name and size without deleting anything."""
+
+    audit = build_storage_audit(files)
+    opportunities = audit["opportunities"]
+    duplicates = audit["duplicate_candidates"]
+    if not duplicates:
+        print("✅ No duplicate candidates found.")
+        return audit
+
+    print(f"⚠️ Found {opportunities['duplicate_count']} duplicate candidate files.")
+    print(f"💾 Estimated recoverable space: {opportunities['duplicate_human']}")
+    for group in duplicates:
         print(
-            f"\n💾 After replacement you will have saved: {human_readable_size(total_bytes_saved)}"
+            f"   {group['name']} - {group['copies']} copies, "
+            f"{human_readable_size(group['recoverable_bytes'])} recoverable"
         )
-        answer = (
-            input(
-                "❓ Do you want to replace the original files in Google Drive with their reduced versions? [y/N]: "
-            )
-            .strip()
-            .lower()
-        )
-        if answer == "y":
-            for file, reduced_path in reduced_paths:
-                try:
-                    file_id = file['path'].split('/')[-2]
-                    # Move original file to trash
-                    service.files().update(fileId=file_id, body={'trashed': True}).execute()
-                    print(f"🗑️ Moved original {file['name']} to trash in Google Drive.")
-                    # Upload reduced file as a new file
-                    from googleapiclient.http import MediaFileUpload
-
-                    media_body = MediaFileUpload(
-                        reduced_path, mimetype=file['mimeType'], resumable=True
-                    )
-                    new_file_metadata = {'name': file['name'], 'mimeType': file['mimeType']}
-                    new_file = (
-                        service.files()
-                        .create(body=new_file_metadata, media_body=media_body)
-                        .execute()
-                    )
-                    print(f"🔄 Uploaded reduced version of {file['name']} to Google Drive.")
-                except Exception as e:
-                    print(f"❌ Failed to replace {file['name']} in Google Drive: {e}")
-        print(f"\n💾 Total space saved: {human_readable_size(total_bytes_saved)}")
+    print("ℹ️ No files were deleted. Review the storage audit before removing files.")
+    return audit
 
 
-def find_duplicates(service, files):
-    from collections import defaultdict
-
-    print("🔍 Scanning for duplicate files by name and size...")
-    grouped = defaultdict(list)
-    for file in files:
-        key = (file['name'], file['size_bytes'])
-        grouped[key].append(file)
-
-    duplicates_to_delete = []
-    total_bytes_savable = 0
-
-    for group in grouped.values():
-        if len(group) > 1:
-            # Keep the first, mark the rest as duplicates
-            duplicates_to_delete.extend(group[1:])
-            total_bytes_savable += sum(f['size_bytes'] for f in group[1:])
-
-    if not duplicates_to_delete:
-        print("✅ No duplicate files found.")
-        return
-
-    print(f"⚠️ Found {len(duplicates_to_delete)} duplicate files.")
-    print(f"💾 Estimated space that can be saved: {human_readable_size(total_bytes_savable)}")
-    confirm = input("❓ Do you want to move these duplicates to trash? [y/N]: ").strip().lower()
-    if confirm == 'y':
-        for file in duplicates_to_delete:
-            try:
-                file_id = file['path'].split('/')[-2]
-                service.files().update(fileId=file_id, body={'trashed': True}).execute()
-                print(f"🗑️ Trashed duplicate: {file['name']} - {file['path']}")
-            except Exception as e:
-                print(f"❌ Failed to trash {file['name']}: {e}")
-    else:
-        print("🚫 No files were deleted.")
+def prompt_for_folder() -> str:
+    return input("📁 Enter local or mounted folder path: ").strip()
 
 
 def main():
-    print("🔐 Authenticating with Google Drive...")
-    service = authenticate()
-    gdrive_files = []
+    print("💾 CloudSaver local storage optimizer")
+    folder_path = prompt_for_folder()
+    try:
+        scanned_files = scan_local_folder(folder_path)
+    except (FileNotFoundError, NotADirectoryError) as error:
+        print(f"❌ {error}")
+        return
 
     while True:
         print("\n🎮 Choose an option:")
         print("1. Run storage audit dashboard")
-        print("2. Export all image/video file info to JSON")
+        print("2. Export all file info to JSON")
         print("3. Export only files larger than X MB to JSON")
-        print("4. Replace first X images above X MB and reduce to 1080p")
-        print("5. Find duplicate files by name and size")
-        print("6. Exit")
+        print("4. Create reduced copies of first X images above X MB")
+        print("5. Find duplicate candidates by name and size")
+        print("6. Rescan folder")
+        print("7. Exit")
 
-        choice = input("👉 Enter choice [1-6]: ").strip()
+        choice = input("👉 Enter choice [1-7]: ").strip()
 
         if choice == "1":
-            gdrive_files = fetch_files(service, QUERY_ALL_FILES)
-            export_storage_audit_dashboard(gdrive_files)
+            export_storage_audit_dashboard(scanned_files)
 
         elif choice == "2":
-            gdrive_files = fetch_files(service, QUERY_MEDIA_FILES)
-            export_to_json_file(gdrive_files, "all_media_files.json")
+            export_to_json_file(scanned_files, "all_files.json")
 
         elif choice == "3":
             threshold_str = input("📏 Enter minimum file size in MB: ").strip()
             try:
-                threshold_mb = float(threshold_str)
-                threshold_bytes = threshold_mb * 1024 * 1024
-                if not gdrive_files:
-                    gdrive_files = fetch_files(service, QUERY_ALL_FILES)
-                large_files = [f for f in gdrive_files if f['size_bytes'] > threshold_bytes]
-                if not large_files:
-                    print("❌ No files found above the specified size.")
-                else:
-                    export_to_json_file(
-                        large_files, f"media_files_above_{int(threshold_mb)}MB.json"
-                    )
+                export_large_files(scanned_files, float(threshold_str))
             except ValueError:
                 print("❌ Invalid number entered.")
 
         elif choice == "4":
-            number_of_files = 0
             try:
                 number_of_files = int(
                     input("🔢 Enter the number of files you want to compress: ").strip()
                 )
                 threshold_mb = float(input("📏 Enter minimum image file size in MB: ").strip())
-                gdrive_files = fetch_files(service, QUERY_MEDIA_FILES)
-                download_and_reduce_images(service, gdrive_files, threshold_mb, number_of_files)
+                reduce_local_images(scanned_files, threshold_mb, number_of_files)
             except ValueError:
                 print("❌ Invalid number entered.")
 
         elif choice == "5":
-            gdrive_files = fetch_files(service, QUERY_ALL_FILES)
-            find_duplicates(service, gdrive_files)
+            find_duplicates(scanned_files)
 
         elif choice == "6":
+            folder_path = prompt_for_folder()
+            try:
+                scanned_files = scan_local_folder(folder_path)
+            except (FileNotFoundError, NotADirectoryError) as error:
+                print(f"❌ {error}")
+
+        elif choice == "7":
             print("👋 Exiting.")
             break
 

@@ -1,29 +1,50 @@
 # CloudSaver
-Save cloud costs by reducing picture and video quality of files uploaded to the cloud.
-Identifies files with same name and size and moves duplicates to Trash
+
+CloudSaver audits and optimizes storage in a local or mounted folder. It works with any
+folder your operating system can see, including synced cloud folders, external drives, NAS
+mounts, and local directories.
 
 ## Storage Audit Dashboard
 
-CloudSaver can run a read-only Google Drive storage audit and generate:
+CloudSaver can run a read-only storage audit and generate:
 
 - `output/storage_audit.html`: a browser-friendly dashboard
 - `output/storage_audit.json`: the same audit data for downstream processing
 
-The audit summarizes total storage, owned storage, storage by file category, largest files,
-largest parent folders, duplicate candidates, large files to review, and estimated recoverable
-space from duplicate cleanup plus image optimization.
+The audit summarizes total storage, storage by file category, largest files, largest folders,
+duplicate candidates, large files to review, and estimated recoverable space from duplicate
+cleanup plus image optimization.
 
-Run the app and choose **Run storage audit dashboard** from the menu.
+## Features
 
-## Google Drive OAuth Setup
+- Scan any local or mounted folder
+- Export all file metadata to JSON
+- Export files larger than a selected size
+- Generate an HTML storage dashboard
+- Find duplicate candidates by file name and size
+- Create reduced 1080p copies of large images in `output/reduced`
 
-To use CloudSaver with Google Drive, you need to generate an OAuth token:
+CloudSaver does not delete files during duplicate scanning. Review the generated audit before
+removing files manually.
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a new project or select an existing one.
-3. Navigate to **APIs & Services > Library** and enable the **Google Drive API**.
-4. Go to **APIs & Services > Credentials** and create an **OAuth 2.0 Client ID**.
-5. Download the `credentials.json` file provided by Google.
-6. Place the `credentials.json` file in the project root directory.
+## Usage
 
-This file is required for authenticating
+Install dependencies:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+Run the CLI:
+
+```bash
+python3 -m src.cloudsaver
+```
+
+When prompted, enter the folder path you want to scan. For example:
+
+```text
+/Users/you/Library/CloudStorage/GoogleDrive-you@example.com/My Drive
+/Volumes/SharedDrive
+/Users/you/Pictures
+```
