@@ -16,6 +16,14 @@ HD_RESOLUTION = (1920, 1080)
 DEFAULT_AUDIT_TOP_N = 10
 LARGE_FILE_THRESHOLD_BYTES = 100 * 1024 * 1024
 IMAGE_OPTIMIZATION_SAVINGS_RATE = 0.35
+SUPPORTED_IMAGE_MIME_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/bmp",
+    "image/tiff",
+}
+DEFAULT_IMAGE_QUALITY = 82
 
 
 @dataclass
@@ -39,6 +47,16 @@ def human_readable_size(size_bytes: int) -> str:
             return f"{size_bytes:.2f} {unit}"
         size_bytes /= 1024
     return f"{size_bytes:.2f} PB"
+
+
+def is_path_within(child_path: Path, parent_path: Path) -> bool:
+    """Return whether ``child_path`` is inside ``parent_path`` after resolving both."""
+
+    try:
+        child_path.resolve().relative_to(parent_path.resolve())
+        return True
+    except ValueError:
+        return False
 
 
 def guess_mime_type(path: Path) -> str:
@@ -93,6 +111,71 @@ def scan_local_folder(root_path: str) -> List[dict]:
     else:
         print(f"✅ Found {len(files)} files.\n")
     return files
+
+
+def estimate_reduction_for_file(
+    file: dict,
+    max_resolution: tuple[int, int] = HD_RESOLUTION,
+    quality: int = DEFAULT_IMAGE_QUALITY,
+) -> dict:
+    """Estimate non-destructive optimization savings for a file."""
+
+    size_bytes = int(file.get("size_bytes", 0) or 0)
+    mime_type = file.get("mimeType") or ""
+    if mime_type not in SUPPORTED_IMAGE_MIME_TYPES or size_bytes <= 0:
+        return {
+            "supported": False,
+            "estimated_after_bytes": size_bytes,
+            "estimated_saved_bytes": 0,
+            "estimated_saved_human": human_readable_size(0),
+            "estimated_reduction_percent": 0,
+            "reason": "Only common raster image formats can be reduced currently.",
+        }
+
+    if mime_type == "image/png":
+        base_rate = 0.42
+    elif mime_type in {"image/bmp", "image/tiff"}:
+        base_rate = 0.58
+    elif mime_type == "image/webp":
+        base_rate = 0.22
+    else:
+        base_rate = 0.32
+
+    if size_bytes < 1024 * 1024:
+        base_rate *= 0.45
+    elif size_bytes > 10 * 1024 * 1024:
+        base_rate *= 1.15
+
+    quality_adjustment = max(0.6, min(1.2, (92 - quality) / 18 + 0.75))
+    estimated_saved_bytes = int(size_bytes * min(base_rate * quality_adjustment, 0.72))
+    estimated_after_bytes = max(size_bytes - estimated_saved_bytes, 0)
+
+    return {
+        "supported": True,
+        "estimated_after_bytes": estimated_after_bytes,
+        "estimated_saved_bytes": estimated_saved_bytes,
+        "estimated_saved_human": human_readable_size(estimated_saved_bytes),
+        "estimated_reduction_percent": round((estimated_saved_bytes / size_bytes) * 100, 1),
+        "max_resolution": f"{max_resolution[0]}x{max_resolution[1]}",
+        "quality": quality,
+        "reason": "Approximation based on file type, current size, target dimensions, and quality.",
+    }
+
+
+def attach_reduction_estimates(
+    files: Iterable[dict],
+    max_resolution: tuple[int, int] = HD_RESOLUTION,
+    quality: int = DEFAULT_IMAGE_QUALITY,
+) -> List[dict]:
+    """Return files with per-file reduction estimates attached."""
+
+    return [
+        {
+            **file,
+            "reduction": estimate_reduction_for_file(file, max_resolution, quality),
+        }
+        for file in files
+    ]
 
 
 def export_to_json_file(data: Iterable[dict], filename: str) -> None:
@@ -438,6 +521,99 @@ def reduce_image_to_1080p(input_path: str, output_path: str) -> tuple[int, int]:
     return before_size, after_size
 
 
+def reduce_image_copy(
+    input_path: str,
+    output_path: str,
+    max_resolution: tuple[int, int] = HD_RESOLUTION,
+    quality: int = DEFAULT_IMAGE_QUALITY,
+) -> tuple[int, int]:
+    """Create a reduced image copy without modifying the original file."""
+
+    before_size = os.path.getsize(input_path)
+    with Image.open(input_path) as img:
+        original_format = img.format
+        img.thumbnail(max_resolution, Image.LANCZOS)
+        save_kwargs = {}
+        if original_format in {"JPEG", "PNG", "WEBP"}:
+            save_kwargs["optimize"] = True
+        if original_format in {"JPEG", "WEBP"}:
+            save_kwargs["quality"] = quality
+        if img.mode in {"RGBA", "P"} and original_format == "JPEG":
+            img = img.convert("RGB")
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        img.save(output_path, **save_kwargs)
+
+    after_size = os.path.getsize(output_path)
+    return before_size, after_size
+
+
+def reduce_selected_images(
+    root_path: str,
+    file_ids: Iterable[str],
+    output_dir: str = REDUCED_DIR,
+    max_resolution: tuple[int, int] = HD_RESOLUTION,
+    quality: int = DEFAULT_IMAGE_QUALITY,
+) -> dict:
+    """Reduce selected local images into ``output_dir`` while preserving relative paths."""
+
+    root = Path(root_path).expanduser().resolve()
+    if not root.exists() or not root.is_dir():
+        raise NotADirectoryError(f"Path is not a folder: {root}")
+
+    results = []
+    total_before = 0
+    total_after = 0
+    for file_id in file_ids:
+        source_path = (root / file_id).resolve()
+        if not is_path_within(source_path, root):
+            results.append({"id": file_id, "status": "skipped", "error": "Path is outside scan root."})
+            continue
+        if not source_path.exists() or not source_path.is_file():
+            results.append({"id": file_id, "status": "skipped", "error": "File no longer exists."})
+            continue
+
+        mime_type = guess_mime_type(source_path)
+        if mime_type not in SUPPORTED_IMAGE_MIME_TYPES:
+            results.append(
+                {"id": file_id, "status": "skipped", "error": "File type cannot be reduced."}
+            )
+            continue
+
+        output_path = Path(output_dir) / file_id
+        try:
+            before_size, after_size = reduce_image_copy(
+                str(source_path), str(output_path), max_resolution, quality
+            )
+        except Exception as error:
+            results.append({"id": file_id, "status": "failed", "error": str(error)})
+            continue
+
+        saved_bytes = max(before_size - after_size, 0)
+        total_before += before_size
+        total_after += after_size
+        results.append(
+            {
+                "id": file_id,
+                "status": "reduced",
+                "source_path": str(source_path),
+                "output_path": str(output_path),
+                "before_bytes": before_size,
+                "after_bytes": after_size,
+                "saved_bytes": saved_bytes,
+                "saved_human": human_readable_size(saved_bytes),
+            }
+        )
+
+    total_saved = max(total_before - total_after, 0)
+    return {
+        "results": results,
+        "total_before_bytes": total_before,
+        "total_after_bytes": total_after,
+        "total_saved_bytes": total_saved,
+        "total_saved_human": human_readable_size(total_saved),
+    }
+
+
 def export_large_files(files: Iterable[dict], threshold_mb: float) -> None:
     """Export local files larger than ``threshold_mb`` to JSON."""
 
@@ -471,7 +647,7 @@ def reduce_local_images(files: Iterable[dict], min_size_mb: float, number_of_fil
         output_path = os.path.join(REDUCED_DIR, relative_id)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         try:
-            before, after = reduce_image_to_1080p(source_path, output_path)
+            before, after = reduce_image_copy(source_path, output_path)
             total_bytes_saved += max(before - after, 0)
         except Exception as error:
             print(f"⚠️ Skipped image {source_path}: {error}")

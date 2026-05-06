@@ -5,8 +5,10 @@ from unittest.mock import patch
 from src.cloudsaver import (
     OUTPUT_DIR,
     build_storage_audit,
+    estimate_reduction_for_file,
     export_storage_audit_dashboard,
     export_to_json_file,
+    reduce_selected_images,
     scan_local_folder,
 )
 
@@ -121,3 +123,44 @@ def test_export_storage_audit_dashboard_creates_json_and_html(tmp_path):
     assert json_path.exists()
     assert html_path.exists()
     assert "CloudSaver Storage Audit" in html_path.read_text()
+
+
+def test_estimate_reduction_for_file_marks_supported_images():
+    estimate = estimate_reduction_for_file(
+        {"size_bytes": 5 * 1024 * 1024, "mimeType": "image/jpeg"}
+    )
+
+    assert estimate["supported"] is True
+    assert estimate["estimated_saved_bytes"] > 0
+    assert estimate["estimated_after_bytes"] < 5 * 1024 * 1024
+
+
+def test_estimate_reduction_for_file_marks_unsupported_files():
+    estimate = estimate_reduction_for_file({"size_bytes": 2048, "mimeType": "application/pdf"})
+
+    assert estimate["supported"] is False
+    assert estimate["estimated_saved_bytes"] == 0
+
+
+def test_reduce_selected_images_creates_reduced_copy(tmp_path):
+    from PIL import Image
+
+    root = tmp_path / "scan"
+    output_dir = tmp_path / "reduced"
+    image_dir = root / "photos"
+    image_dir.mkdir(parents=True)
+    image_path = image_dir / "large.jpg"
+    Image.new("RGB", (2200, 1400), color=(45, 90, 120)).save(image_path, quality=95)
+
+    result = reduce_selected_images(
+        root_path=str(root),
+        file_ids=["photos/large.jpg"],
+        output_dir=str(output_dir),
+        max_resolution=(640, 480),
+        quality=70,
+    )
+
+    reduced_path = output_dir / "photos" / "large.jpg"
+    assert result["results"][0]["status"] == "reduced"
+    assert reduced_path.exists()
+    assert result["total_saved_bytes"] > 0
