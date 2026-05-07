@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import hashlib
 import json
 import mimetypes
 import os
@@ -24,6 +27,7 @@ SUPPORTED_IMAGE_MIME_TYPES = {
     "image/tiff",
 }
 DEFAULT_IMAGE_QUALITY = 82
+HASH_CHUNK_SIZE = 1024 * 1024
 
 
 @dataclass
@@ -64,6 +68,16 @@ def guess_mime_type(path: Path) -> str:
 
     mime_type, _ = mimetypes.guess_type(path)
     return mime_type or "application/octet-stream"
+
+
+def hash_file_sha256(path: str | Path) -> str:
+    """Return a SHA-256 digest for a local file."""
+
+    digest = hashlib.sha256()
+    with open(path, "rb") as file:
+        for chunk in iter(lambda: file.read(HASH_CHUNK_SIZE), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def scan_local_folder(root_path: str) -> List[dict]:
@@ -178,6 +192,58 @@ def attach_reduction_estimates(
     ]
 
 
+def attach_duplicate_verification(files: Iterable[dict]) -> List[dict]:
+    """Hash duplicate candidates so readable matches can be treated as verified."""
+
+    normalized_files = list(files)
+    candidate_groups = {}
+    for file in normalized_files:
+        size_bytes = int(file.get("size_bytes", 0) or 0)
+        if size_bytes <= 0:
+            continue
+        key = (file.get("name") or "Untitled", size_bytes)
+        candidate_groups.setdefault(key, []).append(file)
+
+    candidate_ids = {
+        id(file)
+        for group in candidate_groups.values()
+        if len(group) > 1
+        for file in group
+    }
+    verified_files = []
+    for file in normalized_files:
+        if id(file) not in candidate_ids:
+            verified_files.append(file)
+            continue
+
+        path = file.get("path") or ""
+        try:
+            content_hash = hash_file_sha256(path)
+        except OSError as error:
+            verified_files.append(
+                {
+                    **file,
+                    "duplicate_verification": {
+                        "status": "unverified",
+                        "reason": str(error),
+                    },
+                }
+            )
+            continue
+
+        verified_files.append(
+            {
+                **file,
+                "duplicate_verification": {
+                    "status": "verified",
+                    "algorithm": "sha256",
+                    "content_hash": content_hash,
+                },
+            }
+        )
+    return verified_files
+
+
 def export_to_json_file(data: Iterable[dict], filename: str) -> None:
     """Serialize ``data`` to ``OUTPUT_DIR/filename`` as JSON."""
 
@@ -288,19 +354,56 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
     for (name, size_bytes), group in duplicate_groups.items():
         if len(group) <= 1:
             continue
-        extra_files = group[1:]
-        duplicate_extra_ids.update(file.get("id") or file.get("path") for file in extra_files)
-        duplicate_count += len(extra_files)
-        duplicate_bytes += sum(file["size_bytes"] for file in extra_files)
-        duplicate_candidates.append(
+
+        verified_groups = {}
+        unverified_group = []
+        for file in group:
+            verification = file.get("duplicate_verification") or {}
+            content_hash = verification.get("content_hash")
+            if verification.get("status") == "verified" and content_hash:
+                verified_groups.setdefault(content_hash, []).append(file)
+            else:
+                unverified_group.append(file)
+
+        candidate_sets = [
             {
-                "name": name,
-                "size_bytes": size_bytes,
-                "copies": len(group),
-                "recoverable_bytes": sum(file["size_bytes"] for file in extra_files),
-                "files": group,
+                "files": verified_group,
+                "verification_status": "verified",
+                "verification_algorithm": "sha256",
+                "confidence": "high",
             }
-        )
+            for verified_group in verified_groups.values()
+            if len(verified_group) > 1
+        ]
+        if not candidate_sets and len(unverified_group) > 1:
+            candidate_sets.append(
+                {
+                    "files": unverified_group,
+                    "verification_status": "candidate",
+                    "verification_algorithm": None,
+                    "confidence": "medium",
+                }
+            )
+
+        for candidate_set in candidate_sets:
+            candidate_files = candidate_set["files"]
+            extra_files = candidate_files[1:]
+            recoverable_bytes = sum(file["size_bytes"] for file in extra_files)
+            duplicate_extra_ids.update(file.get("id") or file.get("path") for file in extra_files)
+            duplicate_count += len(extra_files)
+            duplicate_bytes += recoverable_bytes
+            duplicate_candidates.append(
+                {
+                    "name": name,
+                    "size_bytes": size_bytes,
+                    "copies": len(candidate_files),
+                    "recoverable_bytes": recoverable_bytes,
+                    "verification_status": candidate_set["verification_status"],
+                    "verification_algorithm": candidate_set["verification_algorithm"],
+                    "confidence": candidate_set["confidence"],
+                    "files": candidate_files,
+                }
+            )
 
     duplicate_candidates.sort(key=lambda group: group["recoverable_bytes"], reverse=True)
 

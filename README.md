@@ -35,7 +35,8 @@ candidates plus image optimization.
 - Export all file metadata to JSON
 - Export files larger than a selected size
 - Generate an HTML storage dashboard
-- Find duplicate candidates by file name and size
+- Find duplicate candidates by file name and size, with SHA-256 verification for readable
+  local candidates in the web UI
 - Create reduced 1080p copies of large images in `output/reduced`
 - Estimate per-file and selected-file size reductions before processing
 
