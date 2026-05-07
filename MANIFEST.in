@@ -3,5 +3,6 @@ include LICENSE
 include CHANGELOG.md
 include RELEASE.md
 recursive-include desktop *.md
+recursive-include packaging *.md *.template
 recursive-include web *.html *.css *.js
 recursive-include tests *.py
