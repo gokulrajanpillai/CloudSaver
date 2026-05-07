@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 import threading
 import time
 import uuid
@@ -26,7 +27,7 @@ from src.cloudsaver_history import list_scan_history, save_scan_history
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-WEB_ROOT = PROJECT_ROOT / "web"
+WEB_ROOT = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT)) / "web"
 SCAN_JOBS: dict[str, dict] = {}
 SCAN_JOBS_LOCK = threading.Lock()
 
