@@ -67,6 +67,12 @@ Run the web UI:
 python3 -m src.cloudsaver_web
 ```
 
+After installing CloudSaver as a package, you can also run:
+
+```bash
+cloudsaver-web
+```
+
 Then open:
 
 ```text
@@ -77,6 +83,12 @@ Run the CLI:
 
 ```bash
 python3 -m src.cloudsaver
+```
+
+Or, after package installation:
+
+```bash
+cloudsaver
 ```
 
 When prompted, enter the folder path you want to scan. For example:
