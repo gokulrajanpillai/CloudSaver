@@ -29,6 +29,7 @@ const elements = {
   categoryCount: document.querySelector("#category-count"),
   categoryBars: document.querySelector("#category-bars"),
   folderList: document.querySelector("#folder-list"),
+  historyList: document.querySelector("#history-list"),
   fileCount: document.querySelector("#file-count"),
   fileTableBody: document.querySelector("#file-table-body"),
   selectAll: document.querySelector("#select-all"),
@@ -87,6 +88,32 @@ async function loadLocations() {
     .slice(0, 6)
     .map((location) => `<button type="button" data-path="${escapeHtml(location.path)}">${escapeHtml(location.label)}</button>`)
     .join("");
+}
+
+async function loadHistory() {
+  const response = await fetch("/api/history");
+  const data = await response.json();
+  if (!response.ok) {
+    return;
+  }
+  renderHistory(data.scans || []);
+}
+
+function renderHistory(scans) {
+  elements.historyList.innerHTML = scans
+    .map((scan) => {
+      const date = new Date(scan.scanned_at * 1000).toLocaleString();
+      return `
+        <div class="history-item">
+          <div>
+            <strong title="${escapeHtml(scan.root_path)}">${escapeHtml(scan.root_path)}</strong>
+            <span>${escapeHtml(date)} - ${scan.file_count} files</span>
+          </div>
+          <span>${formatBytes(scan.recoverable_bytes)} recoverable</span>
+        </div>
+      `;
+    })
+    .join("") || "<div class='empty-state'>No scan history yet.</div>";
 }
 
 function renderSummary(data) {
@@ -276,6 +303,7 @@ async function scan(event) {
     renderCategories(data.audit);
     renderFolders(data.audit);
     renderFiles();
+    loadHistory();
     setStatus(`Scan complete. ${data.files.length} files analyzed.`);
   } catch (error) {
     setStatus(error.message, "error");
@@ -366,3 +394,4 @@ elements.selectAll.addEventListener("change", () => {
 });
 
 loadLocations().catch(() => setStatus("Location suggestions are unavailable.", "error"));
+loadHistory().catch(() => {});
