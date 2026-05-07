@@ -362,12 +362,14 @@ output {
   background: var(--teal);
 }
 
-.folder-list {
+.folder-list,
+.history-list {
   display: grid;
   gap: 8px;
 }
 
-.folder-item {
+.folder-item,
+.history-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
@@ -378,7 +380,8 @@ output {
   border-radius: 7px;
 }
 
-.folder-item strong {
+.folder-item strong,
+.history-item strong {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -386,7 +389,8 @@ output {
   font-size: 13px;
 }
 
-.folder-item span {
+.folder-item span,
+.history-item span {
   color: var(--muted);
   font-size: 12px;
 }

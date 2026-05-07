@@ -20,6 +20,7 @@ from src.cloudsaver import (
     reduce_selected_images,
     scan_local_folder,
 )
+from src.cloudsaver_history import list_scan_history, save_scan_history
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -72,6 +73,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             return
         if parsed.path == "/api/scan/status":
             self.handle_scan_status(parsed)
+            return
+        if parsed.path == "/api/history":
+            self.write_json({"scans": list_scan_history()})
             return
         if parsed.path == "/":
             self.path = "/index.html"
@@ -203,13 +207,15 @@ def run_scan(payload: dict, job_id: str | None = None) -> dict:
     )
     files_with_estimates.sort(key=lambda file: file["size_bytes"], reverse=True)
 
-    return {
+    result = {
         "root_path": str(Path(root_path).expanduser().resolve()),
         "audit": audit,
         "files": files_with_estimates,
         "estimated_reducible_bytes": estimated_reducible_bytes,
         "estimated_reducible_human": human_readable_size(estimated_reducible_bytes),
     }
+    result["history_id"] = save_scan_history(result["root_path"], audit)
+    return result
 
 
 def run_scan_job(job_id: str, payload: dict) -> None:

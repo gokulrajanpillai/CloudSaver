@@ -13,6 +13,7 @@ from src.cloudsaver import (
     reduce_selected_images,
     scan_local_folder,
 )
+from src.cloudsaver_history import list_scan_history, save_scan_history
 
 
 def test_export_to_json_file_creates_file(tmp_path):
@@ -117,6 +118,30 @@ def test_build_storage_audit_summarizes_opportunities():
 
 def test_estimate_monthly_storage_cost_usd():
     assert estimate_monthly_storage_cost_usd(100 * 1024 * 1024 * 1024) == 2.5
+
+
+def test_scan_history_persists_recent_scans(tmp_path):
+    db_path = tmp_path / "history.sqlite3"
+    audit = build_storage_audit(
+        [
+            {
+                "id": "report.pdf",
+                "name": "report.pdf",
+                "path": str(tmp_path / "report.pdf"),
+                "size_bytes": 2048,
+                "mimeType": "application/pdf",
+                "included": True,
+                "parents": ["root"],
+            }
+        ]
+    )
+
+    history_id = save_scan_history(str(tmp_path), audit, db_path)
+    history = list_scan_history(db_path=db_path)
+
+    assert history_id == 1
+    assert history[0]["root_path"] == str(tmp_path)
+    assert history[0]["file_count"] == 1
 
 
 def test_duplicate_verification_confirms_matching_file_content(tmp_path):
