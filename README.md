@@ -39,6 +39,7 @@ cost avoided and can download local JSON or CSV reports.
 - Keep recent scan summaries in a local SQLite history database
 - Visualize largest files in a browser-native storage treemap
 - Review duplicate groups with verification and confidence labels
+- Move selected files to a local review folder with a restore manifest
 - Export all file metadata to JSON
 - Export files larger than a selected size
 - Generate an HTML storage dashboard

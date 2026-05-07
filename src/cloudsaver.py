@@ -4,6 +4,8 @@ import hashlib
 import json
 import mimetypes
 import os
+import shutil
+import time
 from dataclasses import asdict, dataclass
 from html import escape
 from pathlib import Path
@@ -14,6 +16,7 @@ from PIL import Image
 
 OUTPUT_DIR = "output"
 REDUCED_DIR = os.path.join(OUTPUT_DIR, "reduced")
+QUARANTINE_DIR_NAME = ".cloudsaver-review"
 
 HD_RESOLUTION = (1920, 1080)
 DEFAULT_AUDIT_TOP_N = 10
@@ -742,6 +745,86 @@ def reduce_selected_images(
         "total_saved_bytes": total_saved,
         "total_saved_human": human_readable_size(total_saved),
     }
+
+
+def quarantine_selected_files(
+    root_path: str,
+    file_ids: Iterable[str],
+    quarantine_dir: str | None = None,
+) -> dict:
+    """Move selected files to a review folder with a restore manifest."""
+
+    root = Path(root_path).expanduser().resolve()
+    if not root.exists() or not root.is_dir():
+        raise NotADirectoryError(f"Path is not a folder: {root}")
+
+    review_root = Path(quarantine_dir).expanduser().resolve() if quarantine_dir else root / QUARANTINE_DIR_NAME
+    batch_dir = review_root / time.strftime("%Y%m%d-%H%M%S")
+    batch_dir.mkdir(parents=True, exist_ok=True)
+
+    results = []
+    for file_id in file_ids:
+        source_path = (root / file_id).resolve()
+        if not is_path_within(source_path, root):
+            results.append({"id": file_id, "status": "skipped", "error": "Path is outside scan root."})
+            continue
+        if not source_path.exists() or not source_path.is_file():
+            results.append({"id": file_id, "status": "skipped", "error": "File no longer exists."})
+            continue
+        if is_path_within(source_path, review_root):
+            results.append({"id": file_id, "status": "skipped", "error": "File is already in review."})
+            continue
+
+        destination_path = batch_dir / file_id
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(source_path), str(destination_path))
+        results.append(
+            {
+                "id": file_id,
+                "status": "quarantined",
+                "source_path": str(source_path),
+                "review_path": str(destination_path),
+            }
+        )
+
+    manifest = {
+        "root_path": str(root),
+        "created_at": time.time(),
+        "results": results,
+    }
+    manifest_path = batch_dir / "manifest.json"
+    with open(manifest_path, "w") as file:
+        json.dump(manifest, file, indent=2)
+
+    return {
+        "review_dir": str(batch_dir),
+        "manifest_path": str(manifest_path),
+        "results": results,
+        "quarantined_count": sum(1 for result in results if result["status"] == "quarantined"),
+    }
+
+
+def restore_quarantine(manifest_path: str) -> dict:
+    """Restore files moved by ``quarantine_selected_files``."""
+
+    manifest_file = Path(manifest_path).expanduser().resolve()
+    with open(manifest_file) as file:
+        manifest = json.load(file)
+
+    results = []
+    for item in manifest.get("results", []):
+        if item.get("status") != "quarantined":
+            continue
+        source = Path(item["review_path"])
+        destination = Path(item["source_path"])
+        if not source.exists():
+            results.append({"id": item["id"], "status": "skipped", "error": "Review file missing."})
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(source), str(destination))
+        results.append({"id": item["id"], "status": "restored", "source_path": str(destination)})
+
+    return {"manifest_path": str(manifest_file), "results": results}
 
 
 def export_large_files(files: Iterable[dict], threshold_mb: float) -> None:

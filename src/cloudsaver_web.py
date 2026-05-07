@@ -17,7 +17,9 @@ from src.cloudsaver import (
     attach_reduction_estimates,
     build_storage_audit,
     human_readable_size,
+    quarantine_selected_files,
     reduce_selected_images,
+    restore_quarantine,
     scan_local_folder,
 )
 from src.cloudsaver_history import list_scan_history, save_scan_history
@@ -94,6 +96,12 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/reduce":
                 self.handle_reduce(payload)
                 return
+            if parsed.path == "/api/quarantine":
+                self.handle_quarantine(payload)
+                return
+            if parsed.path == "/api/restore":
+                self.handle_restore(payload)
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
@@ -169,6 +177,21 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             quality=quality,
         )
         self.write_json(result)
+
+    def handle_quarantine(self, payload: dict) -> None:
+        root_path = payload.get("root_path", "").strip()
+        file_ids = payload.get("file_ids") or []
+        if not root_path:
+            raise ValueError("A scan root path is required.")
+        if not isinstance(file_ids, list) or not file_ids:
+            raise ValueError("Select at least one file to move to review.")
+        self.write_json(quarantine_selected_files(root_path, file_ids))
+
+    def handle_restore(self, payload: dict) -> None:
+        manifest_path = payload.get("manifest_path", "").strip()
+        if not manifest_path:
+            raise ValueError("A manifest path is required.")
+        self.write_json(restore_quarantine(manifest_path))
 
     def write_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = json.dumps(payload).encode("utf-8")
