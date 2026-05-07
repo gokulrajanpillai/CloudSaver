@@ -441,6 +441,61 @@ output {
   font-size: 12px;
 }
 
+.duplicate-panel {
+  margin-top: 16px;
+}
+
+.duplicate-list {
+  display: grid;
+  gap: 10px;
+}
+
+.duplicate-group {
+  border: 1px solid #e5eaf0;
+  border-radius: 7px;
+  background: var(--surface-2);
+  padding: 12px;
+}
+
+.duplicate-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.duplicate-summary strong,
+.duplicate-summary span {
+  display: block;
+}
+
+.duplicate-summary strong {
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.duplicate-summary span {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.duplicate-group ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.duplicate-group li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .file-panel {
   margin-top: 16px;
   padding-bottom: 0;
