@@ -26,7 +26,8 @@ CloudSaver can run a read-only storage audit and generate:
 
 The audit summarizes total storage, storage by file category, largest files, largest folders,
 duplicate candidates, large files to review, and estimated recoverable space from duplicate
-candidates plus image optimization.
+candidates plus image optimization. The web UI also estimates rough monthly cloud storage
+cost avoided and can download local JSON or CSV reports.
 
 ## Features
 
@@ -35,6 +36,7 @@ candidates plus image optimization.
 - Export all file metadata to JSON
 - Export files larger than a selected size
 - Generate an HTML storage dashboard
+- Download JSON and CSV reports from the local web UI
 - Find duplicate candidates by file name and size, with SHA-256 verification for readable
   local candidates in the web UI
 - Create reduced 1080p copies of large images in `output/reduced`

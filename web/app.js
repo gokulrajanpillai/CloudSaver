@@ -18,10 +18,13 @@ const elements = {
   metricFiles: document.querySelector("#metric-files"),
   metricReducible: document.querySelector("#metric-reducible"),
   metricDuplicates: document.querySelector("#metric-duplicates"),
+  metricCost: document.querySelector("#metric-cost"),
   currentRoot: document.querySelector("#current-root"),
   selectionSummary: document.querySelector("#selection-summary"),
   filterInput: document.querySelector("#filter-input"),
   reduceButton: document.querySelector("#reduce-button"),
+  exportJsonButton: document.querySelector("#export-json-button"),
+  exportCsvButton: document.querySelector("#export-csv-button"),
   categoryCount: document.querySelector("#category-count"),
   categoryBars: document.querySelector("#category-bars"),
   folderList: document.querySelector("#folder-list"),
@@ -87,6 +90,7 @@ function renderSummary(data) {
   elements.metricFiles.textContent = String(audit.summary.file_count);
   elements.metricReducible.textContent = data.estimated_reducible_human;
   elements.metricDuplicates.textContent = audit.opportunities.duplicate_human;
+  elements.metricCost.textContent = audit.opportunities.estimated_monthly_cost_avoided_human;
   elements.currentRoot.textContent = data.root_path;
 }
 
@@ -178,6 +182,67 @@ function updateSelectionSummary() {
     ? `${selectedFiles.length} selected, approximately ${formatBytes(estimatedBytes)} reducible`
     : "Select reducible files after scanning.";
   elements.reduceButton.disabled = selectedFiles.length === 0;
+  elements.exportJsonButton.disabled = !state.audit;
+  elements.exportCsvButton.disabled = !state.audit;
+}
+
+function reportFilename(extension) {
+  const timestamp = new Date().toISOString().replaceAll(":", "-").slice(0, 19);
+  return `cloudsaver-report-${timestamp}.${extension}`;
+}
+
+function downloadText(filename, text, type) {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function csvCell(value) {
+  const text = String(value ?? "");
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function exportJsonReport() {
+  if (!state.audit) {
+    return;
+  }
+  downloadText(
+    reportFilename("json"),
+    JSON.stringify({ root_path: state.rootPath, audit: state.audit, files: state.files }, null, 2),
+    "application/json"
+  );
+}
+
+function exportCsvReport() {
+  if (!state.audit) {
+    return;
+  }
+  const headers = [
+    "name",
+    "path",
+    "category",
+    "size_bytes",
+    "estimated_saved_bytes",
+    "estimated_reduction_percent",
+    "reduction_supported",
+    "duplicate_verification",
+  ];
+  const rows = state.files.map((file) => [
+    file.name,
+    file.path,
+    file.category,
+    file.size_bytes,
+    file.reduction.estimated_saved_bytes,
+    file.reduction.estimated_reduction_percent,
+    file.reduction.supported,
+    file.duplicate_verification?.status || "",
+  ]);
+  const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+  downloadText(reportFilename("csv"), `${csv}\n`, "text/csv");
 }
 
 async function scan(event) {
@@ -243,6 +308,8 @@ elements.qualityInput.addEventListener("input", () => {
 });
 elements.filterInput.addEventListener("input", filterFiles);
 elements.reduceButton.addEventListener("click", reduceSelected);
+elements.exportJsonButton.addEventListener("click", exportJsonReport);
+elements.exportCsvButton.addEventListener("click", exportCsvReport);
 elements.fileTableBody.addEventListener("change", (event) => {
   const checkbox = event.target.closest("input[type='checkbox'][data-file-id]");
   if (!checkbox) {

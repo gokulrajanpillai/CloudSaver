@@ -7,6 +7,7 @@ from src.cloudsaver import (
     attach_duplicate_verification,
     build_storage_audit,
     estimate_reduction_for_file,
+    estimate_monthly_storage_cost_usd,
     export_storage_audit_dashboard,
     export_to_json_file,
     reduce_selected_images,
@@ -97,7 +98,12 @@ def test_build_storage_audit_summarizes_opportunities():
     assert audit["opportunities"]["duplicate_bytes"] == 10 * one_mb
     assert audit["opportunities"]["image_optimization_count"] == 1
     assert audit["opportunities"]["large_file_count"] == 1
+    assert audit["opportunities"]["estimated_monthly_cost_avoided_human"].endswith("/mo")
     assert audit["top_folders"][0]["folder_id"] == "videos"
+
+
+def test_estimate_monthly_storage_cost_usd():
+    assert estimate_monthly_storage_cost_usd(100 * 1024 * 1024 * 1024) == 2.5
 
 
 def test_duplicate_verification_confirms_matching_file_content(tmp_path):
