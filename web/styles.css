@@ -184,6 +184,10 @@ output {
   background: var(--blue);
 }
 
+.danger-action {
+  background: var(--red);
+}
+
 .tertiary-action {
   color: var(--text);
   background: #eef3f6;

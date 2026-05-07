@@ -10,7 +10,9 @@ from src.cloudsaver import (
     estimate_monthly_storage_cost_usd,
     export_storage_audit_dashboard,
     export_to_json_file,
+    quarantine_selected_files,
     reduce_selected_images,
+    restore_quarantine,
     scan_local_folder,
 )
 from src.cloudsaver_history import list_scan_history, save_scan_history
@@ -246,3 +248,20 @@ def test_reduce_selected_images_creates_reduced_copy(tmp_path):
     assert result["results"][0]["status"] == "reduced"
     assert reduced_path.exists()
     assert result["total_saved_bytes"] > 0
+
+
+def test_quarantine_selected_files_can_restore(tmp_path):
+    root = tmp_path / "scan"
+    root.mkdir()
+    file_path = root / "old.txt"
+    file_path.write_text("review me")
+
+    quarantine = quarantine_selected_files(str(root), ["old.txt"])
+
+    assert quarantine["quarantined_count"] == 1
+    assert not file_path.exists()
+    manifest_path = quarantine["manifest_path"]
+    restored = restore_quarantine(manifest_path)
+
+    assert restored["results"][0]["status"] == "restored"
+    assert file_path.read_text() == "review me"

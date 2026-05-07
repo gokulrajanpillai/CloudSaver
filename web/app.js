@@ -24,6 +24,7 @@ const elements = {
   selectionSummary: document.querySelector("#selection-summary"),
   filterInput: document.querySelector("#filter-input"),
   reduceButton: document.querySelector("#reduce-button"),
+  quarantineButton: document.querySelector("#quarantine-button"),
   exportJsonButton: document.querySelector("#export-json-button"),
   exportCsvButton: document.querySelector("#export-csv-button"),
   categoryCount: document.querySelector("#category-count"),
@@ -242,16 +243,15 @@ function renderFiles() {
     .map((file) => {
       const supported = file.reduction.supported;
       const checked = state.selected.has(file.id) ? "checked" : "";
-      const disabled = supported ? "" : "disabled";
       const statusClass = supported ? "status-pill" : "status-pill unsupported";
-      const statusText = supported ? "Reducible" : "Not supported";
+      const statusText = supported ? "Reducible" : "Review only";
       const expected = supported
         ? `${file.reduction.estimated_saved_human} (${file.reduction.estimated_reduction_percent}%)`
         : "-";
       return `
         <tr>
           <td class="select-cell">
-            <input type="checkbox" data-file-id="${escapeHtml(file.id)}" ${checked} ${disabled} aria-label="Select ${escapeHtml(file.name)}">
+            <input type="checkbox" data-file-id="${escapeHtml(file.id)}" ${checked} aria-label="Select ${escapeHtml(file.name)}">
           </td>
           <td>
             <span class="file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
@@ -274,10 +274,12 @@ function updateSelectionSummary() {
     (total, file) => total + file.reduction.estimated_saved_bytes,
     0
   );
+  const selectedReducible = selectedFiles.filter((file) => file.reduction.supported);
   elements.selectionSummary.textContent = selectedFiles.length
     ? `${selectedFiles.length} selected, approximately ${formatBytes(estimatedBytes)} reducible`
     : "Select reducible files after scanning.";
-  elements.reduceButton.disabled = selectedFiles.length === 0;
+  elements.reduceButton.disabled = selectedReducible.length === 0;
+  elements.quarantineButton.disabled = selectedFiles.length === 0;
   elements.exportJsonButton.disabled = !state.audit;
   elements.exportCsvButton.disabled = !state.audit;
 }
@@ -398,7 +400,9 @@ async function waitForScan(jobId) {
 }
 
 async function reduceSelected() {
-  const fileIds = [...state.selected];
+  const fileIds = state.files
+    .filter((file) => state.selected.has(file.id) && file.reduction.supported)
+    .map((file) => file.id);
   if (!fileIds.length) {
     return;
   }
@@ -420,6 +424,27 @@ async function reduceSelected() {
   }
 }
 
+async function quarantineSelected() {
+  const fileIds = [...state.selected];
+  if (!fileIds.length) {
+    return;
+  }
+  elements.quarantineButton.disabled = true;
+  setStatus("Moving selected files to the local review folder...");
+  try {
+    const result = await postJson("/api/quarantine", {
+      root_path: state.rootPath,
+      file_ids: fileIds,
+    });
+    setStatus(`${result.quarantined_count} files moved to review. Manifest: ${result.manifest_path}`);
+    state.selected.clear();
+  } catch (error) {
+    setStatus(error.message, "error");
+  } finally {
+    updateSelectionSummary();
+  }
+}
+
 elements.form.addEventListener("submit", scan);
 elements.qualityInput.addEventListener("input", () => {
   elements.qualityOutput.value = elements.qualityInput.value;
@@ -427,6 +452,7 @@ elements.qualityInput.addEventListener("input", () => {
 });
 elements.filterInput.addEventListener("input", filterFiles);
 elements.reduceButton.addEventListener("click", reduceSelected);
+elements.quarantineButton.addEventListener("click", quarantineSelected);
 elements.exportJsonButton.addEventListener("click", exportJsonReport);
 elements.exportCsvButton.addEventListener("click", exportCsvReport);
 elements.quickLocations.addEventListener("click", (event) => {
