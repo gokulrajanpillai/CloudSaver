@@ -9,6 +9,8 @@ NAS mounts, and local directories.
 Files stay on your machine. CloudSaver does not upload file contents, file names, or file
 paths to a hosted service.
 
+CloudSaver is tested on Linux, macOS, and Windows across supported Python versions.
+
 ## Support CloudSaver
 
 CloudSaver is free and open source. If it helps you recover space or avoid a storage
