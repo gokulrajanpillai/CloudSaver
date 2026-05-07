@@ -178,6 +178,38 @@ output {
   line-height: 1.45;
 }
 
+.support-box {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #d5dee6;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.support-box strong,
+.support-box p {
+  margin: 0;
+}
+
+.support-box p {
+  margin-top: 4px;
+}
+
+.support-box a {
+  display: inline-block;
+  margin-top: 8px;
+  color: #9be0d1;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.support-box a:hover {
+  text-decoration: underline;
+}
+
 .workspace {
   min-width: 0;
   padding: 24px;

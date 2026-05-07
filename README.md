@@ -1,10 +1,21 @@
 # CloudSaver
 
-![CI](https://github.com/nandananair/CloudSaver/workflows/CI/badge.svg)
+![CI](https://github.com/gokulrajanpillai/CloudSaver/workflows/CI/badge.svg)
 
-CloudSaver audits and optimizes storage in a local or mounted folder. It works with any
-folder your operating system can see, including synced cloud folders, external drives, NAS
-mounts, and local directories.
+CloudSaver is an open-source, local-first storage audit and optimization tool. It scans
+folders your operating system can see, including synced cloud folders, external drives,
+NAS mounts, and local directories.
+
+Files stay on your machine. CloudSaver does not upload file contents, file names, or file
+paths to a hosted service.
+
+## Support CloudSaver
+
+CloudSaver is free and open source. If it helps you recover space or avoid a storage
+upgrade, consider sponsoring development:
+
+- GitHub Sponsors: https://github.com/sponsors/gokulrajanpillai
+- Project issues and roadmap: https://github.com/gokulrajanpillai/CloudSaver/issues
 
 ## Storage Audit Dashboard
 
@@ -15,7 +26,7 @@ CloudSaver can run a read-only storage audit and generate:
 
 The audit summarizes total storage, storage by file category, largest files, largest folders,
 duplicate candidates, large files to review, and estimated recoverable space from duplicate
-cleanup plus image optimization.
+candidates plus image optimization.
 
 ## Features
 
@@ -30,6 +41,14 @@ cleanup plus image optimization.
 
 CloudSaver does not delete files during duplicate scanning. Review the generated audit before
 removing files manually.
+
+## Open Source Scope
+
+CloudSaver focuses on local and mounted storage. Direct cloud-provider APIs, user accounts,
+hosted dashboards, telemetry, and automatic deletion are intentionally out of scope for now.
+
+See [PRIVACY.md](PRIVACY.md), [CONTRIBUTING.md](CONTRIBUTING.md), and
+[SECURITY.md](SECURITY.md) before contributing or reporting sensitive issues.
 
 ## Usage
 
