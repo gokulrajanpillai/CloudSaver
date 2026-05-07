@@ -7,7 +7,7 @@ import os
 from dataclasses import asdict, dataclass
 from html import escape
 from pathlib import Path
-from typing import Iterable, List
+from typing import Callable, Iterable, List
 
 from PIL import Image
 
@@ -90,7 +90,9 @@ def hash_file_sha256(path: str | Path) -> str:
     return digest.hexdigest()
 
 
-def scan_local_folder(root_path: str) -> List[dict]:
+def scan_local_folder(
+    root_path: str, progress_callback: Callable[[dict], None] | None = None
+) -> List[dict]:
     """Scan a local or mounted folder and return file metadata for audits."""
 
     root = Path(root_path).expanduser().resolve()
@@ -127,6 +129,14 @@ def scan_local_folder(root_path: str) -> List[dict]:
             )
             files.append(asdict(local_file))
             count += 1
+            if progress_callback:
+                progress_callback(
+                    {
+                        "files_scanned": count,
+                        "current_path": str(path),
+                        "current_folder": str(current_dir),
+                    }
+                )
             if count % 50 == 0:
                 print(f"   ...{count} files scanned")
 

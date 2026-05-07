@@ -140,6 +140,27 @@ output {
   gap: 12px;
 }
 
+.quick-locations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-locations button {
+  min-height: 30px;
+  border-radius: 7px;
+  padding: 0 10px;
+  color: #dce5eb;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.quick-locations button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 .primary-action,
 .secondary-action,
 .tertiary-action {

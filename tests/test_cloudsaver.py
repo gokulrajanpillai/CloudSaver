@@ -57,6 +57,19 @@ def test_scan_local_folder_returns_file_metadata(tmp_path):
     assert by_name["notes.txt"]["parents"] == ["root"]
 
 
+def test_scan_local_folder_reports_progress(tmp_path):
+    document_path = tmp_path / "notes.txt"
+    document_path.write_text("hello")
+    progress_events = []
+
+    files = scan_local_folder(str(tmp_path), progress_events.append)
+
+    assert len(files) == 1
+    assert progress_events
+    assert progress_events[-1]["files_scanned"] == 1
+    assert progress_events[-1]["current_path"].endswith("notes.txt")
+
+
 def test_build_storage_audit_summarizes_opportunities():
     one_mb = 1024 * 1024
     files = [
