@@ -31,6 +31,8 @@ const elements = {
   folderList: document.querySelector("#folder-list"),
   treemap: document.querySelector("#treemap"),
   historyList: document.querySelector("#history-list"),
+  duplicateCount: document.querySelector("#duplicate-count"),
+  duplicateList: document.querySelector("#duplicate-list"),
   fileCount: document.querySelector("#file-count"),
   fileTableBody: document.querySelector("#file-table-body"),
   selectAll: document.querySelector("#select-all"),
@@ -193,6 +195,33 @@ function renderTreemap(files) {
     .join("");
 }
 
+function renderDuplicates(audit) {
+  const groups = audit.duplicate_candidates || [];
+  elements.duplicateCount.textContent = `${groups.length} groups`;
+  elements.duplicateList.innerHTML = groups
+    .map((group) => {
+      const status = group.verification_status || "candidate";
+      const confidence = group.confidence || "medium";
+      const files = (group.files || [])
+        .slice(0, 4)
+        .map((file) => `<li title="${escapeHtml(file.path)}">${escapeHtml(file.path)}</li>`)
+        .join("");
+      return `
+        <div class="duplicate-group">
+          <div class="duplicate-summary">
+            <div>
+              <strong title="${escapeHtml(group.name)}">${escapeHtml(group.name)}</strong>
+              <span>${group.copies} copies - ${formatBytes(group.recoverable_bytes)} recoverable</span>
+            </div>
+            <span class="status-pill ${status === "verified" ? "" : "unsupported"}">${escapeHtml(status)} / ${escapeHtml(confidence)}</span>
+          </div>
+          <ul>${files}</ul>
+        </div>
+      `;
+    })
+    .join("") || "<div class='empty-state'>No duplicate candidates found.</div>";
+}
+
 function filterFiles() {
   const query = elements.filterInput.value.trim().toLowerCase();
   state.filteredFiles = query
@@ -338,6 +367,7 @@ async function scan(event) {
     renderCategories(data.audit);
     renderFolders(data.audit);
     renderTreemap(data.files);
+    renderDuplicates(data.audit);
     renderFiles();
     loadHistory();
     setStatus(`Scan complete. ${data.files.length} files analyzed.`);
