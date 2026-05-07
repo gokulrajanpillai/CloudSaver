@@ -10,6 +10,7 @@ const elements = {
   form: document.querySelector("#scan-form"),
   pathInput: document.querySelector("#path-input"),
   locationOptions: document.querySelector("#location-options"),
+  quickLocations: document.querySelector("#quick-locations"),
   qualityInput: document.querySelector("#quality-input"),
   qualityOutput: document.querySelector("#quality-output"),
   resolutionInput: document.querySelector("#resolution-input"),
@@ -81,6 +82,10 @@ async function loadLocations() {
   const data = await response.json();
   elements.locationOptions.innerHTML = data.locations
     .map((location) => `<option value="${escapeHtml(location.path)}">${escapeHtml(location.label)}</option>`)
+    .join("");
+  elements.quickLocations.innerHTML = data.locations
+    .slice(0, 6)
+    .map((location) => `<button type="button" data-path="${escapeHtml(location.path)}">${escapeHtml(location.label)}</button>`)
     .join("");
 }
 
@@ -253,14 +258,15 @@ async function scan(event) {
     return;
   }
 
-  setStatus("Scanning files and estimating reductions...");
+  setStatus("Starting scan...");
   elements.form.querySelector("button").disabled = true;
   try {
-    const data = await postJson("/api/scan", {
+    const start = await postJson("/api/scan/start", {
       path,
       quality: Number(elements.qualityInput.value),
       ...resolution(),
     });
+    const data = await waitForScan(start.job_id);
     state.rootPath = data.root_path;
     state.files = data.files;
     state.filteredFiles = [...data.files];
@@ -275,6 +281,25 @@ async function scan(event) {
     setStatus(error.message, "error");
   } finally {
     elements.form.querySelector("button").disabled = false;
+  }
+}
+
+async function waitForScan(jobId) {
+  while (true) {
+    const response = await fetch(`/api/scan/status?job_id=${encodeURIComponent(jobId)}`);
+    const job = await response.json();
+    if (!response.ok) {
+      throw new Error(job.error || "Scan status request failed.");
+    }
+    if (job.status === "failed") {
+      throw new Error(job.error || "Scan failed.");
+    }
+    if (job.status === "complete") {
+      return job.result;
+    }
+    const current = job.current_folder || job.current_path || "Preparing scan...";
+    setStatus(`Scanning ${job.files_scanned || 0} files... ${current}`);
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
 
@@ -310,6 +335,14 @@ elements.filterInput.addEventListener("input", filterFiles);
 elements.reduceButton.addEventListener("click", reduceSelected);
 elements.exportJsonButton.addEventListener("click", exportJsonReport);
 elements.exportCsvButton.addEventListener("click", exportCsvReport);
+elements.quickLocations.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-path]");
+  if (!button) {
+    return;
+  }
+  elements.pathInput.value = button.dataset.path;
+  setStatus(`Ready to scan ${button.textContent}.`);
+});
 elements.fileTableBody.addEventListener("change", (event) => {
   const checkbox = event.target.closest("input[type='checkbox'][data-file-id]");
   if (!checkbox) {

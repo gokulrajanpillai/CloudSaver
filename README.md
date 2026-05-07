@@ -34,7 +34,8 @@ cost avoided and can download local JSON or CSV reports.
 ## Features
 
 - Scan any local or mounted folder
-- Use the local web UI to choose a drive or enter a specific path
+- Use the local web UI to choose common scan locations or enter a specific path
+- View live scan progress while files are being analyzed
 - Export all file metadata to JSON
 - Export files larger than a selected size
 - Generate an HTML storage dashboard

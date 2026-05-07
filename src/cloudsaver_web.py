@@ -1,6 +1,9 @@
 import argparse
 import json
 import os
+import threading
+import time
+import uuid
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -21,6 +24,8 @@ from src.cloudsaver import (
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 WEB_ROOT = PROJECT_ROOT / "web"
+SCAN_JOBS: dict[str, dict] = {}
+SCAN_JOBS_LOCK = threading.Lock()
 
 
 def common_scan_locations() -> list[dict]:
@@ -65,6 +70,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/health":
             self.write_json({"status": "ok"})
             return
+        if parsed.path == "/api/scan/status":
+            self.handle_scan_status(parsed)
+            return
         if parsed.path == "/":
             self.path = "/index.html"
         super().do_GET()
@@ -75,6 +83,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             payload = self.read_json()
             if parsed.path == "/api/scan":
                 self.handle_scan(payload)
+                return
+            if parsed.path == "/api/scan/start":
+                self.handle_scan_start(payload)
                 return
             if parsed.path == "/api/reduce":
                 self.handle_reduce(payload)
@@ -101,34 +112,36 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             raise ValueError("Request body must be valid JSON.") from error
 
     def handle_scan(self, payload: dict) -> None:
-        root_path = payload.get("path", "").strip()
-        if not root_path:
-            raise ValueError("A folder path is required.")
-        quality = int(payload.get("quality", DEFAULT_IMAGE_QUALITY))
-        max_width = int(payload.get("max_width", HD_RESOLUTION[0]))
-        max_height = int(payload.get("max_height", HD_RESOLUTION[1]))
+        self.write_json(run_scan(payload))
 
-        files = attach_duplicate_verification(scan_local_folder(root_path))
-        files_with_estimates = attach_reduction_estimates(
-            files, (max_width, max_height), quality
-        )
-        audit = build_storage_audit(files_with_estimates)
-        estimated_reducible_bytes = sum(
-            file["reduction"]["estimated_saved_bytes"]
-            for file in files_with_estimates
-            if file["reduction"]["supported"]
-        )
-        files_with_estimates.sort(key=lambda file: file["size_bytes"], reverse=True)
-
-        self.write_json(
-            {
-                "root_path": str(Path(root_path).expanduser().resolve()),
-                "audit": audit,
-                "files": files_with_estimates,
-                "estimated_reducible_bytes": estimated_reducible_bytes,
-                "estimated_reducible_human": human_readable_size(estimated_reducible_bytes),
+    def handle_scan_start(self, payload: dict) -> None:
+        job_id = str(uuid.uuid4())
+        with SCAN_JOBS_LOCK:
+            SCAN_JOBS[job_id] = {
+                "id": job_id,
+                "status": "queued",
+                "created_at": time.time(),
+                "updated_at": time.time(),
+                "files_scanned": 0,
+                "current_path": "",
+                "current_folder": "",
             }
-        )
+
+        thread = threading.Thread(target=run_scan_job, args=(job_id, payload), daemon=True)
+        thread.start()
+        self.write_json({"job_id": job_id, "status": "queued"})
+
+    def handle_scan_status(self, parsed) -> None:
+        query = parsed.query or ""
+        params = dict(part.split("=", 1) for part in query.split("&") if "=" in part)
+        job_id = params.get("job_id")
+        if not job_id:
+            raise ValueError("A scan job id is required.")
+        with SCAN_JOBS_LOCK:
+            job = SCAN_JOBS.get(job_id)
+            if not job:
+                raise ValueError("Scan job was not found.")
+            self.write_json(job)
 
     def handle_reduce(self, payload: dict) -> None:
         root_path = payload.get("root_path", "").strip()
@@ -161,6 +174,71 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+
+def run_scan(payload: dict, job_id: str | None = None) -> dict:
+    def update_progress(progress: dict) -> None:
+        if not job_id:
+            return
+        with SCAN_JOBS_LOCK:
+            job = SCAN_JOBS.get(job_id)
+            if job:
+                job.update(progress)
+                job["status"] = "scanning"
+                job["updated_at"] = time.time()
+
+    root_path = payload.get("path", "").strip()
+    if not root_path:
+        raise ValueError("A folder path is required.")
+    quality = int(payload.get("quality", DEFAULT_IMAGE_QUALITY))
+    max_width = int(payload.get("max_width", HD_RESOLUTION[0]))
+    max_height = int(payload.get("max_height", HD_RESOLUTION[1]))
+
+    files = attach_duplicate_verification(scan_local_folder(root_path, update_progress))
+    files_with_estimates = attach_reduction_estimates(files, (max_width, max_height), quality)
+    audit = build_storage_audit(files_with_estimates)
+    estimated_reducible_bytes = sum(
+        file["reduction"]["estimated_saved_bytes"]
+        for file in files_with_estimates
+        if file["reduction"]["supported"]
+    )
+    files_with_estimates.sort(key=lambda file: file["size_bytes"], reverse=True)
+
+    return {
+        "root_path": str(Path(root_path).expanduser().resolve()),
+        "audit": audit,
+        "files": files_with_estimates,
+        "estimated_reducible_bytes": estimated_reducible_bytes,
+        "estimated_reducible_human": human_readable_size(estimated_reducible_bytes),
+    }
+
+
+def run_scan_job(job_id: str, payload: dict) -> None:
+    with SCAN_JOBS_LOCK:
+        SCAN_JOBS[job_id]["status"] = "scanning"
+        SCAN_JOBS[job_id]["updated_at"] = time.time()
+    try:
+        result = run_scan(payload, job_id)
+    except Exception as error:
+        with SCAN_JOBS_LOCK:
+            SCAN_JOBS[job_id].update(
+                {
+                    "status": "failed",
+                    "error": str(error),
+                    "updated_at": time.time(),
+                }
+            )
+        return
+    with SCAN_JOBS_LOCK:
+        SCAN_JOBS[job_id].update(
+            {
+                "status": "complete",
+                "result": result,
+                "files_scanned": len(result["files"]),
+                "current_path": "",
+                "current_folder": "",
+                "updated_at": time.time(),
+            }
+        )
 
 def run(host: str, port: int) -> None:
     server = ThreadingHTTPServer((host, port), CloudSaverRequestHandler)
