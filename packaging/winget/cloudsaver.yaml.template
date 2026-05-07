@@ -1,0 +1,15 @@
+PackageIdentifier: GokulRajan.CloudSaver
+PackageVersion: VERSION
+PackageLocale: en-US
+Publisher: Gokul Rajan
+PackageName: CloudSaver
+License: MIT
+ShortDescription: Local-first storage audit and safe optimization tool.
+PackageUrl: https://github.com/gokulrajanpillai/CloudSaver
+Installers:
+  - Architecture: x64
+    InstallerType: exe
+    InstallerUrl: URL
+    InstallerSha256: SHA256
+ManifestType: singleton
+ManifestVersion: 1.6.0

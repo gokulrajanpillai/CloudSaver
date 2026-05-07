@@ -44,3 +44,11 @@ macOS, and Linux. These artifacts are unsigned until platform signing credential
 configured.
 
 Run it manually from GitHub Actions or by pushing a version tag.
+
+## Package Manager Templates
+
+Package templates live in `packaging/`. After a release is published, replace `VERSION`,
+`URL`, and `SHA256` placeholders with final artifact metadata and submit them to the
+appropriate registries.
+
+Signing and notarization requirements are documented in `packaging/SIGNING.md`.

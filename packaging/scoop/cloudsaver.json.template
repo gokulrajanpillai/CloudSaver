@@ -1,0 +1,21 @@
+{
+  "version": "VERSION",
+  "description": "Local-first storage audit and safe optimization tool.",
+  "homepage": "https://github.com/gokulrajanpillai/CloudSaver",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "URL",
+      "hash": "SHA256"
+    }
+  },
+  "bin": ["CloudSaver.exe"],
+  "checkver": "github",
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "URL"
+      }
+    }
+  }
+}

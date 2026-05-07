@@ -1,0 +1,17 @@
+app-id: io.github.gokulrajanpillai.CloudSaver
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+command: cloudsaver-desktop
+finish-args:
+  - --share=network
+  - --filesystem=home
+modules:
+  - name: cloudsaver
+    buildsystem: simple
+    build-commands:
+      - python3 -m pip install --prefix=/app .
+    sources:
+      - type: archive
+        url: URL
+        sha256: SHA256
