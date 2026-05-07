@@ -36,3 +36,11 @@ Use semantic versioning:
 
 The `Release` GitHub Actions workflow builds source and wheel distributions, creates
 `SHA256SUMS`, and publishes the GitHub Release.
+
+## Desktop Builds
+
+The `Desktop Builds` workflow uses PyInstaller to build one-file binaries for Windows,
+macOS, and Linux. These artifacts are unsigned until platform signing credentials are
+configured.
+
+Run it manually from GitHub Actions or by pushing a version tag.
