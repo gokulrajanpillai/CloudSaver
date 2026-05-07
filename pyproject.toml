@@ -46,6 +46,7 @@ Sponsors = "https://github.com/sponsors/gokulrajanpillai"
 [project.scripts]
 cloudsaver = "src.cloudsaver:main"
 cloudsaver-web = "src.cloudsaver_web:main"
+cloudsaver-desktop = "src.cloudsaver_desktop:main"
 
 [tool.setuptools.packages.find]
 include = ["src*"]

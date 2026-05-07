@@ -99,6 +99,12 @@ Or, after package installation:
 cloudsaver
 ```
 
+Run the desktop-style launcher:
+
+```bash
+cloudsaver-desktop
+```
+
 When prompted, enter the folder path you want to scan. For example:
 
 ```text
