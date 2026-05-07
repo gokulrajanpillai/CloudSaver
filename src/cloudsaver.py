@@ -19,6 +19,7 @@ HD_RESOLUTION = (1920, 1080)
 DEFAULT_AUDIT_TOP_N = 10
 LARGE_FILE_THRESHOLD_BYTES = 100 * 1024 * 1024
 IMAGE_OPTIMIZATION_SAVINGS_RATE = 0.35
+CLOUD_STORAGE_COST_PER_GB_MONTH_USD = 0.025
 SUPPORTED_IMAGE_MIME_TYPES = {
     "image/jpeg",
     "image/png",
@@ -51,6 +52,15 @@ def human_readable_size(size_bytes: int) -> str:
             return f"{size_bytes:.2f} {unit}"
         size_bytes /= 1024
     return f"{size_bytes:.2f} PB"
+
+
+def estimate_monthly_storage_cost_usd(
+    size_bytes: int, cost_per_gb_month: float = CLOUD_STORAGE_COST_PER_GB_MONTH_USD
+) -> float:
+    """Estimate monthly cloud storage cost for a byte count."""
+
+    gib = size_bytes / (1024**3)
+    return round(gib * cost_per_gb_month, 2)
 
 
 def is_path_within(child_path: Path, parent_path: Path) -> bool:
@@ -433,6 +443,10 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
     top_files = sorted(normalized_files, key=lambda file: file["size_bytes"], reverse=True)[
         :top_n
     ]
+    estimated_recoverable_bytes = duplicate_bytes + image_optimization_bytes
+    estimated_monthly_cost_avoided = estimate_monthly_storage_cost_usd(
+        estimated_recoverable_bytes
+    )
 
     return {
         "summary": {
@@ -459,10 +473,13 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
             "large_file_human": human_readable_size(
                 sum(file["size_bytes"] for file in large_files)
             ),
-            "estimated_recoverable_bytes": duplicate_bytes + image_optimization_bytes,
+            "estimated_recoverable_bytes": estimated_recoverable_bytes,
             "estimated_recoverable_human": human_readable_size(
-                duplicate_bytes + image_optimization_bytes
+                estimated_recoverable_bytes
             ),
+            "estimated_monthly_cost_avoided_usd": estimated_monthly_cost_avoided,
+            "estimated_monthly_cost_avoided_human": f"${estimated_monthly_cost_avoided:.2f}/mo",
+            "cost_estimate_rate_usd_per_gb_month": CLOUD_STORAGE_COST_PER_GB_MONTH_USD,
         },
     }
 

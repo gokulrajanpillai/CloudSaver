@@ -141,7 +141,8 @@ output {
 }
 
 .primary-action,
-.secondary-action {
+.secondary-action,
+.tertiary-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -160,6 +161,12 @@ output {
 .secondary-action {
   color: white;
   background: var(--blue);
+}
+
+.tertiary-action {
+  color: var(--text);
+  background: #eef3f6;
+  border: 1px solid var(--line);
 }
 
 .primary-action svg,
@@ -217,7 +224,7 @@ output {
 
 .summary-band {
   display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
   gap: 14px;
 }
 
@@ -275,7 +282,7 @@ output {
 
 .actions {
   display: grid;
-  grid-template-columns: minmax(180px, 260px) auto;
+  grid-template-columns: minmax(180px, 260px) auto auto auto;
   gap: 10px;
   align-items: center;
 }
