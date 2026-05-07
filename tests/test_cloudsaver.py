@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from src.cloudsaver import (
     OUTPUT_DIR,
+    attach_duplicate_verification,
     build_storage_audit,
     estimate_reduction_for_file,
     export_storage_audit_dashboard,
@@ -97,6 +98,43 @@ def test_build_storage_audit_summarizes_opportunities():
     assert audit["opportunities"]["image_optimization_count"] == 1
     assert audit["opportunities"]["large_file_count"] == 1
     assert audit["top_folders"][0]["folder_id"] == "videos"
+
+
+def test_duplicate_verification_confirms_matching_file_content(tmp_path):
+    first_dir = tmp_path / "first"
+    second_dir = tmp_path / "second"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    first = first_dir / "copy.txt"
+    second = second_dir / "copy.txt"
+    first.write_text("same content")
+    second.write_text("same content")
+
+    files = scan_local_folder(str(tmp_path))
+    verified_files = attach_duplicate_verification(files)
+    audit = build_storage_audit(verified_files)
+
+    assert audit["opportunities"]["duplicate_count"] == 1
+    assert audit["duplicate_candidates"][0]["verification_status"] == "verified"
+    assert audit["duplicate_candidates"][0]["verification_algorithm"] == "sha256"
+
+
+def test_duplicate_verification_rejects_same_name_and_size_with_different_content(tmp_path):
+    first_dir = tmp_path / "first"
+    second_dir = tmp_path / "second"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    first = first_dir / "copy.txt"
+    second = second_dir / "copy.txt"
+    first.write_text("aa")
+    second.write_text("bb")
+
+    files = scan_local_folder(str(tmp_path))
+    verified_files = attach_duplicate_verification(files)
+    audit = build_storage_audit(verified_files)
+
+    assert audit["opportunities"]["duplicate_count"] == 0
+    assert audit["duplicate_candidates"] == []
 
 
 def test_export_storage_audit_dashboard_creates_json_and_html(tmp_path):

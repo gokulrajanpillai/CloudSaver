@@ -10,6 +10,7 @@ from src.cloudsaver import (
     DEFAULT_IMAGE_QUALITY,
     HD_RESOLUTION,
     REDUCED_DIR,
+    attach_duplicate_verification,
     attach_reduction_estimates,
     build_storage_audit,
     human_readable_size,
@@ -107,7 +108,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
         max_width = int(payload.get("max_width", HD_RESOLUTION[0]))
         max_height = int(payload.get("max_height", HD_RESOLUTION[1]))
 
-        files = scan_local_folder(root_path)
+        files = attach_duplicate_verification(scan_local_folder(root_path))
         files_with_estimates = attach_reduction_estimates(
             files, (max_width, max_height), quality
         )
