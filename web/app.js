@@ -29,6 +29,7 @@ const elements = {
   categoryCount: document.querySelector("#category-count"),
   categoryBars: document.querySelector("#category-bars"),
   folderList: document.querySelector("#folder-list"),
+  treemap: document.querySelector("#treemap"),
   historyList: document.querySelector("#history-list"),
   fileCount: document.querySelector("#file-count"),
   fileTableBody: document.querySelector("#file-table-body"),
@@ -156,6 +157,40 @@ function renderFolders(audit) {
       </div>
     `)
     .join("") || "<div class='empty-state'>No folders found.</div>";
+}
+
+function categoryColor(category) {
+  const colors = {
+    image: "#16806a",
+    video: "#8f5fe8",
+    audio: "#b7791f",
+    document: "#1f6fb2",
+    archive: "#596579",
+    other: "#7a8794",
+  };
+  return colors[category] || colors.other;
+}
+
+function renderTreemap(files) {
+  const topFiles = files.filter((file) => file.size_bytes > 0).slice(0, 36);
+  const totalBytes = topFiles.reduce((total, file) => total + file.size_bytes, 0);
+  if (!topFiles.length || totalBytes <= 0) {
+    elements.treemap.innerHTML = "<div class='empty-state'>No files to visualize.</div>";
+    return;
+  }
+
+  elements.treemap.innerHTML = topFiles
+    .map((file) => {
+      const basis = Math.max((file.size_bytes / totalBytes) * 100, 3);
+      const color = categoryColor(file.category);
+      return `
+        <div class="treemap-tile" style="flex-basis:${basis}%; background:${color}" title="${escapeHtml(file.path)} - ${formatBytes(file.size_bytes)}">
+          <strong>${escapeHtml(file.name)}</strong>
+          <span>${formatBytes(file.size_bytes)}</span>
+        </div>
+      `;
+    })
+    .join("");
 }
 
 function filterFiles() {
@@ -302,6 +337,7 @@ async function scan(event) {
     renderSummary(data);
     renderCategories(data.audit);
     renderFolders(data.audit);
+    renderTreemap(data.files);
     renderFiles();
     loadHistory();
     setStatus(`Scan complete. ${data.files.length} files analyzed.`);
