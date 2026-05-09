@@ -617,6 +617,48 @@ output {
   margin-top: 16px;
 }
 
+.support-panel {
+  margin-top: 16px;
+}
+
+.support-callout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #d7eadf;
+  border-radius: 7px;
+  background: #f0faf5;
+  padding: 14px;
+}
+
+.support-callout strong,
+.support-callout span {
+  display: block;
+}
+
+.support-callout strong {
+  font-size: 15px;
+}
+
+.support-callout span {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+.support-callout a {
+  white-space: nowrap;
+  color: white;
+  background: var(--teal);
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .settings-grid,
 .cleanup-grid {
   display: grid;
@@ -787,5 +829,14 @@ th {
   .cleanup-grid,
   .restore-row {
     grid-template-columns: 1fr;
+  }
+
+  .support-callout {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .support-callout a {
+    text-align: center;
   }
 }

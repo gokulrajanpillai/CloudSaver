@@ -38,6 +38,8 @@ const elements = {
   duplicateList: document.querySelector("#duplicate-list"),
   restoreManifestInput: document.querySelector("#restore-manifest-input"),
   restoreButton: document.querySelector("#restore-button"),
+  supportHeadline: document.querySelector("#support-headline"),
+  supportDetail: document.querySelector("#support-detail"),
   fileCount: document.querySelector("#file-count"),
   fileTableBody: document.querySelector("#file-table-body"),
   selectAll: document.querySelector("#select-all"),
@@ -132,6 +134,8 @@ function renderSummary(data) {
   elements.metricDuplicates.textContent = audit.opportunities.duplicate_human;
   elements.metricCost.textContent = audit.opportunities.estimated_monthly_cost_avoided_human;
   elements.currentRoot.textContent = data.root_path;
+  elements.supportHeadline.textContent = `${data.estimated_reducible_human} of image savings estimated`;
+  elements.supportDetail.textContent = `CloudSaver scanned ${audit.summary.file_count} files locally and found ${audit.opportunities.estimated_recoverable_human} in review opportunities. Sponsorship funds safer cleanup, signed builds, and platform support.`;
 }
 
 function renderCategories(audit) {
