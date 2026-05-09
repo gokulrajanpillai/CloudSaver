@@ -16,6 +16,7 @@ from cloudsaver.core import (
     scan_local_folder,
 )
 from cloudsaver.history import list_scan_history, save_scan_history
+from cloudsaver.web_server import reveal_path_in_platform_file_manager
 
 
 def test_export_to_json_file_creates_file(tmp_path):
@@ -265,3 +266,13 @@ def test_quarantine_selected_files_can_restore(tmp_path):
 
     assert restored["results"][0]["status"] == "restored"
     assert file_path.read_text() == "review me"
+
+
+def test_reveal_path_opens_containing_location(tmp_path):
+    file_path = tmp_path / "report.txt"
+    file_path.write_text("review me")
+
+    with patch("cloudsaver.web_server.subprocess.Popen") as popen:
+        reveal_path_in_platform_file_manager(str(file_path))
+
+    popen.assert_called_once()

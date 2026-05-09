@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 import threading
 import time
@@ -105,6 +106,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/restore":
                 self.handle_restore(payload)
                 return
+            if parsed.path == "/api/reveal":
+                self.handle_reveal(payload)
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
@@ -196,6 +200,13 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             raise ValueError("A manifest path is required.")
         self.write_json(restore_quarantine(manifest_path))
 
+    def handle_reveal(self, payload: dict) -> None:
+        path = payload.get("path", "").strip()
+        if not path:
+            raise ValueError("A file path is required.")
+        reveal_path_in_platform_file_manager(path)
+        self.write_json({"status": "opened"})
+
     def write_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
@@ -271,6 +282,25 @@ def run_scan_job(job_id: str, payload: dict) -> None:
                 "updated_at": time.time(),
             }
         )
+
+
+def reveal_path_in_platform_file_manager(path: str) -> None:
+    """Open the selected file's location in the user's platform file manager."""
+
+    target = Path(path).expanduser().resolve()
+    if not target.exists():
+        raise FileNotFoundError(f"Path does not exist: {target}")
+
+    if sys.platform == "darwin":
+        command = ["open", "-R", str(target)]
+    elif sys.platform.startswith("win"):
+        command = ["explorer", f"/select,{target}"]
+    else:
+        folder = target if target.is_dir() else target.parent
+        command = ["xdg-open", str(folder)]
+
+    subprocess.Popen(command)
+
 
 def run(host: str, port: int) -> None:
     server = ThreadingHTTPServer((host, port), CloudSaverRequestHandler)

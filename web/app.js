@@ -5,6 +5,7 @@ const state = {
   selected: new Set(),
   audit: null,
   treemapFolder: "",
+  reviewBatches: [],
 };
 
 const elements = {
@@ -12,6 +13,7 @@ const elements = {
   pathInput: document.querySelector("#path-input"),
   locationOptions: document.querySelector("#location-options"),
   quickLocations: document.querySelector("#quick-locations"),
+  scanStarters: document.querySelector("#scan-starters"),
   qualityInput: document.querySelector("#quality-input"),
   qualityOutput: document.querySelector("#quality-output"),
   resolutionInput: document.querySelector("#resolution-input"),
@@ -28,6 +30,13 @@ const elements = {
   quarantineButton: document.querySelector("#quarantine-button"),
   exportJsonButton: document.querySelector("#export-json-button"),
   exportCsvButton: document.querySelector("#export-csv-button"),
+  planConfidence: document.querySelector("#plan-confidence"),
+  planDuplicates: document.querySelector("#plan-duplicates"),
+  planDuplicatesDetail: document.querySelector("#plan-duplicates-detail"),
+  planImages: document.querySelector("#plan-images"),
+  planImagesDetail: document.querySelector("#plan-images-detail"),
+  planLargeFiles: document.querySelector("#plan-large-files"),
+  planLargeFilesDetail: document.querySelector("#plan-large-files-detail"),
   categoryCount: document.querySelector("#category-count"),
   categoryBars: document.querySelector("#category-bars"),
   folderList: document.querySelector("#folder-list"),
@@ -38,6 +47,7 @@ const elements = {
   duplicateList: document.querySelector("#duplicate-list"),
   restoreManifestInput: document.querySelector("#restore-manifest-input"),
   restoreButton: document.querySelector("#restore-button"),
+  reviewBatches: document.querySelector("#review-batches"),
   supportHeadline: document.querySelector("#support-headline"),
   supportDetail: document.querySelector("#support-detail"),
   fileCount: document.querySelector("#file-count"),
@@ -98,6 +108,39 @@ async function loadLocations() {
     .slice(0, 6)
     .map((location) => `<button type="button" data-path="${escapeHtml(location.path)}">${escapeHtml(location.label)}</button>`)
     .join("");
+  renderScanStarters(data.locations || []);
+}
+
+function renderScanStarters(locations) {
+  const priority = ["Downloads", "Pictures", "Desktop", "CloudStorage", "Documents"];
+  const starters = priority
+    .map((label) => locations.find((location) => location.label === label || location.path.endsWith(`/${label}`)))
+    .filter(Boolean);
+  const uniqueStarters = starters.filter(
+    (location, index, all) => all.findIndex((item) => item.path === location.path) === index
+  );
+  elements.scanStarters.innerHTML = uniqueStarters
+    .slice(0, 4)
+    .map(
+      (location) => `
+        <button type="button" data-path="${escapeHtml(location.path)}">
+          <strong>${escapeHtml(starterLabel(location.label))}</strong>
+          <span>${escapeHtml(location.path)}</span>
+        </button>
+      `
+    )
+    .join("") || "<span class='starter-empty'>Common folders were not found.</span>";
+}
+
+function starterLabel(label) {
+  const labels = {
+    Downloads: "Downloads",
+    Pictures: "Photos",
+    Desktop: "Desktop",
+    CloudStorage: "Cloud folders",
+    Documents: "Documents",
+  };
+  return labels[label] || label;
 }
 
 async function loadHistory() {
@@ -136,6 +179,26 @@ function renderSummary(data) {
   elements.currentRoot.textContent = data.root_path;
   elements.supportHeadline.textContent = `${data.estimated_reducible_human} of image savings estimated`;
   elements.supportDetail.textContent = `CloudSaver scanned ${audit.summary.file_count} files locally and found ${audit.opportunities.estimated_recoverable_human} in review opportunities. Sponsorship funds safer cleanup, signed builds, and platform support.`;
+  renderCleanupPlan(audit, data.estimated_reducible_human);
+}
+
+function renderCleanupPlan(audit, estimatedReducibleHuman) {
+  const opportunities = audit.opportunities;
+  elements.planConfidence.textContent = `${opportunities.estimated_recoverable_human} review opportunity`;
+  elements.planDuplicates.textContent = opportunities.duplicate_count
+    ? `${opportunities.duplicate_human} duplicate review`
+    : "No duplicates found";
+  elements.planDuplicatesDetail.textContent = opportunities.duplicate_count
+    ? `${opportunities.duplicate_count} extra copies found. Verified matches are the safest place to start.`
+    : "CloudSaver did not find duplicate candidates in this scan.";
+  elements.planImages.textContent = `${estimatedReducibleHuman} image reduction`;
+  elements.planImagesDetail.textContent = opportunities.image_optimization_count
+    ? `${opportunities.image_optimization_count} images can be copied at smaller size without changing originals.`
+    : "No large reducible images were found in this scan.";
+  elements.planLargeFiles.textContent = `${opportunities.large_file_count} large files`;
+  elements.planLargeFilesDetail.textContent = opportunities.large_file_count
+    ? `${opportunities.large_file_human} in large files needs manual review before moving.`
+    : "No files over the large-file threshold were found.";
 }
 
 function renderCategories(audit) {
@@ -276,7 +339,7 @@ function filterFiles() {
 function renderFiles() {
   elements.fileCount.textContent = `${state.filteredFiles.length} files`;
   if (!state.filteredFiles.length) {
-    elements.fileTableBody.innerHTML = "<tr><td colspan='6' class='empty-state'>No files match the current filter.</td></tr>";
+    elements.fileTableBody.innerHTML = "<tr><td colspan='7' class='empty-state'>No files match the current filter.</td></tr>";
     updateSelectionSummary();
     return;
   }
@@ -303,6 +366,7 @@ function renderFiles() {
           <td>${formatBytes(file.size_bytes)}</td>
           <td>${expected}</td>
           <td><span class="${statusClass}">${statusText}</span></td>
+          <td><button class="table-action" type="button" data-reveal-path="${escapeHtml(file.path)}">Reveal</button></td>
         </tr>
       `;
     })
@@ -480,11 +544,46 @@ async function quarantineSelected() {
       file_ids: fileIds,
     });
     setStatus(`${result.quarantined_count} files moved to review. Manifest: ${result.manifest_path}`);
+    state.reviewBatches.unshift({
+      manifestPath: result.manifest_path,
+      count: result.quarantined_count,
+      createdAt: Date.now(),
+    });
+    renderReviewBatches();
     state.selected.clear();
   } catch (error) {
     setStatus(error.message, "error");
   } finally {
     updateSelectionSummary();
+  }
+}
+
+function renderReviewBatches() {
+  elements.reviewBatches.innerHTML = state.reviewBatches
+    .map((batch) => {
+      const date = new Date(batch.createdAt).toLocaleString();
+      return `
+        <div class="review-batch">
+          <div>
+            <strong>${batch.count} files moved to review</strong>
+            <span title="${escapeHtml(batch.manifestPath)}">${escapeHtml(date)} - ${escapeHtml(batch.manifestPath)}</span>
+          </div>
+          <button type="button" class="tertiary-action" data-restore-manifest="${escapeHtml(batch.manifestPath)}">Restore</button>
+        </div>
+      `;
+    })
+    .join("") || "<div class='empty-state'>Moved files will appear here for quick restore.</div>";
+}
+
+async function revealPath(path) {
+  if (!path) {
+    return;
+  }
+  try {
+    await postJson("/api/reveal", { path });
+    setStatus("Opened the file location.");
+  } catch (error) {
+    setStatus(error.message, "error");
   }
 }
 
@@ -526,6 +625,14 @@ elements.quickLocations.addEventListener("click", (event) => {
   elements.pathInput.value = button.dataset.path;
   setStatus(`Ready to scan ${button.textContent}.`);
 });
+elements.scanStarters.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-path]");
+  if (!button) {
+    return;
+  }
+  elements.pathInput.value = button.dataset.path;
+  setStatus(`Ready to scan ${button.querySelector("strong").textContent}.`);
+});
 elements.treemap.addEventListener("click", (event) => {
   const tile = event.target.closest("[data-folder]");
   if (!tile) {
@@ -551,6 +658,21 @@ elements.fileTableBody.addEventListener("change", (event) => {
     state.selected.delete(checkbox.dataset.fileId);
   }
   updateSelectionSummary();
+});
+elements.fileTableBody.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-reveal-path]");
+  if (!button) {
+    return;
+  }
+  revealPath(button.dataset.revealPath);
+});
+elements.reviewBatches.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-restore-manifest]");
+  if (!button) {
+    return;
+  }
+  elements.restoreManifestInput.value = button.dataset.restoreManifest;
+  restoreManifest();
 });
 elements.selectAll.addEventListener("change", () => {
   const visibleReducible = state.filteredFiles.filter((file) => file.reduction.supported);
