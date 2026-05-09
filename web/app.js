@@ -36,6 +36,8 @@ const elements = {
   historyList: document.querySelector("#history-list"),
   duplicateCount: document.querySelector("#duplicate-count"),
   duplicateList: document.querySelector("#duplicate-list"),
+  restoreManifestInput: document.querySelector("#restore-manifest-input"),
+  restoreButton: document.querySelector("#restore-button"),
   fileCount: document.querySelector("#file-count"),
   fileTableBody: document.querySelector("#file-table-body"),
   selectAll: document.querySelector("#select-all"),
@@ -482,6 +484,25 @@ async function quarantineSelected() {
   }
 }
 
+async function restoreManifest() {
+  const manifestPath = elements.restoreManifestInput.value.trim();
+  if (!manifestPath) {
+    setStatus("Enter a restore manifest path.", "error");
+    return;
+  }
+  elements.restoreButton.disabled = true;
+  setStatus("Restoring files from manifest...");
+  try {
+    const result = await postJson("/api/restore", { manifest_path: manifestPath });
+    const restored = result.results.filter((item) => item.status === "restored").length;
+    setStatus(`${restored} files restored from review.`);
+  } catch (error) {
+    setStatus(error.message, "error");
+  } finally {
+    elements.restoreButton.disabled = false;
+  }
+}
+
 elements.form.addEventListener("submit", scan);
 elements.qualityInput.addEventListener("input", () => {
   elements.qualityOutput.value = elements.qualityInput.value;
@@ -490,6 +511,7 @@ elements.qualityInput.addEventListener("input", () => {
 elements.filterInput.addEventListener("input", filterFiles);
 elements.reduceButton.addEventListener("click", reduceSelected);
 elements.quarantineButton.addEventListener("click", quarantineSelected);
+elements.restoreButton.addEventListener("click", restoreManifest);
 elements.exportJsonButton.addEventListener("click", exportJsonReport);
 elements.exportCsvButton.addEventListener("click", exportCsvReport);
 elements.quickLocations.addEventListener("click", (event) => {
