@@ -87,7 +87,7 @@ python3 -m pip install -r requirements.txt
 Run the web UI:
 
 ```bash
-python3 -m src.cloudsaver_web
+python3 -m cloudsaver.web_server
 ```
 
 After installing CloudSaver as a package, you can also run:
@@ -105,7 +105,7 @@ http://127.0.0.1:8765
 Run the CLI:
 
 ```bash
-python3 -m src.cloudsaver
+python3 -m cloudsaver
 ```
 
 Or, after package installation:
