@@ -617,13 +617,15 @@ output {
   margin-top: 16px;
 }
 
-.settings-grid {
+.settings-grid,
+.cleanup-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 1fr));
   gap: 12px;
 }
 
-.settings-grid div {
+.settings-grid div,
+.cleanup-grid div {
   border: 1px solid #e5eaf0;
   border-radius: 7px;
   background: var(--surface-2);
@@ -631,19 +633,34 @@ output {
 }
 
 .settings-grid strong,
-.settings-grid span {
+.settings-grid span,
+.cleanup-grid strong,
+.cleanup-grid span {
   display: block;
 }
 
-.settings-grid strong {
+.settings-grid strong,
+.cleanup-grid strong {
   font-size: 13px;
 }
 
-.settings-grid span {
+.settings-grid span,
+.cleanup-grid span {
   color: var(--muted);
   font-size: 12px;
   margin-top: 4px;
   line-height: 1.45;
+}
+
+.cleanup-panel {
+  margin-top: 16px;
+}
+
+.restore-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .table-wrap {
@@ -766,7 +783,9 @@ th {
     grid-template-columns: 1fr;
   }
 
-  .settings-grid {
+  .settings-grid,
+  .cleanup-grid,
+  .restore-row {
     grid-template-columns: 1fr;
   }
 }

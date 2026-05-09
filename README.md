@@ -49,6 +49,7 @@ cost avoided and can download local JSON or CSV reports.
 - Visualize folders and files in a browser-native storage treemap with drill-down
 - Review duplicate groups with verification and confidence labels
 - Move selected files to a local review folder with a restore manifest
+- Restore reviewed files from a manifest through the cleanup UI
 - Build one-file desktop artifacts for Windows, macOS, and Linux through GitHub Actions
 - Maintain package-manager templates and signing documentation for release distribution
 - Export all file metadata to JSON

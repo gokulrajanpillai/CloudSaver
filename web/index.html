@@ -69,6 +69,7 @@
           <a href="#dashboard">Dashboard</a>
           <a href="#storage-map">Map</a>
           <a href="#duplicates">Duplicates</a>
+          <a href="#cleanup">Cleanup</a>
           <a href="#files">Files</a>
           <a href="#history">History</a>
           <a href="#settings">Settings</a>
@@ -169,6 +170,31 @@
         </div>
         <div id="duplicate-list" class="duplicate-list">
           <div class="empty-state">Run a scan to review duplicate candidates.</div>
+        </div>
+      </section>
+
+      <section id="cleanup" class="panel cleanup-panel">
+        <div class="panel-heading">
+          <h2>Cleanup Plan</h2>
+          <span>Review before removal</span>
+        </div>
+        <div class="cleanup-grid">
+          <div>
+            <strong>Move to review</strong>
+            <span>Selected files are moved into `.cloudsaver-review` with a manifest.</span>
+          </div>
+          <div>
+            <strong>Restore by manifest</strong>
+            <span>Paste a manifest path to move reviewed files back to their original paths.</span>
+          </div>
+          <div>
+            <strong>No permanent delete</strong>
+            <span>CloudSaver keeps cleanup reversible by default.</span>
+          </div>
+        </div>
+        <div class="restore-row">
+          <input id="restore-manifest-input" placeholder="/path/to/.cloudsaver-review/batch/manifest.json" aria-label="Restore manifest path">
+          <button id="restore-button" class="tertiary-action" type="button">Restore manifest</button>
         </div>
       </section>
 
