@@ -121,9 +121,10 @@ def scan_local_folder(
                 continue
 
             relative_path = path.relative_to(root)
-            parent = str(relative_path.parent) if str(relative_path.parent) != "." else "root"
+            relative_id = relative_path.as_posix()
+            parent = relative_path.parent.as_posix() if str(relative_path.parent) != "." else "root"
             local_file = LocalFile(
-                id=str(relative_path),
+                id=relative_id,
                 name=path.name,
                 path=str(path),
                 size_bytes=stat.st_size,
