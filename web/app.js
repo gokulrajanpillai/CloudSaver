@@ -4,6 +4,7 @@ const state = {
   filteredFiles: [],
   selected: new Set(),
   audit: null,
+  treemapFolder: "",
 };
 
 const elements = {
@@ -30,6 +31,7 @@ const elements = {
   categoryCount: document.querySelector("#category-count"),
   categoryBars: document.querySelector("#category-bars"),
   folderList: document.querySelector("#folder-list"),
+  treemapBreadcrumbs: document.querySelector("#treemap-breadcrumbs"),
   treemap: document.querySelector("#treemap"),
   historyList: document.querySelector("#history-list"),
   duplicateCount: document.querySelector("#duplicate-count"),
@@ -174,26 +176,60 @@ function categoryColor(category) {
   return colors[category] || colors.other;
 }
 
-function renderTreemap(files) {
-  const topFiles = files.filter((file) => file.size_bytes > 0).slice(0, 36);
-  const totalBytes = topFiles.reduce((total, file) => total + file.size_bytes, 0);
-  if (!topFiles.length || totalBytes <= 0) {
+function renderTreemap(files, audit = state.audit) {
+  if (!audit) {
+    elements.treemap.innerHTML = "<div class='empty-state'>Run a scan to visualize storage usage.</div>";
+    return;
+  }
+
+  elements.treemapBreadcrumbs.innerHTML = state.treemapFolder
+    ? `<button type="button" data-folder="">Storage root</button><span>${escapeHtml(state.treemapFolder)}</span>`
+    : "<span>Storage root</span>";
+
+  const items = state.treemapFolder
+    ? files
+        .filter((file) => (file.parents || []).includes(state.treemapFolder))
+        .filter((file) => file.size_bytes > 0)
+        .slice(0, 40)
+        .map((file) => ({
+          kind: "file",
+          label: file.name,
+          detail: file.path,
+          bytes: file.size_bytes,
+          category: file.category,
+        }))
+    : (audit.top_folders || []).slice(0, 28).map((folder) => ({
+        kind: "folder",
+        label: folder.folder_id,
+        detail: `${folder.count} files`,
+        bytes: folder.bytes,
+        folder: folder.folder_id,
+      }));
+
+  const totalBytes = items.reduce((total, item) => total + item.bytes, 0);
+  if (!items.length || totalBytes <= 0) {
     elements.treemap.innerHTML = "<div class='empty-state'>No files to visualize.</div>";
     return;
   }
 
-  elements.treemap.innerHTML = topFiles
-    .map((file) => {
-      const basis = Math.max((file.size_bytes / totalBytes) * 100, 3);
-      const color = categoryColor(file.category);
+  elements.treemap.innerHTML = items
+    .map((item) => {
+      const basis = Math.max((item.bytes / totalBytes) * 100, 4);
+      const color = item.kind === "folder" ? "#31475c" : categoryColor(item.category);
+      const folderAttribute = item.folder ? `data-folder="${escapeHtml(item.folder)}"` : "";
       return `
-        <div class="treemap-tile" style="flex-basis:${basis}%; background:${color}" title="${escapeHtml(file.path)} - ${formatBytes(file.size_bytes)}">
-          <strong>${escapeHtml(file.name)}</strong>
-          <span>${formatBytes(file.size_bytes)}</span>
-        </div>
+        <button class="treemap-tile ${item.kind}" type="button" ${folderAttribute} style="flex-basis:${basis}%; background:${color}" title="${escapeHtml(item.detail)} - ${formatBytes(item.bytes)}">
+          <strong>${escapeHtml(item.label)}</strong>
+          <span>${formatBytes(item.bytes)}</span>
+        </button>
       `;
     })
     .join("");
+}
+
+function setTreemapFolder(folder) {
+  state.treemapFolder = folder;
+  renderTreemap(state.files, state.audit);
 }
 
 function renderDuplicates(audit) {
@@ -365,10 +401,11 @@ async function scan(event) {
     state.filteredFiles = [...data.files];
     state.selected.clear();
     state.audit = data.audit;
+    state.treemapFolder = "";
     renderSummary(data);
     renderCategories(data.audit);
     renderFolders(data.audit);
-    renderTreemap(data.files);
+    renderTreemap(data.files, data.audit);
     renderDuplicates(data.audit);
     renderFiles();
     loadHistory();
@@ -462,6 +499,20 @@ elements.quickLocations.addEventListener("click", (event) => {
   }
   elements.pathInput.value = button.dataset.path;
   setStatus(`Ready to scan ${button.textContent}.`);
+});
+elements.treemap.addEventListener("click", (event) => {
+  const tile = event.target.closest("[data-folder]");
+  if (!tile) {
+    return;
+  }
+  setTreemapFolder(tile.dataset.folder);
+});
+elements.treemapBreadcrumbs.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-folder]");
+  if (!button) {
+    return;
+  }
+  setTreemapFolder(button.dataset.folder);
 });
 elements.fileTableBody.addEventListener("change", (event) => {
   const checkbox = event.target.closest("input[type='checkbox'][data-file-id]");
