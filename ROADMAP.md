@@ -26,6 +26,12 @@ source while making the product easier to install, trust, sponsor, and use.
 - Add optional commercial support and business report templates.
 - Explore a native desktop shell after the web UI stabilizes.
 
+## Monetization Boundary
+
+CloudSaver's core scanner, local dashboard, duplicate review, and safe cleanup primitives
+remain open source. Paid convenience can focus on signed builds, store delivery, updates,
+support, and business templates.
+
 ## Out Of Scope For Now
 
 - Hosted accounts.
