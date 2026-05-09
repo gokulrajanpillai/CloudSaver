@@ -80,6 +80,8 @@ checklist lives in [docs/screenshots.md](docs/screenshots.md).
 
 ## Usage
 
+See [docs/install.md](docs/install.md) for platform-specific install notes.
+
 Install dependencies:
 
 ```bash

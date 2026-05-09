@@ -17,7 +17,7 @@ source while making the product easier to install, trust, sponsor, and use.
 - Expand the app navigation model with deeper Cleanup and Support views.
 - Add richer treemap details, file actions, and platform reveal support.
 - Add protected folders, exclusions, and cleanup policy presets.
-- Publish a preview GitHub Release with checksums and install instructions.
+- Publish a preview GitHub Release and validate it with the release smoke checklist.
 
 ## Later
 

@@ -20,14 +20,20 @@ Use semantic versioning:
    python3 -m pytest
    ```
 
-4. Build locally:
+4. Run the full release smoke check:
+
+   ```bash
+   ./scripts/release-smoke.sh
+   ```
+
+5. Build locally:
 
    ```bash
    python3 -m pip install --upgrade build
    python3 -m build
    ```
 
-5. Create and push a version tag:
+6. Create and push a version tag:
 
    ```bash
    git tag v0.1.0
@@ -52,3 +58,5 @@ Package templates live in `packaging/`. After a release is published, replace `V
 appropriate registries.
 
 Signing and notarization requirements are documented in `packaging/SIGNING.md`.
+
+Install instructions are documented in `docs/install.md`.

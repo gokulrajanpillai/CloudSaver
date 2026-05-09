@@ -6,6 +6,7 @@
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
+.pycache/
 
 # Build artifacts
 build/
