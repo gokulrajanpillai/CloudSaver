@@ -402,6 +402,59 @@ output {
   padding: 9px;
   color: white;
   overflow: hidden;
+  border: 0;
+  text-align: left;
+  cursor: default;
+}
+
+.treemap-tile.folder {
+  cursor: pointer;
+}
+
+.treemap-tile.folder:hover {
+  filter: brightness(1.08);
+}
+
+.treemap-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.treemap-breadcrumbs button {
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.treemap-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.treemap-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.treemap-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
 }
 
 .treemap-tile strong,
