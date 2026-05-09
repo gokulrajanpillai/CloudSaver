@@ -14,8 +14,7 @@ source while making the product easier to install, trust, sponsor, and use.
 ## Next
 
 - Restructure the Python package from `src` modules into a `cloudsaver` package.
-- Add a professional app navigation model: Dashboard, Storage Map, Duplicates, Cleanup,
-  History, Settings, and Support.
+- Expand the app navigation model with deeper Cleanup and Support views.
 - Upgrade the treemap with folder drill-down, breadcrumbs, category legend, and details.
 - Add restore controls to the web UI for quarantine manifests.
 - Publish a preview GitHub Release with checksums and install instructions.
