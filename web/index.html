@@ -60,7 +60,22 @@
     </aside>
 
     <main class="workspace">
-      <section class="summary-band" aria-label="Storage summary">
+      <header class="workspace-header">
+        <div>
+          <p>Private local storage review</p>
+          <h2>Storage Workspace</h2>
+        </div>
+        <nav class="workspace-tabs" aria-label="Workspace sections">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#storage-map">Map</a>
+          <a href="#duplicates">Duplicates</a>
+          <a href="#files">Files</a>
+          <a href="#history">History</a>
+          <a href="#settings">Settings</a>
+        </nav>
+      </header>
+
+      <section id="dashboard" class="summary-band" aria-label="Storage summary">
         <div class="metric">
           <span>Total storage</span>
           <strong id="metric-total">-</strong>
@@ -100,7 +115,7 @@
         </div>
       </section>
 
-      <section class="content-grid">
+      <section class="content-grid" aria-label="Dashboard details">
         <div class="panel category-panel">
           <div class="panel-heading">
             <h2>Storage Mix</h2>
@@ -118,7 +133,7 @@
         </div>
       </section>
 
-      <section class="panel treemap-panel">
+      <section id="storage-map" class="panel treemap-panel">
         <div class="panel-heading">
           <h2>Storage Map</h2>
           <span>Largest files by area</span>
@@ -128,7 +143,7 @@
         </div>
       </section>
 
-      <section class="panel history-panel">
+      <section id="history" class="panel history-panel">
         <div class="panel-heading">
           <h2>Recent Scans</h2>
           <span>Local history</span>
@@ -138,7 +153,7 @@
         </div>
       </section>
 
-      <section class="panel duplicate-panel">
+      <section id="duplicates" class="panel duplicate-panel">
         <div class="panel-heading">
           <h2>Duplicate Review</h2>
           <span id="duplicate-count">0 groups</span>
@@ -148,7 +163,7 @@
         </div>
       </section>
 
-      <section class="panel file-panel">
+      <section id="files" class="panel file-panel">
         <div class="panel-heading">
           <h2>Files</h2>
           <span id="file-count">0 files</span>
@@ -169,6 +184,27 @@
               <tr><td colspan="6" class="empty-state">No scan results yet.</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section id="settings" class="panel settings-panel">
+        <div class="panel-heading">
+          <h2>Settings</h2>
+          <span>Local-first defaults</span>
+        </div>
+        <div class="settings-grid">
+          <div>
+            <strong>Privacy</strong>
+            <span>No accounts, telemetry, or file uploads.</span>
+          </div>
+          <div>
+            <strong>Cleanup safety</strong>
+            <span>Files move to a local review folder before removal.</span>
+          </div>
+          <div>
+            <strong>Reports</strong>
+            <span>Exports stay in your browser or local output folder.</span>
+          </div>
         </div>
       </section>
     </main>
