@@ -5,13 +5,7 @@ documentation, accessibility, test coverage, and safe cleanup work.
 
 ## Suggested Tiers
 
-| Tier | Amount | Benefit |
-| --- | ---: | --- |
-| Supporter | $3/month | Helps keep maintenance active |
-| Power User | $10/month | Roadmap voting and sponsor updates |
-| Professional | $25/month | Priority issue triage where feasible |
-| Small Business | $100/month | Name or logo in sponsor acknowledgements |
-| Project Sponsor | $500/month | Prominent acknowledgement in releases and README |
+Detailed sponsor tier copy is maintained in [docs/sponsor-tiers.md](sponsor-tiers.md).
 
 ## What Sponsors Fund
 

@@ -7,6 +7,7 @@ Use this checklist before promoting CloudSaver publicly.
 - Publish a preview GitHub Release.
 - Add release checksums.
 - Verify Windows, macOS, and Linux artifacts.
+- Add repository topics listed in `LAUNCH.md`.
 - Add `good first issue`, `ux`, `platform:macos`, `platform:windows`, `platform:linux`,
   `sponsor-needed`, and `privacy` labels.
 - Enable GitHub Discussions when community questions start appearing.
