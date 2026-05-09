@@ -51,3 +51,8 @@ Then open `http://127.0.0.1:8765`.
 - Avoid committing generated `output/` files, credentials, tokens, or private scan data.
 - Document user-visible behavior in `README.md` when needed.
 - Preserve the local-first privacy model.
+
+## Roadmap And Sponsorship
+
+Use [ROADMAP.md](ROADMAP.md) to align larger changes with current project priorities.
+Sponsorship priorities are documented in [docs/sponsorship.md](docs/sponsorship.md).

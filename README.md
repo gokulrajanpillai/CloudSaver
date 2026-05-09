@@ -1,6 +1,10 @@
 # CloudSaver
 
+Open-source storage insight for local drives, synced cloud folders, external drives, and NAS.
+
 ![CI](https://github.com/gokulrajanpillai/CloudSaver/workflows/CI/badge.svg)
+![License](https://img.shields.io/github/license/gokulrajanpillai/CloudSaver)
+![Sponsors](https://img.shields.io/github/sponsors/gokulrajanpillai)
 
 CloudSaver is an open-source, local-first storage audit and optimization tool. It scans
 folders your operating system can see, including synced cloud folders, external drives,
@@ -18,6 +22,10 @@ upgrade, consider sponsoring development:
 
 - GitHub Sponsors: https://github.com/sponsors/gokulrajanpillai
 - Project issues and roadmap: https://github.com/gokulrajanpillai/CloudSaver/issues
+- Sponsorship guide: [docs/sponsorship.md](docs/sponsorship.md)
+
+Sponsorship funds release packaging, signed builds, platform support, documentation,
+accessibility, safer cleanup workflows, and dashboard polish.
 
 ## Storage Audit Dashboard
 
@@ -59,8 +67,14 @@ removing files manually.
 CloudSaver focuses on local and mounted storage. Direct cloud-provider APIs, user accounts,
 hosted dashboards, telemetry, and automatic deletion are intentionally out of scope for now.
 
-See [PRIVACY.md](PRIVACY.md), [CONTRIBUTING.md](CONTRIBUTING.md), and
-[SECURITY.md](SECURITY.md) before contributing or reporting sensitive issues.
+See [PRIVACY.md](PRIVACY.md), [CONTRIBUTING.md](CONTRIBUTING.md),
+[SECURITY.md](SECURITY.md), [ROADMAP.md](ROADMAP.md), and
+[docs/comparison.md](docs/comparison.md) before contributing or reporting sensitive issues.
+
+## Screenshots
+
+Screenshots and demo GIFs are planned before the first broad public launch. The capture
+checklist lives in [docs/screenshots.md](docs/screenshots.md).
 
 ## Usage
 
