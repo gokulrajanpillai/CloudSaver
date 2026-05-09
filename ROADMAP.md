@@ -33,6 +33,8 @@ CloudSaver's core scanner, local dashboard, duplicate review, and safe cleanup p
 remain open source. Paid convenience can focus on signed builds, store delivery, updates,
 support, and business templates.
 
+Licensing strategy is documented in [docs/licensing-strategy.md](docs/licensing-strategy.md).
+
 ## Out Of Scope For Now
 
 - Hosted accounts.

@@ -25,6 +25,7 @@ upgrade, consider sponsoring development:
 - Sponsorship guide: [docs/sponsorship.md](docs/sponsorship.md)
 - Paid convenience build policy: [docs/paid-builds.md](docs/paid-builds.md)
 - Commercial support: [docs/commercial-support.md](docs/commercial-support.md)
+- Licensing strategy: [docs/licensing-strategy.md](docs/licensing-strategy.md)
 
 Sponsorship funds release packaging, signed builds, platform support, documentation,
 accessibility, safer cleanup workflows, and dashboard polish.
