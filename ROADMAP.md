@@ -18,6 +18,7 @@ source while making the product easier to install, trust, sponsor, and use.
 - Add richer treemap details, file actions, and platform reveal support.
 - Add protected folders, exclusions, and cleanup policy presets.
 - Publish a preview GitHub Release and validate it with the release smoke checklist.
+- Complete the launch checklist in [LAUNCH.md](LAUNCH.md).
 
 ## Later
 

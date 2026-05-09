@@ -23,6 +23,7 @@ upgrade, consider sponsoring development:
 - GitHub Sponsors: https://github.com/sponsors/gokulrajanpillai
 - Project issues and roadmap: https://github.com/gokulrajanpillai/CloudSaver/issues
 - Sponsorship guide: [docs/sponsorship.md](docs/sponsorship.md)
+- Sponsor tiers: [docs/sponsor-tiers.md](docs/sponsor-tiers.md)
 - Paid convenience build policy: [docs/paid-builds.md](docs/paid-builds.md)
 - Commercial support: [docs/commercial-support.md](docs/commercial-support.md)
 - Licensing strategy: [docs/licensing-strategy.md](docs/licensing-strategy.md)
@@ -75,7 +76,8 @@ hosted dashboards, telemetry, and automatic deletion are intentionally out of sc
 
 See [PRIVACY.md](PRIVACY.md), [CONTRIBUTING.md](CONTRIBUTING.md),
 [SECURITY.md](SECURITY.md), [DCO.md](DCO.md), [ROADMAP.md](ROADMAP.md), and
-[docs/comparison.md](docs/comparison.md) before contributing or reporting sensitive issues.
+[LAUNCH.md](LAUNCH.md) before contributing or reporting sensitive issues. Product
+comparison notes live in [docs/comparison.md](docs/comparison.md).
 
 ## Screenshots
 
