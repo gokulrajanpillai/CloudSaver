@@ -5,7 +5,7 @@ include RELEASE.md
 recursive-include desktop *.md
 recursive-include cloudsaver *.py
 recursive-include packaging *.md *.template
-recursive-include scripts *.sh
+recursive-include scripts *.sh *.py
 recursive-include src *.py
 recursive-include web *.html *.css *.js
 recursive-include tests *.py

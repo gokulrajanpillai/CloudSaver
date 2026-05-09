@@ -34,6 +34,9 @@ dependencies = [
 dev = [
   "pytest==8.4.1",
 ]
+desktop = [
+  "pywebview==5.4",
+]
 release = [
   "pyinstaller==6.17.0",
 ]
