@@ -33,7 +33,7 @@ jobs:
 
       - name: Build one-file app
         run: |
-          pyinstaller --name CloudSaver --onefile --add-data "web:web" src/cloudsaver_web.py
+          pyinstaller --name CloudSaver --onefile --add-data "web:web" cloudsaver/web_server.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

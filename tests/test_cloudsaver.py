@@ -2,7 +2,7 @@ import json
 import os
 from unittest.mock import patch
 
-from src.cloudsaver import (
+from cloudsaver.core import (
     OUTPUT_DIR,
     attach_duplicate_verification,
     build_storage_audit,
@@ -15,7 +15,7 @@ from src.cloudsaver import (
     restore_quarantine,
     scan_local_folder,
 )
-from src.cloudsaver_history import list_scan_history, save_scan_history
+from cloudsaver.history import list_scan_history, save_scan_history
 
 
 def test_export_to_json_file_creates_file(tmp_path):
@@ -23,7 +23,7 @@ def test_export_to_json_file_creates_file(tmp_path):
     filename = "test.json"
     output_dir = tmp_path / OUTPUT_DIR
     os.makedirs(output_dir, exist_ok=True)
-    with patch("src.cloudsaver.OUTPUT_DIR", str(output_dir)):
+    with patch("cloudsaver.core.OUTPUT_DIR", str(output_dir)):
         export_to_json_file(data, filename)
         file_path = output_dir / filename
         assert file_path.exists()
@@ -36,7 +36,7 @@ def test_export_to_json_file_no_data(capsys, tmp_path):
     filename = "empty.json"
     output_dir = tmp_path / OUTPUT_DIR
     os.makedirs(output_dir, exist_ok=True)
-    with patch("src.cloudsaver.OUTPUT_DIR", str(output_dir)):
+    with patch("cloudsaver.core.OUTPUT_DIR", str(output_dir)):
         export_to_json_file([], filename)
         captured = capsys.readouterr()
         assert "No data to export" in captured.out
@@ -197,7 +197,7 @@ def test_export_storage_audit_dashboard_creates_json_and_html(tmp_path):
         }
     ]
 
-    with patch("src.cloudsaver.OUTPUT_DIR", str(output_dir)):
+    with patch("cloudsaver.core.OUTPUT_DIR", str(output_dir)):
         audit = export_storage_audit_dashboard(files)
 
     json_path = output_dir / "storage_audit.json"

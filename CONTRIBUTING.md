@@ -39,7 +39,7 @@ pytest
 Run the local web UI:
 
 ```bash
-python3 -m src.cloudsaver_web
+python3 -m cloudsaver.web_server
 ```
 
 Then open `http://127.0.0.1:8765`.
