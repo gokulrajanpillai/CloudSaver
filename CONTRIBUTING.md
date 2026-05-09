@@ -56,3 +56,4 @@ Then open `http://127.0.0.1:8765`.
 
 Use [ROADMAP.md](ROADMAP.md) to align larger changes with current project priorities.
 Sponsorship priorities are documented in [docs/sponsorship.md](docs/sponsorship.md).
+Licensing strategy is documented in [docs/licensing-strategy.md](docs/licensing-strategy.md).
