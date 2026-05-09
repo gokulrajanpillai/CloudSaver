@@ -74,7 +74,7 @@ CloudSaver focuses on local and mounted storage. Direct cloud-provider APIs, use
 hosted dashboards, telemetry, and automatic deletion are intentionally out of scope for now.
 
 See [PRIVACY.md](PRIVACY.md), [CONTRIBUTING.md](CONTRIBUTING.md),
-[SECURITY.md](SECURITY.md), [ROADMAP.md](ROADMAP.md), and
+[SECURITY.md](SECURITY.md), [DCO.md](DCO.md), [ROADMAP.md](ROADMAP.md), and
 [docs/comparison.md](docs/comparison.md) before contributing or reporting sensitive issues.
 
 ## Screenshots

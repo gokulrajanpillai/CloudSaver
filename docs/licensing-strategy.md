@@ -47,5 +47,7 @@ contributors before the project has momentum.
 
 ## Contributor Policy
 
-Before any future license change, add a clear DCO or CLA policy and document how contributor
-rights are handled.
+CloudSaver uses a Developer Certificate of Origin. See [DCO.md](../DCO.md).
+
+Before any future license change, document how contributor rights are handled and announce
+the proposed change before it happens.
