@@ -31,7 +31,7 @@ jobs:
 
     - name: Compile Python modules
       run: |
-        python -m py_compile src/cloudsaver.py src/cloudsaver_web.py
+        python -m py_compile cloudsaver/core.py cloudsaver/web_server.py cloudsaver/history.py cloudsaver/desktop.py
 
     - name: Run tests
       run: |

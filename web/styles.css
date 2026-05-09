@@ -214,7 +214,8 @@ output {
   line-height: 1.45;
 }
 
-.support-box {
+.support-box,
+.starter-box {
   margin-top: 14px;
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -226,11 +227,14 @@ output {
 }
 
 .support-box strong,
-.support-box p {
+.support-box p,
+.starter-box strong,
+.starter-box p {
   margin: 0;
 }
 
-.support-box p {
+.support-box p,
+.starter-box p {
   margin-top: 4px;
 }
 
@@ -244,6 +248,46 @@ output {
 
 .support-box a:hover {
   text-decoration: underline;
+}
+
+.scan-starters {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.scan-starters button {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f9fbfc;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.scan-starters button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.scan-starters strong,
+.scan-starters span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scan-starters strong {
+  font-size: 13px;
+}
+
+.scan-starters span,
+.starter-empty {
+  color: #b9c3cc;
+  font-size: 12px;
 }
 
 .workspace {
@@ -362,9 +406,67 @@ output {
 
 .actions {
   display: grid;
-  grid-template-columns: minmax(180px, 260px) auto auto auto;
+  grid-template-columns: minmax(180px, 260px) auto auto auto auto;
   gap: 10px;
   align-items: center;
+}
+
+.compact-action {
+  min-width: 102px;
+}
+
+.plan-panel {
+  margin-top: 16px;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.plan-card {
+  border: 1px solid #e5eaf0;
+  border-radius: 7px;
+  background: var(--surface-2);
+  padding: 13px;
+}
+
+.plan-card span,
+.plan-card strong,
+.plan-card p {
+  display: block;
+}
+
+.plan-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.plan-card strong {
+  margin-top: 6px;
+  font-size: 16px;
+}
+
+.plan-card p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.plan-card.high {
+  border-color: #b8dfd4;
+}
+
+.plan-card.medium {
+  border-color: #c8d9eb;
+}
+
+.plan-card.review {
+  border-color: #ead7ba;
 }
 
 .content-grid {
@@ -705,6 +807,40 @@ output {
   margin-top: 12px;
 }
 
+.review-batches {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.review-batch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e5eaf0;
+  border-radius: 7px;
+  background: var(--surface-2);
+  padding: 10px;
+}
+
+.review-batch strong,
+.review-batch span {
+  display: block;
+}
+
+.review-batch strong {
+  font-size: 13px;
+}
+
+.review-batch span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .table-wrap {
   overflow: auto;
   border-top: 1px solid var(--line);
@@ -713,7 +849,7 @@ output {
 
 table {
   width: 100%;
-  min-width: 860px;
+  min-width: 960px;
   border-collapse: collapse;
 }
 
@@ -773,6 +909,17 @@ th {
   color: var(--amber);
 }
 
+.table-action {
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #eef3f6;
+  color: var(--text);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
 .empty-state {
   color: var(--muted);
   text-align: center;
@@ -827,7 +974,12 @@ th {
 
   .settings-grid,
   .cleanup-grid,
+  .plan-grid,
   .restore-row {
+    grid-template-columns: 1fr;
+  }
+
+  .review-batch {
     grid-template-columns: 1fr;
   }
 

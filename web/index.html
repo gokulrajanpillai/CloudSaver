@@ -20,9 +20,9 @@
       </div>
 
       <form id="scan-form" class="control-stack">
-        <label for="path-input">Drive or folder path</label>
+        <label for="path-input">Choose what to scan</label>
         <div class="path-row">
-          <input id="path-input" name="path" list="location-options" placeholder="/Users/name/Pictures" autocomplete="off">
+          <input id="path-input" name="path" list="location-options" placeholder="Pick a common location or enter a folder path" autocomplete="off">
           <datalist id="location-options"></datalist>
         </div>
         <div id="quick-locations" class="quick-locations" aria-label="Common scan locations"></div>
@@ -51,6 +51,12 @@
       </form>
 
       <div class="scan-status" id="scan-status" role="status">Choose a folder to begin.</div>
+
+      <div class="starter-box" aria-label="Quick scan starters">
+        <strong>Quick start</strong>
+        <p>Scan common space-heavy locations first.</p>
+        <div id="scan-starters" class="scan-starters"></div>
+      </div>
 
       <div class="support-box" aria-label="Support CloudSaver">
         <strong>Open source</strong>
@@ -112,8 +118,32 @@
             <span>Reduce selected</span>
           </button>
           <button id="quarantine-button" class="secondary-action danger-action" type="button" disabled>Move to review</button>
-          <button id="export-json-button" class="tertiary-action" type="button" disabled>JSON</button>
-          <button id="export-csv-button" class="tertiary-action" type="button" disabled>CSV</button>
+          <button id="export-json-button" class="tertiary-action compact-action" type="button" disabled>Export JSON</button>
+          <button id="export-csv-button" class="tertiary-action compact-action" type="button" disabled>Export CSV</button>
+        </div>
+      </section>
+
+      <section id="recommended-plan" class="panel plan-panel">
+        <div class="panel-heading">
+          <h2>Recommended Cleanup Plan</h2>
+          <span id="plan-confidence">Run a scan</span>
+        </div>
+        <div class="plan-grid">
+          <div class="plan-card high">
+            <span>Safest first</span>
+            <strong id="plan-duplicates">Verified duplicates</strong>
+            <p id="plan-duplicates-detail">Run a scan to find duplicate files that can be reviewed before moving.</p>
+          </div>
+          <div class="plan-card medium">
+            <span>Optional savings</span>
+            <strong id="plan-images">Image reductions</strong>
+            <p id="plan-images-detail">Create smaller copies without changing originals.</p>
+          </div>
+          <div class="plan-card review">
+            <span>Manual review</span>
+            <strong id="plan-large-files">Large files</strong>
+            <p id="plan-large-files-detail">Inspect large local files before moving anything.</p>
+          </div>
         </div>
       </section>
 
@@ -197,6 +227,9 @@
           <input id="restore-manifest-input" placeholder="/path/to/.cloudsaver-review/batch/manifest.json" aria-label="Restore manifest path">
           <button id="restore-button" class="tertiary-action" type="button">Restore manifest</button>
         </div>
+        <div id="review-batches" class="review-batches">
+          <div class="empty-state">Moved files will appear here for quick restore.</div>
+        </div>
       </section>
 
       <section id="files" class="panel file-panel">
@@ -214,10 +247,11 @@
                 <th>Size</th>
                 <th>Expected Reduction</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody id="file-table-body">
-              <tr><td colspan="6" class="empty-state">No scan results yet.</td></tr>
+              <tr><td colspan="7" class="empty-state">No scan results yet.</td></tr>
             </tbody>
           </table>
         </div>
