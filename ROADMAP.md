@@ -24,6 +24,7 @@ source while making the product easier to install, trust, sponsor, and use.
 - Add signed convenience builds for macOS and Windows.
 - Publish package-manager manifests for Homebrew, Winget, Scoop, and Flatpak.
 - Add optional commercial support and business report templates.
+- Validate commercial support packages with early professional users.
 - Explore a native desktop shell after the web UI stabilizes.
 
 ## Monetization Boundary

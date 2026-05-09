@@ -34,3 +34,5 @@ but non-blocking.
 - Preferential access to user data.
 - Closed-source control over the core.
 - Silent or unsafe cleanup behavior.
+
+Commercial support options are documented separately in `docs/commercial-support.md`.
