@@ -22,6 +22,12 @@ documentation, accessibility, test coverage, and safe cleanup work.
 - Documentation, screenshots, and onboarding.
 - Accessibility and usability reviews.
 
+## Product Placement
+
+CloudSaver should ask for sponsorship after it has delivered value, such as after a scan
+finds recoverable storage or creates a useful report. Sponsor prompts should stay visible
+but non-blocking.
+
 ## What Sponsorship Does Not Buy
 
 - Hidden telemetry.
