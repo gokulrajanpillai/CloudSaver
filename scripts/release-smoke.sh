@@ -6,7 +6,8 @@ PYTHONPYCACHEPREFIX=.pycache python3 -m py_compile \
   cloudsaver/core.py \
   cloudsaver/web_server.py \
   cloudsaver/history.py \
-  cloudsaver/desktop.py
+  cloudsaver/desktop.py \
+  scripts/package-desktop-artifact.py
 node --check web/app.js
 python3 -m cloudsaver --help >/dev/null
 python3 -m cloudsaver.web_server --help >/dev/null
