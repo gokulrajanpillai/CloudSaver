@@ -18,3 +18,5 @@ The templates are intentionally not submitted automatically. Publishing requires
 - Flatpak: `packaging/flatpak/io.github.gokulrajanpillai.CloudSaver.yml.template`
 
 Replace `VERSION`, `URL`, and `SHA256` placeholders during each release.
+
+Paid convenience build policy is documented in `docs/paid-builds.md`.

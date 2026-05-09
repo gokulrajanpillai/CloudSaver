@@ -23,6 +23,7 @@ upgrade, consider sponsoring development:
 - GitHub Sponsors: https://github.com/sponsors/gokulrajanpillai
 - Project issues and roadmap: https://github.com/gokulrajanpillai/CloudSaver/issues
 - Sponsorship guide: [docs/sponsorship.md](docs/sponsorship.md)
+- Paid convenience build policy: [docs/paid-builds.md](docs/paid-builds.md)
 
 Sponsorship funds release packaging, signed builds, platform support, documentation,
 accessibility, safer cleanup workflows, and dashboard polish.
