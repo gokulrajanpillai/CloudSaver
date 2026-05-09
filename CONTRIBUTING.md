@@ -51,6 +51,7 @@ Then open `http://127.0.0.1:8765`.
 - Avoid committing generated `output/` files, credentials, tokens, or private scan data.
 - Document user-visible behavior in `README.md` when needed.
 - Preserve the local-first privacy model.
+- Sign off commits according to [DCO.md](DCO.md).
 
 ## Roadmap And Sponsorship
 
