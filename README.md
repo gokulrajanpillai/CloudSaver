@@ -47,6 +47,7 @@ cost avoided and can download local JSON or CSV reports.
 
 - Scan any local or mounted folder
 - Use the local web UI to choose common scan locations or enter a specific path
+- Switch between system, light, and dark UI themes with a local browser preference
 - View live scan progress while files are being analyzed
 - Navigate app sections for dashboard, storage map, duplicates, files, history, and settings
 - Keep recent scan summaries in a local SQLite history database
@@ -100,6 +101,24 @@ Run the web UI:
 python3 -m cloudsaver.web_server
 ```
 
+Or use the startup script from a source checkout:
+
+```bash
+./scripts/start-cloudsaver.sh
+```
+
+On Windows PowerShell:
+
+```powershell
+.\scripts\start-cloudsaver.ps1
+```
+
+The startup scripts honor these environment variables:
+
+```bash
+CLOUDSAVER_HOST=127.0.0.1 CLOUDSAVER_PORT=8770 ./scripts/start-cloudsaver.sh
+```
+
 After installing CloudSaver as a package, you can also run:
 
 ```bash
@@ -111,6 +130,13 @@ Then open:
 ```text
 http://127.0.0.1:8765
 ```
+
+## Theme Modes
+
+The web UI supports System, Light, and Dark modes. System follows your operating system
+preference through `prefers-color-scheme`. Manual Light or Dark choices are stored only in
+your browser's `localStorage` under `cloudsaver-theme`; CloudSaver does not upload or sync
+that preference.
 
 Run the CLI:
 
@@ -137,3 +163,33 @@ When prompted, enter the folder path you want to scan. For example:
 /Volumes/SharedDrive
 /Users/you/Pictures
 ```
+
+## Testing
+
+Run the Python unit and integration tests:
+
+```bash
+python3 -m pytest
+```
+
+Run frontend syntax and browser integration tests:
+
+```bash
+npm ci
+npx playwright install chromium
+npm run check:js
+npm run test:e2e
+```
+
+Run a local startup smoke check:
+
+```bash
+./scripts/start-cloudsaver.sh
+curl -fsS http://127.0.0.1:8765/api/health
+```
+
+GitHub Actions runs the Python test matrix, web server integration tests, frontend
+Playwright tests, package build, and startup smoke checks on pull requests and pushes to
+`main`.
+
+If port `8765` is already in use, set `CLOUDSAVER_PORT` before starting the UI.
