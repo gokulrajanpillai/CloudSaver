@@ -53,8 +53,6 @@ const elements = {
   restoreManifestInput: document.querySelector("#restore-manifest-input"),
   restoreButton: document.querySelector("#restore-button"),
   reviewBatches: document.querySelector("#review-batches"),
-  supportHeadline: document.querySelector("#support-headline"),
-  supportDetail: document.querySelector("#support-detail"),
   fileCount: document.querySelector("#file-count"),
   fileTableBody: document.querySelector("#file-table-body"),
   selectAll: document.querySelector("#select-all"),
@@ -62,6 +60,7 @@ const elements = {
   workspaceViews: document.querySelectorAll(".workspace-view"),
   sidebar: document.querySelector("#sidebar"),
   sidebarToggle: document.querySelector("#sidebar-toggle"),
+  modalTriggers: document.querySelectorAll("[data-modal-target]"),
 };
 
 function formatBytes(bytes) {
@@ -214,8 +213,6 @@ function renderSummary(data) {
   elements.metricDuplicates.textContent = audit.opportunities.duplicate_human;
   elements.metricCost.textContent = audit.opportunities.estimated_monthly_cost_avoided_human;
   elements.currentRoot.textContent = data.root_path;
-  elements.supportHeadline.textContent = `${data.estimated_reducible_human} of image savings estimated`;
-  elements.supportDetail.textContent = `CloudSaver scanned ${audit.summary.file_count} files locally and found ${audit.opportunities.estimated_recoverable_human} in review opportunities. Sponsorship funds safer cleanup, signed builds, and platform support.`;
   renderCleanupPlan(audit, data.estimated_reducible_human);
 }
 
@@ -756,6 +753,20 @@ elements.workspaceTabs.addEventListener("click", (event) => {
 });
 elements.sidebarToggle.addEventListener("click", () => {
   setSidebarOpen(!elements.sidebar.classList.contains("open"));
+});
+elements.modalTriggers.forEach((trigger) => {
+  trigger.addEventListener("click", () => {
+    const modal = document.querySelector(`#${trigger.dataset.modalTarget}`);
+    if (modal?.showModal) {
+      modal.showModal();
+    }
+  });
+});
+document.addEventListener("click", (event) => {
+  const closeButton = event.target.closest("[data-modal-close]");
+  if (closeButton) {
+    closeButton.closest("dialog")?.close();
+  }
 });
 elements.form.addEventListener("submit", () => setSidebarOpen(false));
 elements.recommendedPlan.addEventListener("click", (event) => {
