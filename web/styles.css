@@ -496,6 +496,22 @@ output {
   line-height: 1.45;
 }
 
+.plan-action {
+  min-height: 34px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.plan-action:hover {
+  background: #eef3f6;
+}
+
 .plan-card.high {
   border-color: #b8dfd4;
 }

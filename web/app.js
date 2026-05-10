@@ -40,6 +40,7 @@ const elements = {
   planImagesDetail: document.querySelector("#plan-images-detail"),
   planLargeFiles: document.querySelector("#plan-large-files"),
   planLargeFilesDetail: document.querySelector("#plan-large-files-detail"),
+  recommendedPlan: document.querySelector("#recommended-plan"),
   categoryCount: document.querySelector("#category-count"),
   categoryBars: document.querySelector("#category-bars"),
   folderList: document.querySelector("#folder-list"),
@@ -369,6 +370,14 @@ function selectDuplicateExtras(index) {
   setStatus(`${extraFiles.length} duplicate extra copies selected for review.`, "ready");
 }
 
+function selectReducibleImages() {
+  const reducibleFiles = state.files.filter((file) => file.reduction.supported);
+  reducibleFiles.forEach((file) => state.selected.add(file.id));
+  renderFiles();
+  setStatus(`${reducibleFiles.length} reducible image files selected.`, "ready");
+  setWorkspaceView("files");
+}
+
 function filterFiles() {
   const query = elements.filterInput.value.trim().toLowerCase();
   state.filteredFiles = query
@@ -686,6 +695,20 @@ elements.workspaceTabs.addEventListener("click", (event) => {
     return;
   }
   setWorkspaceView(button.dataset.viewTarget);
+});
+elements.recommendedPlan.addEventListener("click", (event) => {
+  const viewButton = event.target.closest("[data-view-target]");
+  if (viewButton) {
+    setWorkspaceView(viewButton.dataset.viewTarget);
+    return;
+  }
+  const actionButton = event.target.closest("[data-plan-action]");
+  if (!actionButton) {
+    return;
+  }
+  if (actionButton.dataset.planAction === "select-images") {
+    selectReducibleImages();
+  }
 });
 elements.quickLocations.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-path]");
