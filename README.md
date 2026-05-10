@@ -35,8 +35,8 @@ accessibility, safer cleanup workflows, and dashboard polish.
 
 CloudSaver can run a read-only storage audit and generate:
 
-- `output/storage_audit.html`: a browser-friendly dashboard
-- `output/storage_audit.json`: the same audit data for downstream processing
+- `~/.cloudsaver/output/storage_audit.html`: a browser-friendly dashboard
+- `~/.cloudsaver/output/storage_audit.json`: the same audit data for downstream processing
 
 The audit summarizes total storage, storage by file category, largest files, largest folders,
 duplicate candidates, large files to review, and estimated recoverable space from duplicate
@@ -63,7 +63,7 @@ cost avoided and can download local JSON or CSV reports.
 - Download JSON and CSV reports from the local web UI
 - Find duplicate candidates by file name and size, with SHA-256 verification for readable
   local candidates in the web UI
-- Create reduced 1080p copies of large images in `output/reduced`
+- Create reduced 1080p copies of large images in `~/.cloudsaver/output/reduced`
 - Estimate per-file and selected-file size reductions before processing
 
 CloudSaver does not delete files during duplicate scanning. Review the generated audit before

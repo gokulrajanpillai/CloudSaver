@@ -15,7 +15,8 @@ from typing import Callable, Iterable, List
 from PIL import Image
 
 
-OUTPUT_DIR = "output"
+APP_DATA_DIR = Path(os.environ.get("CLOUDSAVER_HOME", Path.home() / ".cloudsaver")).expanduser()
+OUTPUT_DIR = str(APP_DATA_DIR / "output")
 REDUCED_DIR = os.path.join(OUTPUT_DIR, "reduced")
 QUARANTINE_DIR_NAME = ".cloudsaver-review"
 

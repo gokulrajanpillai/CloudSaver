@@ -22,7 +22,7 @@ from cloudsaver.web_server import reveal_path_in_platform_file_manager
 def test_export_to_json_file_creates_file(tmp_path):
     data = [{"name": "file1", "size_bytes": 123}]
     filename = "test.json"
-    output_dir = tmp_path / OUTPUT_DIR
+    output_dir = tmp_path / "output"
     os.makedirs(output_dir, exist_ok=True)
     with patch("cloudsaver.core.OUTPUT_DIR", str(output_dir)):
         export_to_json_file(data, filename)
@@ -35,7 +35,7 @@ def test_export_to_json_file_creates_file(tmp_path):
 
 def test_export_to_json_file_no_data(capsys, tmp_path):
     filename = "empty.json"
-    output_dir = tmp_path / OUTPUT_DIR
+    output_dir = tmp_path / "output"
     os.makedirs(output_dir, exist_ok=True)
     with patch("cloudsaver.core.OUTPUT_DIR", str(output_dir)):
         export_to_json_file([], filename)
@@ -198,7 +198,7 @@ def test_duplicate_verification_rejects_same_name_and_size_with_different_conten
 
 
 def test_export_storage_audit_dashboard_creates_json_and_html(tmp_path):
-    output_dir = tmp_path / OUTPUT_DIR
+    output_dir = tmp_path / "output"
     files = [
         {
             "id": "report.pdf",
