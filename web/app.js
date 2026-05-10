@@ -352,7 +352,10 @@ function renderDuplicates(audit) {
             <span class="status-pill ${status === "verified" ? "" : "unsupported"}">${escapeHtml(status)} / ${escapeHtml(confidence)}</span>
           </div>
           <ul>${files}</ul>
-          <button class="duplicate-action" type="button" data-duplicate-index="${index}">Select extra copies</button>
+          <div class="duplicate-actions">
+            <button class="duplicate-action" type="button" data-duplicate-index="${index}">Select extra copies</button>
+            <button class="duplicate-action primary" type="button" data-move-duplicate-index="${index}">Move extra copies to review</button>
+          </div>
         </div>
       `;
     })
@@ -362,12 +365,21 @@ function renderDuplicates(audit) {
 function selectDuplicateExtras(index) {
   const group = state.duplicateGroups[index];
   if (!group || !Array.isArray(group.files)) {
-    return;
+    return [];
   }
   const extraFiles = group.files.slice(1);
   extraFiles.forEach((file) => state.selected.add(file.id));
   renderFiles();
   setStatus(`${extraFiles.length} duplicate extra copies selected for review.`, "ready");
+  return extraFiles;
+}
+
+async function moveDuplicateExtras(index) {
+  const extraFiles = selectDuplicateExtras(index);
+  if (!extraFiles.length) {
+    return;
+  }
+  await quarantineSelected();
 }
 
 function selectReducibleImages() {
@@ -741,11 +753,16 @@ elements.treemapBreadcrumbs.addEventListener("click", (event) => {
   setTreemapFolder(button.dataset.folder);
 });
 elements.duplicateList.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-duplicate-index]");
-  if (!button) {
+  const moveButton = event.target.closest("button[data-move-duplicate-index]");
+  if (moveButton) {
+    moveDuplicateExtras(Number(moveButton.dataset.moveDuplicateIndex));
     return;
   }
-  selectDuplicateExtras(Number(button.dataset.duplicateIndex));
+  const selectButton = event.target.closest("button[data-duplicate-index]");
+  if (!selectButton) {
+    return;
+  }
+  selectDuplicateExtras(Number(selectButton.dataset.duplicateIndex));
 });
 elements.fileTableBody.addEventListener("change", (event) => {
   const checkbox = event.target.closest("input[type='checkbox'][data-file-id]");
