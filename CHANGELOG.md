@@ -18,6 +18,7 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 - Converted workspace navigation into real tabs with Recommended as the default view.
 - Made Recommended cards action-first with direct navigation into duplicate review, image-copy selection, and the storage map.
 - Added a direct duplicate-group action to move extra copies to the review folder.
+- Promoted the storage map with a larger layout and an item detail panel with reveal and select actions.
 
 ## 1.0.0 - 2026-05-09
 
