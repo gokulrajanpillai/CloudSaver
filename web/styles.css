@@ -295,6 +295,14 @@ output {
   padding: 24px;
 }
 
+.workspace-view {
+  min-width: 0;
+}
+
+.workspace-view + .workspace-view {
+  margin-top: 16px;
+}
+
 .workspace-header {
   display: flex;
   justify-content: space-between;

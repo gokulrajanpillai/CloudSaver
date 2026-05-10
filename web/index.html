@@ -83,89 +83,91 @@
         </nav>
       </header>
 
-      <section id="dashboard" class="summary-band" aria-label="Storage summary">
-        <div class="metric">
-          <span>Total storage</span>
-          <strong id="metric-total">-</strong>
-        </div>
-        <div class="metric">
-          <span>Files scanned</span>
-          <strong id="metric-files">-</strong>
-        </div>
-        <div class="metric">
-          <span>Image copy savings</span>
-          <strong id="metric-reducible">-</strong>
-        </div>
-        <div class="metric">
-          <span>Duplicate candidates</span>
-          <strong id="metric-duplicates">-</strong>
-        </div>
-        <div class="metric">
-          <span>Storage cost estimate</span>
-          <strong id="metric-cost">-</strong>
-        </div>
-      </section>
-
-      <section class="action-bar" aria-label="File actions">
-        <div>
-          <h2 id="current-root">No folder scanned</h2>
-          <p id="selection-summary">Select reducible files after scanning.</p>
-        </div>
-        <div class="actions">
-          <input id="filter-input" placeholder="Filter files" aria-label="Filter files">
-          <button id="reduce-button" class="secondary-action" type="button" disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v12H7a2 2 0 0 1-2-2zm2 2v10h12V6zm3 2 2 2.5L14 8l3 4H9zM3 8h2v10h10v2H5a2 2 0 0 1-2-2z"/></svg>
-            <span>Create reduced copies</span>
-          </button>
-          <button id="quarantine-button" class="secondary-action danger-action" type="button" disabled>Move to review</button>
-          <button id="export-json-button" class="tertiary-action compact-action" type="button" disabled>Export JSON</button>
-          <button id="export-csv-button" class="tertiary-action compact-action" type="button" disabled>Export CSV</button>
-        </div>
-      </section>
-
-      <section id="recommended-plan" class="panel plan-panel">
-        <div class="panel-heading">
-          <h2>Recommended Cleanup Plan</h2>
-          <span id="plan-confidence">Run a scan</span>
-        </div>
-        <div class="plan-grid">
-          <div class="plan-card high">
-            <span>Safest first</span>
-            <strong id="plan-duplicates">Verified duplicates</strong>
-            <p id="plan-duplicates-detail">Run a scan to find duplicate files that can be reviewed before moving.</p>
+      <div id="view-recommended" class="workspace-view" data-view="recommended">
+        <section id="dashboard" class="summary-band" aria-label="Storage summary">
+          <div class="metric">
+            <span>Total storage</span>
+            <strong id="metric-total">-</strong>
           </div>
-          <div class="plan-card medium">
-            <span>Optional savings</span>
-            <strong id="plan-images">Image reductions</strong>
-            <p id="plan-images-detail">Create smaller copies without changing originals.</p>
+          <div class="metric">
+            <span>Files scanned</span>
+            <strong id="metric-files">-</strong>
           </div>
-          <div class="plan-card review">
-            <span>Manual review</span>
-            <strong id="plan-large-files">Large files</strong>
-            <p id="plan-large-files-detail">Inspect large local files before moving anything.</p>
+          <div class="metric">
+            <span>Image copy savings</span>
+            <strong id="metric-reducible">-</strong>
           </div>
-        </div>
-      </section>
+          <div class="metric">
+            <span>Duplicate candidates</span>
+            <strong id="metric-duplicates">-</strong>
+          </div>
+          <div class="metric">
+            <span>Storage cost estimate</span>
+            <strong id="metric-cost">-</strong>
+          </div>
+        </section>
 
-      <section class="content-grid" aria-label="Dashboard details">
-        <div class="panel category-panel">
+        <section class="action-bar" aria-label="File actions">
+          <div>
+            <h2 id="current-root">No folder scanned</h2>
+            <p id="selection-summary">Select reducible files after scanning.</p>
+          </div>
+          <div class="actions">
+            <input id="filter-input" placeholder="Filter files" aria-label="Filter files">
+            <button id="reduce-button" class="secondary-action" type="button" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v12H7a2 2 0 0 1-2-2zm2 2v10h12V6zm3 2 2 2.5L14 8l3 4H9zM3 8h2v10h10v2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Create reduced copies</span>
+            </button>
+            <button id="quarantine-button" class="secondary-action danger-action" type="button" disabled>Move to review</button>
+            <button id="export-json-button" class="tertiary-action compact-action" type="button" disabled>Export JSON</button>
+            <button id="export-csv-button" class="tertiary-action compact-action" type="button" disabled>Export CSV</button>
+          </div>
+        </section>
+
+        <section id="recommended-plan" class="panel plan-panel">
           <div class="panel-heading">
-            <h2>Storage Mix</h2>
-            <span id="category-count">0 categories</span>
+            <h2>Recommended Cleanup Plan</h2>
+            <span id="plan-confidence">Run a scan</span>
           </div>
-          <div id="category-bars" class="category-bars"></div>
-        </div>
-
-        <div class="panel folder-panel">
-          <div class="panel-heading">
-            <h2>Largest Folders</h2>
-            <span>Top scan paths</span>
+          <div class="plan-grid">
+            <div class="plan-card high">
+              <span>Safest first</span>
+              <strong id="plan-duplicates">Verified duplicates</strong>
+              <p id="plan-duplicates-detail">Run a scan to find duplicate files that can be reviewed before moving.</p>
+            </div>
+            <div class="plan-card medium">
+              <span>Optional savings</span>
+              <strong id="plan-images">Image reductions</strong>
+              <p id="plan-images-detail">Create smaller copies without changing originals.</p>
+            </div>
+            <div class="plan-card review">
+              <span>Manual review</span>
+              <strong id="plan-large-files">Large files</strong>
+              <p id="plan-large-files-detail">Inspect large local files before moving anything.</p>
+            </div>
           </div>
-          <div id="folder-list" class="folder-list"></div>
-        </div>
-      </section>
+        </section>
 
-      <section id="storage-map" class="panel treemap-panel">
+        <section class="content-grid" aria-label="Dashboard details">
+          <div class="panel category-panel">
+            <div class="panel-heading">
+              <h2>Storage Mix</h2>
+              <span id="category-count">0 categories</span>
+            </div>
+            <div id="category-bars" class="category-bars"></div>
+          </div>
+
+          <div class="panel folder-panel">
+            <div class="panel-heading">
+              <h2>Largest Folders</h2>
+              <span>Top scan paths</span>
+            </div>
+            <div id="folder-list" class="folder-list"></div>
+          </div>
+        </section>
+      </div>
+
+      <section id="storage-map" class="panel treemap-panel workspace-view" data-view="map">
         <div class="panel-heading">
           <h2>Storage Map</h2>
           <span>Largest files by area</span>
@@ -184,7 +186,7 @@
         </div>
       </section>
 
-      <section id="history" class="panel history-panel">
+      <section id="history" class="panel history-panel workspace-view" data-view="history">
         <div class="panel-heading">
           <h2>Recent Scans</h2>
           <span>Local history</span>
@@ -194,7 +196,7 @@
         </div>
       </section>
 
-      <section id="duplicates" class="panel duplicate-panel">
+      <section id="duplicates" class="panel duplicate-panel workspace-view" data-view="duplicates">
         <div class="panel-heading">
           <h2>Duplicate Review</h2>
           <span id="duplicate-count">0 groups</span>
@@ -204,7 +206,7 @@
         </div>
       </section>
 
-      <section id="cleanup" class="panel cleanup-panel">
+      <section id="cleanup" class="panel cleanup-panel workspace-view" data-view="cleanup">
         <div class="panel-heading">
           <h2>Cleanup Plan</h2>
           <span>Review before removal</span>
@@ -232,7 +234,7 @@
         </div>
       </section>
 
-      <section id="files" class="panel file-panel">
+      <section id="files" class="panel file-panel workspace-view" data-view="files">
         <div class="panel-heading">
           <h2>Files</h2>
           <span id="file-count">0 files</span>
@@ -257,7 +259,7 @@
         </div>
       </section>
 
-      <section id="settings" class="panel settings-panel">
+      <section id="settings" class="panel settings-panel workspace-view" data-view="settings">
         <div class="panel-heading">
           <h2>Settings</h2>
           <span>Local-first defaults</span>
@@ -278,7 +280,7 @@
         </div>
       </section>
 
-      <section id="support" class="panel support-panel">
+      <section id="support" class="panel support-panel workspace-view" data-view="support">
         <div class="panel-heading">
           <h2>Support CloudSaver</h2>
           <span>Sponsor-supported open source</span>
