@@ -56,6 +56,10 @@ svg {
   min-height: 100vh;
 }
 
+.sidebar-toggle {
+  display: none;
+}
+
 .sidebar {
   background: #17212b;
   color: #f9fbfc;
@@ -1079,9 +1083,29 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    min-height: 42px;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    background: #17212b;
+    color: #f9fbfc;
+    font-weight: 800;
+  }
+
   .sidebar {
+    display: none;
     position: static;
     height: auto;
+  }
+
+  .sidebar.open {
+    display: block;
   }
 
   .summary-band,

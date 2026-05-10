@@ -60,6 +60,8 @@ const elements = {
   selectAll: document.querySelector("#select-all"),
   workspaceTabs: document.querySelector(".workspace-tabs"),
   workspaceViews: document.querySelectorAll(".workspace-view"),
+  sidebar: document.querySelector("#sidebar"),
+  sidebarToggle: document.querySelector("#sidebar-toggle"),
 };
 
 function formatBytes(bytes) {
@@ -104,6 +106,11 @@ function setWorkspaceView(view) {
   elements.workspaceTabs.querySelectorAll("[data-view-target]").forEach((button) => {
     button.classList.toggle("active", button.dataset.viewTarget === view);
   });
+}
+
+function setSidebarOpen(open) {
+  elements.sidebar.classList.toggle("open", open);
+  elements.sidebarToggle.setAttribute("aria-expanded", String(open));
 }
 
 function escapeHtml(value) {
@@ -747,6 +754,10 @@ elements.workspaceTabs.addEventListener("click", (event) => {
   }
   setWorkspaceView(button.dataset.viewTarget);
 });
+elements.sidebarToggle.addEventListener("click", () => {
+  setSidebarOpen(!elements.sidebar.classList.contains("open"));
+});
+elements.form.addEventListener("submit", () => setSidebarOpen(false));
 elements.recommendedPlan.addEventListener("click", (event) => {
   const viewButton = event.target.closest("[data-view-target]");
   if (viewButton) {
@@ -768,6 +779,7 @@ elements.quickLocations.addEventListener("click", (event) => {
   }
   elements.pathInput.value = button.dataset.path;
   setStatus(`Ready to scan ${button.textContent}.`, "ready");
+  setSidebarOpen(false);
 });
 elements.scanStarters.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-path]");
@@ -776,6 +788,7 @@ elements.scanStarters.addEventListener("click", (event) => {
   }
   elements.pathInput.value = button.dataset.path;
   setStatus(`Ready to scan ${button.querySelector("strong").textContent}.`, "ready");
+  setSidebarOpen(false);
 });
 elements.treemap.addEventListener("click", (event) => {
   const tile = event.target.closest("[data-folder]");

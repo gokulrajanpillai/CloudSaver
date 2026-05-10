@@ -21,6 +21,7 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 - Promoted the storage map with a larger layout and an item detail panel with reveal and select actions.
 - Moved report exports into the Files tab so the main recommendation surface stays focused on cleanup actions.
 - Made review batches the primary restore UI and moved manual manifest restore behind an advanced disclosure.
+- Added a mobile sidebar menu toggle while keeping the scan sidebar persistent on desktop.
 
 ## 1.0.0 - 2026-05-09
 
