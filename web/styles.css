@@ -942,6 +942,19 @@ output {
   margin-top: 12px;
 }
 
+.advanced-restore {
+  margin-top: 12px;
+  border-top: 1px solid #e5eaf0;
+  padding-top: 12px;
+}
+
+.advanced-restore summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+}
+
 .review-batches {
   display: grid;
   gap: 8px;

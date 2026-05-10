@@ -238,13 +238,16 @@
             <span>CloudSaver keeps cleanup reversible by default.</span>
           </div>
         </div>
-        <div class="restore-row">
-          <input id="restore-manifest-input" placeholder="/path/to/.cloudsaver-review/batch/manifest.json" aria-label="Restore manifest path">
-          <button id="restore-button" class="tertiary-action" type="button">Restore manifest</button>
-        </div>
         <div id="review-batches" class="review-batches">
           <div class="empty-state">Moved files will appear here for quick restore.</div>
         </div>
+        <details class="advanced-restore">
+          <summary>Restore from manifest path</summary>
+          <div class="restore-row">
+            <input id="restore-manifest-input" placeholder="/path/to/.cloudsaver-review/batch/manifest.json" aria-label="Restore manifest path">
+            <button id="restore-button" class="tertiary-action" type="button">Restore manifest</button>
+          </div>
+        </details>
       </section>
 
       <section id="files" class="panel file-panel workspace-view" data-view="files">

@@ -688,7 +688,7 @@ function renderReviewBatches() {
             <strong>${batch.count} files moved to review</strong>
             <span title="${escapeHtml(batch.manifestPath)}">${escapeHtml(date)} - ${escapeHtml(batch.manifestPath)}</span>
           </div>
-          <button type="button" class="tertiary-action" data-restore-manifest="${escapeHtml(batch.manifestPath)}">Restore</button>
+          <button type="button" class="tertiary-action" data-restore-manifest="${escapeHtml(batch.manifestPath)}">Restore batch</button>
         </div>
       `;
     })
