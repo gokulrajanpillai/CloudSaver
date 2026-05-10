@@ -71,17 +71,24 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if parsed.path == "/api/locations":
-            self.write_json({"locations": common_scan_locations()})
+        try:
+            if parsed.path == "/api/locations":
+                self.write_json({"locations": common_scan_locations()})
+                return
+            if parsed.path == "/api/health":
+                self.write_json({"status": "ok"})
+                return
+            if parsed.path == "/api/scan/status":
+                self.handle_scan_status(parsed)
+                return
+            if parsed.path == "/api/history":
+                self.write_json({"scans": list_scan_history()})
+                return
+        except ValueError as error:
+            self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
-        if parsed.path == "/api/health":
-            self.write_json({"status": "ok"})
-            return
-        if parsed.path == "/api/scan/status":
-            self.handle_scan_status(parsed)
-            return
-        if parsed.path == "/api/history":
-            self.write_json({"scans": list_scan_history()})
+        except Exception as error:
+            self.write_json({"error": str(error)}, HTTPStatus.INTERNAL_SERVER_ERROR)
             return
         if parsed.path == "/":
             self.path = "/index.html"
