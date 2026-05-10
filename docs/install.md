@@ -12,6 +12,9 @@ python3 -m cloudsaver.web_server
 
 Open `http://127.0.0.1:8765`.
 
+Generated reports and reduced image copies are written to `~/.cloudsaver/output` by
+default. Set `CLOUDSAVER_HOME` to use a different local app-data directory.
+
 ## Package Entry Points
 
 After installing CloudSaver as a package:
