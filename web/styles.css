@@ -765,9 +765,15 @@ output {
   white-space: nowrap;
 }
 
+.duplicate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 .duplicate-action {
   min-height: 32px;
-  margin-top: 10px;
   border: 1px solid var(--line);
   border-radius: 7px;
   background: #eef3f6;
@@ -775,6 +781,12 @@ output {
   padding: 0 10px;
   font-size: 12px;
   font-weight: 750;
+}
+
+.duplicate-action.primary {
+  border-color: #bdd8d1;
+  background: #e9f7f3;
+  color: var(--teal);
 }
 
 .file-panel {
