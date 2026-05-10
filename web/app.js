@@ -457,7 +457,15 @@ async function scan(event) {
     return;
   }
 
-  setStatus("Starting scan...");
+  try {
+    await runScanForPath(path, "Starting scan...");
+  } catch {
+    return;
+  }
+}
+
+async function runScanForPath(path, startingMessage = "Refreshing scan...") {
+  setStatus(startingMessage);
   elements.form.querySelector("button").disabled = true;
   try {
     const start = await postJson("/api/scan/start", {
@@ -480,11 +488,20 @@ async function scan(event) {
     renderFiles();
     loadHistory();
     setStatus(`Scan complete. ${data.files.length} files analyzed.`);
+    return data;
   } catch (error) {
     setStatus(error.message, "error");
+    throw error;
   } finally {
     elements.form.querySelector("button").disabled = false;
   }
+}
+
+async function refreshCurrentScan(message = "Refreshing scan results...") {
+  if (!state.rootPath) {
+    return null;
+  }
+  return runScanForPath(state.rootPath, message);
 }
 
 async function waitForScan(jobId) {
@@ -551,6 +568,8 @@ async function quarantineSelected() {
     });
     renderReviewBatches();
     state.selected.clear();
+    elements.selectAll.checked = false;
+    await refreshCurrentScan("Refreshing scan after moving files to review...");
   } catch (error) {
     setStatus(error.message, "error");
   } finally {
@@ -599,6 +618,9 @@ async function restoreManifest() {
     const result = await postJson("/api/restore", { manifest_path: manifestPath });
     const restored = result.results.filter((item) => item.status === "restored").length;
     setStatus(`${restored} files restored from review.`);
+    state.reviewBatches = state.reviewBatches.filter((batch) => batch.manifestPath !== manifestPath);
+    renderReviewBatches();
+    await refreshCurrentScan("Refreshing scan after restore...");
   } catch (error) {
     setStatus(error.message, "error");
   } finally {

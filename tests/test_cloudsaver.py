@@ -74,6 +74,19 @@ def test_scan_local_folder_reports_progress(tmp_path):
     assert progress_events[-1]["current_path"].endswith("notes.txt")
 
 
+def test_scan_local_folder_skips_review_folder(tmp_path):
+    live_file = tmp_path / "keep.txt"
+    live_file.write_text("keep")
+    review_dir = tmp_path / ".cloudsaver-review" / "batch"
+    review_dir.mkdir(parents=True)
+    reviewed_file = review_dir / "old.txt"
+    reviewed_file.write_text("reviewed")
+
+    files = scan_local_folder(str(tmp_path))
+
+    assert [file["id"] for file in files] == ["keep.txt"]
+
+
 def test_build_storage_audit_summarizes_opportunities():
     one_mb = 1024 * 1024
     files = [
