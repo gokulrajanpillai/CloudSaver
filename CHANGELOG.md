@@ -10,6 +10,7 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 - Added cross-platform desktop artifact packaging for Windows, macOS, and Linux release builds.
 - Marked the package maturity as Beta until signed desktop builds and consumer cleanup flows are proven.
 - Clarified savings labels so image-copy estimates and storage-cost estimates are not presented as guaranteed cleanup savings.
+- Refreshed scan results after quarantine and restore actions, and excluded `.cloudsaver-review` folders from future scans.
 
 ## 1.0.0 - 2026-05-09
 

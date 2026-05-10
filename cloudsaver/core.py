@@ -108,7 +108,8 @@ def scan_local_folder(
     files: List[dict] = []
     count = 0
     print(f"📦 Scanning local folder: {root}")
-    for current_root, _, filenames in os.walk(root):
+    for current_root, dirnames, filenames in os.walk(root):
+        dirnames[:] = [dirname for dirname in dirnames if dirname != QUARANTINE_DIR_NAME]
         current_dir = Path(current_root)
         for filename in filenames:
             path = current_dir / filename
