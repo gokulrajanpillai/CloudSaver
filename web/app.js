@@ -382,8 +382,8 @@ function updateSelectionSummary() {
   );
   const selectedReducible = selectedFiles.filter((file) => file.reduction.supported);
   elements.selectionSummary.textContent = selectedFiles.length
-    ? `${selectedFiles.length} selected, approximately ${formatBytes(estimatedBytes)} reducible`
-    : "Select reducible files after scanning.";
+    ? `${selectedFiles.length} selected, approximately ${formatBytes(estimatedBytes)} image-copy savings`
+    : "Select image files to create smaller copies after scanning.";
   elements.reduceButton.disabled = selectedReducible.length === 0;
   elements.quarantineButton.disabled = selectedFiles.length === 0;
   elements.exportJsonButton.disabled = !state.audit;
@@ -514,7 +514,7 @@ async function reduceSelected() {
     return;
   }
   elements.reduceButton.disabled = true;
-  setStatus("Creating reduced copies in output/reduced...");
+  setStatus("Creating reduced image copies...");
   try {
     const result = await postJson("/api/reduce", {
       root_path: state.rootPath,
@@ -523,7 +523,7 @@ async function reduceSelected() {
       ...resolution(),
     });
     const reduced = result.results.filter((item) => item.status === "reduced").length;
-    setStatus(`${reduced} files reduced. Actual saved size: ${result.total_saved_human}.`);
+    setStatus(`${reduced} reduced copies created. Actual image-copy savings: ${result.total_saved_human}.`);
   } catch (error) {
     setStatus(error.message, "error");
   } finally {
