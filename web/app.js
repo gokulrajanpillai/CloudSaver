@@ -14,7 +14,7 @@ const elements = {
   pathInput: document.querySelector("#path-input"),
   locationOptions: document.querySelector("#location-options"),
   quickLocations: document.querySelector("#quick-locations"),
-  scanStarters: document.querySelector("#scan-starters"),
+  sidebarRecentScans: document.querySelector("#sidebar-recent-scans"),
   qualityInput: document.querySelector("#quality-input"),
   qualityOutput: document.querySelector("#quality-output"),
   resolutionInput: document.querySelector("#resolution-input"),
@@ -81,7 +81,7 @@ function resolution() {
 
 function scanStateForTone(tone) {
   const states = {
-    neutral: ["Ready", "Choose a folder"],
+    neutral: ["Idle", "No scan yet"],
     ready: ["Ready", "Ready to scan"],
     scanning: ["Scanning", "Scan in progress"],
     complete: ["Complete", "Scan complete"],
@@ -141,42 +141,9 @@ async function loadLocations() {
     .map((location) => `<option value="${escapeHtml(location.path)}">${escapeHtml(location.label)}</option>`)
     .join("");
   elements.quickLocations.innerHTML = data.locations
-    .slice(0, 6)
+    .slice(0, 4)
     .map((location) => `<button type="button" data-path="${escapeHtml(location.path)}">${escapeHtml(location.label)}</button>`)
     .join("");
-  renderScanStarters(data.locations || []);
-}
-
-function renderScanStarters(locations) {
-  const priority = ["Downloads", "Pictures", "Desktop", "CloudStorage", "Documents"];
-  const starters = priority
-    .map((label) => locations.find((location) => location.label === label || location.path.endsWith(`/${label}`)))
-    .filter(Boolean);
-  const uniqueStarters = starters.filter(
-    (location, index, all) => all.findIndex((item) => item.path === location.path) === index
-  );
-  elements.scanStarters.innerHTML = uniqueStarters
-    .slice(0, 4)
-    .map(
-      (location) => `
-        <button type="button" data-path="${escapeHtml(location.path)}">
-          <strong>${escapeHtml(starterLabel(location.label))}</strong>
-          <span>${escapeHtml(location.path)}</span>
-        </button>
-      `
-    )
-    .join("") || "<span class='starter-empty'>Common folders were not found.</span>";
-}
-
-function starterLabel(label) {
-  const labels = {
-    Downloads: "Downloads",
-    Pictures: "Photos",
-    Desktop: "Desktop",
-    CloudStorage: "Cloud folders",
-    Documents: "Documents",
-  };
-  return labels[label] || label;
 }
 
 async function loadHistory() {
@@ -186,6 +153,7 @@ async function loadHistory() {
     return;
   }
   renderHistory(data.scans || []);
+  renderSidebarRecentScans(data.scans || []);
 }
 
 function renderHistory(scans) {
@@ -203,6 +171,24 @@ function renderHistory(scans) {
       `;
     })
     .join("") || "<div class='empty-state'>No scan history yet.</div>";
+}
+
+function renderSidebarRecentScans(scans) {
+  elements.sidebarRecentScans.innerHTML = scans
+    .slice(0, 3)
+    .map((scan) => {
+      const date = new Date(scan.scanned_at * 1000).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      });
+      return `
+        <button type="button" data-path="${escapeHtml(scan.root_path)}">
+          <strong title="${escapeHtml(scan.root_path)}">${escapeHtml(scan.root_path)}</strong>
+          <span>${escapeHtml(date)} - ${formatBytes(scan.recoverable_bytes)} recoverable</span>
+        </button>
+      `;
+    })
+    .join("") || "<span class='starter-empty'>No recent scans.</span>";
 }
 
 function renderSummary(data) {
@@ -792,13 +778,13 @@ elements.quickLocations.addEventListener("click", (event) => {
   setStatus(`Ready to scan ${button.textContent}.`, "ready");
   setSidebarOpen(false);
 });
-elements.scanStarters.addEventListener("click", (event) => {
+elements.sidebarRecentScans.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-path]");
   if (!button) {
     return;
   }
   elements.pathInput.value = button.dataset.path;
-  setStatus(`Ready to scan ${button.querySelector("strong").textContent}.`, "ready");
+  setStatus("Ready to rescan recent folder.", "ready");
   setSidebarOpen(false);
 });
 elements.treemap.addEventListener("click", (event) => {

@@ -20,53 +20,58 @@
         </div>
       </div>
 
-      <form id="scan-form" class="control-stack">
-        <label for="path-input">Choose what to scan</label>
-        <div class="path-row">
-          <input id="path-input" name="path" list="location-options" placeholder="Pick a common location or enter a folder path" autocomplete="off">
-          <datalist id="location-options"></datalist>
-        </div>
-        <div id="quick-locations" class="quick-locations" aria-label="Common scan locations"></div>
-
-        <div class="field-grid">
-          <div>
-            <label for="quality-input">Reduced copy quality <span class="field-hint" title="Used only when creating smaller image copies. Originals are not changed.">?</span></label>
-            <input id="quality-input" type="range" min="60" max="92" value="82">
-            <output id="quality-output" for="quality-input">82</output>
+      <section class="sidebar-section" aria-label="Scan">
+        <h2>Scan</h2>
+        <form id="scan-form" class="control-stack">
+          <label for="path-input">Choose folder</label>
+          <div class="path-row">
+            <input id="path-input" name="path" list="location-options" placeholder="Enter a folder path" autocomplete="off">
+            <datalist id="location-options"></datalist>
           </div>
-          <div>
-            <label for="resolution-input">Max dimension</label>
-            <select id="resolution-input">
-              <option value="1920x1080">1080p</option>
-              <option value="2560x1440">1440p</option>
-              <option value="3840x2160">4K</option>
-              <option value="1280x720">720p</option>
-            </select>
-          </div>
+          <div id="quick-locations" class="quick-locations" aria-label="Common scan locations"></div>
+
+          <details class="advanced-options">
+            <summary>Advanced options</summary>
+            <div class="field-grid">
+              <div>
+                <label for="quality-input">Reduced copy quality <span class="field-hint" title="Used only when creating smaller image copies. Originals are not changed.">?</span></label>
+                <input id="quality-input" type="range" min="60" max="92" value="82">
+                <output id="quality-output" for="quality-input">82</output>
+              </div>
+              <div>
+                <label for="resolution-input">Max dimension</label>
+                <select id="resolution-input">
+                  <option value="1920x1080">1080p</option>
+                  <option value="2560x1440">1440p</option>
+                  <option value="3840x2160">4K</option>
+                  <option value="1280x720">720p</option>
+                </select>
+              </div>
+            </div>
+          </details>
+
+          <button class="primary-action" type="submit">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 1 0 4.95 11.95l3.05 3.05 1.4-1.4-3.05-3.05A7 7 0 0 0 11 4Zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/></svg>
+            <span>Start scan</span>
+          </button>
+        </form>
+      </section>
+
+      <section class="sidebar-section" aria-label="Scan status">
+        <h2>Status</h2>
+        <div class="scan-state-card" aria-label="Scan state">
+          <span id="scan-state-label">Idle</span>
+          <strong id="scan-state-title">No scan yet</strong>
+          <p id="scan-status" role="status">Choose a folder to begin.</p>
         </div>
+      </section>
 
-        <button class="primary-action" type="submit">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 1 0 4.95 11.95l3.05 3.05 1.4-1.4-3.05-3.05A7 7 0 0 0 11 4Zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/></svg>
-          <span>Start scan</span>
-        </button>
-      </form>
-
-      <div class="scan-state-card" aria-label="Scan state">
-        <span id="scan-state-label">No scan</span>
-        <strong id="scan-state-title">Choose a folder</strong>
-        <p id="scan-status" role="status">Choose a folder to begin.</p>
-      </div>
-
-      <div class="starter-box" aria-label="Quick scan starters">
-        <strong>Quick start</strong>
-        <p>Scan common space-heavy locations first.</p>
-        <div id="scan-starters" class="scan-starters"></div>
-      </div>
-
-      <div class="safety-box" aria-label="Privacy and cleanup safety">
-        <strong>Local and reversible</strong>
-        <p>No accounts, telemetry, or file uploads. Cleanup moves files to a local review folder first.</p>
-      </div>
+      <section class="sidebar-section" aria-label="Recent scans">
+        <h2>Recent scans</h2>
+        <div id="sidebar-recent-scans" class="sidebar-recent-scans">
+          <span class="starter-empty">No recent scans.</span>
+        </div>
+      </section>
 
       <footer class="sidebar-footer" aria-label="Utility links">
         <button type="button" data-modal-target="safety-modal">Safety</button>
