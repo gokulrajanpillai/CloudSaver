@@ -316,7 +316,12 @@ output {
 }
 
 .workspace-view {
+  display: none;
   min-width: 0;
+}
+
+.workspace-view.active {
+  display: block;
 }
 
 .workspace-view + .workspace-view {
@@ -356,7 +361,7 @@ output {
   justify-content: flex-end;
 }
 
-.workspace-tabs a {
+.workspace-tabs button {
   min-height: 34px;
   display: inline-flex;
   align-items: center;
@@ -370,8 +375,14 @@ output {
   text-decoration: none;
 }
 
-.workspace-tabs a:hover {
+.workspace-tabs button:hover,
+.workspace-tabs button.active {
   background: #edf3f7;
+}
+
+.workspace-tabs button.active {
+  border-color: #b6c6d5;
+  color: var(--blue);
 }
 
 .summary-band {

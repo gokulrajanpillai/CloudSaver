@@ -56,6 +56,8 @@ const elements = {
   fileCount: document.querySelector("#file-count"),
   fileTableBody: document.querySelector("#file-table-body"),
   selectAll: document.querySelector("#select-all"),
+  workspaceTabs: document.querySelector(".workspace-tabs"),
+  workspaceViews: document.querySelectorAll(".workspace-view"),
 };
 
 function formatBytes(bytes) {
@@ -91,6 +93,15 @@ function setStatus(message, tone = "neutral") {
   const [label, title] = scanStateForTone(tone);
   elements.scanStateLabel.textContent = label;
   elements.scanStateTitle.textContent = title;
+}
+
+function setWorkspaceView(view) {
+  elements.workspaceViews.forEach((section) => {
+    section.classList.toggle("active", section.dataset.view === view);
+  });
+  elements.workspaceTabs.querySelectorAll("[data-view-target]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.viewTarget === view);
+  });
 }
 
 function escapeHtml(value) {
@@ -669,6 +680,13 @@ elements.quarantineButton.addEventListener("click", quarantineSelected);
 elements.restoreButton.addEventListener("click", restoreManifest);
 elements.exportJsonButton.addEventListener("click", exportJsonReport);
 elements.exportCsvButton.addEventListener("click", exportCsvReport);
+elements.workspaceTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-view-target]");
+  if (!button) {
+    return;
+  }
+  setWorkspaceView(button.dataset.viewTarget);
+});
 elements.quickLocations.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-path]");
   if (!button) {
