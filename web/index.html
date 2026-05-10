@@ -16,7 +16,7 @@
         </div>
         <div>
           <h1>CloudSaver</h1>
-          <p>Local storage optimizer</p>
+          <p>Local storage audit</p>
         </div>
       </div>
 
@@ -30,12 +30,12 @@
 
         <div class="field-grid">
           <div>
-            <label for="quality-input">Image quality</label>
+            <label for="quality-input">Reduced copy quality <span class="field-hint" title="Used only when creating smaller image copies. Originals are not changed.">?</span></label>
             <input id="quality-input" type="range" min="60" max="92" value="82">
             <output id="quality-output" for="quality-input">82</output>
           </div>
           <div>
-            <label for="resolution-input">Max edge</label>
+            <label for="resolution-input">Max dimension</label>
             <select id="resolution-input">
               <option value="1920x1080">1080p</option>
               <option value="2560x1440">1440p</option>
@@ -47,7 +47,7 @@
 
         <button class="primary-action" type="submit">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 1 0 4.95 11.95l3.05 3.05 1.4-1.4-3.05-3.05A7 7 0 0 0 11 4Zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/></svg>
-          <span>Scan</span>
+          <span>Start scan</span>
         </button>
       </form>
 
@@ -67,6 +67,11 @@
         <strong>Local and reversible</strong>
         <p>No accounts, telemetry, or file uploads. Cleanup moves files to a local review folder first.</p>
       </div>
+
+      <footer class="sidebar-footer" aria-label="Utility links">
+        <button type="button" data-modal-target="safety-modal">Safety</button>
+        <a href="https://github.com/sponsors/gokulrajanpillai" target="_blank" rel="noreferrer">Sponsor</a>
+      </footer>
     </aside>
 
     <main class="workspace">
@@ -76,18 +81,15 @@
           <h2>Storage Workspace</h2>
         </div>
         <nav class="workspace-tabs" aria-label="Workspace sections">
-          <button type="button" class="active" data-view-target="recommended">Recommended</button>
+          <button type="button" class="active" data-view-target="overview">Overview</button>
           <button type="button" data-view-target="map">Map</button>
           <button type="button" data-view-target="duplicates">Duplicates</button>
           <button type="button" data-view-target="files">Files</button>
           <button type="button" data-view-target="history">History</button>
-          <button type="button" data-view-target="cleanup">Undo</button>
-          <button type="button" data-view-target="settings">Safety</button>
-          <button type="button" data-view-target="support">Support</button>
         </nav>
       </header>
 
-      <div id="view-recommended" class="workspace-view active" data-view="recommended">
+      <div id="view-overview" class="workspace-view active" data-view="overview">
         <section id="dashboard" class="summary-band" aria-label="Storage summary">
           <div class="metric">
             <span>Total storage</span>
@@ -220,37 +222,6 @@
         </div>
       </section>
 
-      <section id="cleanup" class="panel cleanup-panel workspace-view" data-view="cleanup">
-        <div class="panel-heading">
-          <h2>Cleanup Plan</h2>
-          <span>Review before removal</span>
-        </div>
-        <div class="cleanup-grid">
-          <div>
-            <strong>Move to review</strong>
-            <span>Selected files are moved into `.cloudsaver-review` with a manifest.</span>
-          </div>
-          <div>
-            <strong>Restore by manifest</strong>
-            <span>Paste a manifest path to move reviewed files back to their original paths.</span>
-          </div>
-          <div>
-            <strong>No permanent delete</strong>
-            <span>CloudSaver keeps cleanup reversible by default.</span>
-          </div>
-        </div>
-        <div id="review-batches" class="review-batches">
-          <div class="empty-state">Moved files will appear here for quick restore.</div>
-        </div>
-        <details class="advanced-restore">
-          <summary>Restore from manifest path</summary>
-          <div class="restore-row">
-            <input id="restore-manifest-input" placeholder="/path/to/.cloudsaver-review/batch/manifest.json" aria-label="Restore manifest path">
-            <button id="restore-button" class="tertiary-action" type="button">Restore manifest</button>
-          </div>
-        </details>
-      </section>
-
       <section id="files" class="panel file-panel workspace-view" data-view="files">
         <div class="panel-heading">
           <div>
@@ -280,44 +251,64 @@
             </tbody>
           </table>
         </div>
-      </section>
-
-      <section id="settings" class="panel settings-panel workspace-view" data-view="settings">
-        <div class="panel-heading">
-          <h2>Settings</h2>
-          <span>Local-first defaults</span>
-        </div>
-        <div class="settings-grid">
-          <div>
-            <strong>Privacy</strong>
-            <span>No accounts, telemetry, or file uploads.</span>
+        <section class="review-queue" aria-label="Review queue">
+          <div class="panel-heading">
+            <div>
+              <h2>Review Queue</h2>
+              <span>Restore files moved by CloudSaver</span>
+            </div>
           </div>
-          <div>
-            <strong>Cleanup safety</strong>
-            <span>Files move to a local review folder before removal.</span>
+          <div class="cleanup-grid">
+            <div>
+              <strong>Move to review</strong>
+              <span>Selected files are moved into `.cloudsaver-review` with a manifest.</span>
+            </div>
+            <div>
+              <strong>Restore by manifest</strong>
+              <span>Paste a manifest path to move reviewed files back to their original paths.</span>
+            </div>
+            <div>
+              <strong>No permanent delete</strong>
+              <span>CloudSaver keeps cleanup reversible by default.</span>
+            </div>
           </div>
-          <div>
-            <strong>Reports</strong>
-            <span>Exports stay in your browser or local output folder.</span>
+          <div id="review-batches" class="review-batches">
+            <div class="empty-state">Moved files will appear here for quick restore.</div>
           </div>
-        </div>
-      </section>
-
-      <section id="support" class="panel support-panel workspace-view" data-view="support">
-        <div class="panel-heading">
-          <h2>Support CloudSaver</h2>
-          <span>Sponsor-supported open source</span>
-        </div>
-        <div class="support-callout">
-          <div>
-            <strong id="support-headline">CloudSaver is free and local-first.</strong>
-            <span id="support-detail">Run a scan to see how much storage CloudSaver can help you review.</span>
-          </div>
-          <a href="https://github.com/sponsors/gokulrajanpillai" target="_blank" rel="noreferrer">Sponsor development</a>
-        </div>
+          <details class="advanced-restore">
+            <summary>Restore from manifest path</summary>
+            <div class="restore-row">
+              <input id="restore-manifest-input" placeholder="/path/to/.cloudsaver-review/batch/manifest.json" aria-label="Restore manifest path">
+              <button id="restore-button" class="tertiary-action" type="button">Restore manifest</button>
+            </div>
+          </details>
+        </section>
       </section>
     </main>
   </div>
+
+  <dialog id="safety-modal" class="utility-modal">
+    <div class="modal-card">
+      <div class="panel-heading">
+        <h2>Safety</h2>
+        <button type="button" class="modal-close" data-modal-close aria-label="Close safety dialog">Close</button>
+      </div>
+      <div class="settings-grid">
+        <div>
+          <strong>Privacy</strong>
+          <span>No accounts, telemetry, or file uploads.</span>
+        </div>
+        <div>
+          <strong>Cleanup safety</strong>
+          <span>Files move to a local review folder before removal.</span>
+        </div>
+        <div>
+          <strong>Reports</strong>
+          <span>Exports stay in your browser or local output folder.</span>
+        </div>
+      </div>
+    </div>
+  </dialog>
 
   <script src="/app.js"></script>
 </body>

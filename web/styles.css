@@ -151,6 +151,19 @@ output {
   margin-top: 2px;
 }
 
+.field-hint {
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #dce5eb;
+  font-size: 11px;
+  cursor: help;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -281,6 +294,25 @@ output {
 .safety-box p,
 .starter-box p {
   margin-top: 4px;
+}
+
+.sidebar-footer {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.sidebar-footer button,
+.sidebar-footer a {
+  min-height: 32px;
+  color: #d5dee6;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
 }
 
 .scan-starters {
@@ -878,50 +910,38 @@ output {
   padding-bottom: 0;
 }
 
-.settings-panel {
-  margin-top: 16px;
+.review-queue {
+  margin: 18px -16px 0;
+  padding: 16px;
+  border-top: 1px solid var(--line);
 }
 
-.support-panel {
-  margin-top: 16px;
+.utility-modal {
+  width: min(720px, calc(100vw - 32px));
+  border: 0;
+  border-radius: 10px;
+  padding: 0;
+  box-shadow: 0 24px 70px rgba(18, 38, 63, 0.24);
 }
 
-.support-callout {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  border: 1px solid #d7eadf;
+.utility-modal::backdrop {
+  background: rgba(17, 24, 39, 0.46);
+}
+
+.modal-card {
+  padding: 18px;
+  background: var(--surface);
+}
+
+.modal-close {
+  min-height: 32px;
+  border: 1px solid var(--line);
   border-radius: 7px;
-  background: #f0faf5;
-  padding: 14px;
-}
-
-.support-callout strong,
-.support-callout span {
-  display: block;
-}
-
-.support-callout strong {
-  font-size: 15px;
-}
-
-.support-callout span {
-  color: var(--muted);
-  font-size: 13px;
-  margin-top: 4px;
-  line-height: 1.45;
-}
-
-.support-callout a {
-  white-space: nowrap;
-  color: white;
-  background: var(--teal);
-  border-radius: 7px;
-  padding: 10px 12px;
-  font-size: 13px;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0 10px;
+  font-size: 12px;
   font-weight: 800;
-  text-decoration: none;
 }
 
 .settings-grid,
