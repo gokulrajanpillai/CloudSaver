@@ -38,7 +38,7 @@ jobs:
         python -m pytest
 
   frontend-check:
-    name: Frontend syntax
+    name: Frontend checks
     runs-on: ubuntu-latest
 
     steps:
@@ -48,10 +48,70 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: "22"
+        cache: npm
+
+    - name: Install frontend dependencies
+      run: npm ci
+
+    - name: Install Playwright browser
+      run: npx playwright install --with-deps chromium
 
     - name: Check JavaScript syntax
+      run: npm run check:js
+
+    - name: Run browser integration tests
+      run: npm run test:e2e
+
+    - name: Upload Playwright artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-artifacts
+        path: |
+          playwright-report/
+          test-results/
+        if-no-files-found: ignore
+
+  startup-smoke:
+    name: Startup smoke
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install package
       run: |
-        node --check web/app.js
+        python -m pip install --upgrade pip
+        python -m pip install -e .
+
+    - name: Start local web UI
+      run: |
+        CLOUDSAVER_PORT=8765 ./scripts/start-cloudsaver.sh > cloudsaver.log 2>&1 &
+        echo $! > cloudsaver.pid
+        for i in {1..20}; do
+          if curl -fsS http://127.0.0.1:8765/api/health; then
+            exit 0
+          fi
+          sleep 0.5
+        done
+        cat cloudsaver.log
+        exit 1
+
+    - name: Verify app shell
+      run: |
+        curl -fsS http://127.0.0.1:8765/ | grep -q "CloudSaver"
+
+    - name: Stop local web UI
+      if: always()
+      run: |
+        if [ -f cloudsaver.pid ]; then
+          kill "$(cat cloudsaver.pid)" || true
+        fi
 
   package-build:
     name: Package build
