@@ -99,37 +99,52 @@
           <div class="metric">
             <span>Total storage</span>
             <strong id="metric-total">-</strong>
+            <small id="metric-total-detail">No scan yet</small>
           </div>
           <div class="metric">
             <span>Files scanned</span>
             <strong id="metric-files">-</strong>
+            <small id="metric-files-detail">Choose a folder</small>
           </div>
           <div class="metric">
             <span>Image copy savings</span>
             <strong id="metric-reducible">-</strong>
+            <small>Safe copies only</small>
           </div>
           <div class="metric">
             <span>Duplicate candidates</span>
             <strong id="metric-duplicates">-</strong>
+            <small>Review before moving</small>
           </div>
           <div class="metric">
             <span>Storage cost estimate</span>
             <strong id="metric-cost">-</strong>
+            <small>Monthly estimate</small>
+          </div>
+        </section>
+
+        <section id="overview-empty" class="panel overview-empty">
+          <div class="empty-state overview-empty-state">
+            <span aria-hidden="true"></span>
+            <strong>Choose a folder to begin your storage audit</strong>
+            <p>CloudSaver will map large folders, duplicate candidates, and safe image-copy savings locally.</p>
+            <button type="button" class="primary-action" data-focus-scan>Start scan</button>
           </div>
         </section>
 
         <section class="action-bar" aria-label="File actions">
-          <div>
+          <div class="scan-context">
             <h2 id="current-root">No folder scanned</h2>
-            <p id="selection-summary">Select reducible files after scanning.</p>
+            <p id="scan-meta">Choose a folder to begin your storage audit.</p>
           </div>
-          <div class="actions">
+          <div class="action-strip">
             <input id="filter-input" placeholder="Filter files" aria-label="Filter files">
             <button id="reduce-button" class="secondary-action" type="button" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v12H7a2 2 0 0 1-2-2zm2 2v10h12V6zm3 2 2 2.5L14 8l3 4H9zM3 8h2v10h10v2H5a2 2 0 0 1-2-2z"/></svg>
             <span>Create reduced copies</span>
           </button>
-          <button id="quarantine-button" class="secondary-action danger-action" type="button" disabled>Move to review</button>
+          <button id="quarantine-button" class="danger-action" type="button" disabled>Move to review</button>
+          <p id="selection-summary">Select reducible files after scanning.</p>
         </div>
       </section>
 
@@ -141,19 +156,22 @@
           <div class="plan-grid">
             <div class="plan-card high">
               <span>Safest first</span>
-              <strong id="plan-duplicates">Verified duplicates</strong>
+              <strong>Verified duplicates</strong>
+              <b id="plan-duplicates">Scan to estimate</b>
               <p id="plan-duplicates-detail">Run a scan to find duplicate files that can be reviewed before moving.</p>
               <button type="button" class="plan-action" data-view-target="duplicates">Review duplicates</button>
             </div>
             <div class="plan-card medium">
               <span>Optional savings</span>
-              <strong id="plan-images">Image reductions</strong>
+              <strong>Image reductions</strong>
+              <b id="plan-images">Scan to estimate</b>
               <p id="plan-images-detail">Create smaller copies without changing originals.</p>
               <button type="button" class="plan-action" data-plan-action="select-images">Select reducible images</button>
             </div>
             <div class="plan-card review">
               <span>Manual review</span>
-              <strong id="plan-large-files">Large files</strong>
+              <strong>Large files</strong>
+              <b id="plan-large-files">Scan to estimate</b>
               <p id="plan-large-files-detail">Inspect large local files before moving anything.</p>
               <button type="button" class="plan-action" data-view-target="map">View storage map</button>
             </div>
@@ -196,7 +214,7 @@
               <span data-category="other"><i></i>Other</span>
             </div>
             <div id="treemap" class="treemap">
-              <div class="empty-state">Run a scan to visualize storage usage.</div>
+              <div class="empty-state map-empty"><span aria-hidden="true"></span><strong>Scan to see where your storage is going</strong></div>
             </div>
           </div>
           <aside id="map-detail" class="map-detail" aria-label="Storage map selection">
@@ -223,7 +241,7 @@
           <span id="duplicate-count">0 groups</span>
         </div>
         <div id="duplicate-list" class="duplicate-list">
-          <div class="empty-state">Run a scan to review duplicate candidates.</div>
+          <div class="empty-state duplicate-empty"><span aria-hidden="true"></span><strong>No duplicates found yet</strong></div>
         </div>
       </section>
 
@@ -252,7 +270,7 @@
               </tr>
             </thead>
             <tbody id="file-table-body">
-              <tr><td colspan="7" class="empty-state">No scan results yet.</td></tr>
+              <tr><td colspan="7" class="empty-state table-empty"><span aria-hidden="true"></span><strong>Files will appear here after scanning</strong></td></tr>
             </tbody>
           </table>
         </div>
