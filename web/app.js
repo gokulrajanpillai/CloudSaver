@@ -22,11 +22,15 @@ const elements = {
   scanStateLabel: document.querySelector("#scan-state-label"),
   scanStateTitle: document.querySelector("#scan-state-title"),
   metricTotal: document.querySelector("#metric-total"),
+  metricTotalDetail: document.querySelector("#metric-total-detail"),
   metricFiles: document.querySelector("#metric-files"),
+  metricFilesDetail: document.querySelector("#metric-files-detail"),
   metricReducible: document.querySelector("#metric-reducible"),
   metricDuplicates: document.querySelector("#metric-duplicates"),
   metricCost: document.querySelector("#metric-cost"),
   currentRoot: document.querySelector("#current-root"),
+  overviewEmpty: document.querySelector("#overview-empty"),
+  scanMeta: document.querySelector("#scan-meta"),
   selectionSummary: document.querySelector("#selection-summary"),
   filterInput: document.querySelector("#filter-input"),
   reduceButton: document.querySelector("#reduce-button"),
@@ -121,6 +125,11 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function emptyState(kind, title, detail = "") {
+  const detailMarkup = detail ? `<p>${escapeHtml(detail)}</p>` : "";
+  return `<div class="empty-state ${kind}-empty"><span aria-hidden="true"></span><strong>${escapeHtml(title)}</strong>${detailMarkup}</div>`;
+}
+
 async function postJson(url, payload) {
   const response = await fetch(url, {
     method: "POST",
@@ -194,11 +203,15 @@ function renderSidebarRecentScans(scans) {
 function renderSummary(data) {
   const audit = data.audit;
   elements.metricTotal.textContent = audit.summary.total_human;
+  elements.metricTotalDetail.textContent = `${audit.summary.file_count} files`;
   elements.metricFiles.textContent = String(audit.summary.file_count);
+  elements.metricFilesDetail.textContent = "Local scan complete";
   elements.metricReducible.textContent = data.estimated_reducible_human;
   elements.metricDuplicates.textContent = audit.opportunities.duplicate_human;
   elements.metricCost.textContent = audit.opportunities.estimated_monthly_cost_avoided_human;
   elements.currentRoot.textContent = data.root_path;
+  elements.overviewEmpty.hidden = true;
+  elements.scanMeta.textContent = `${audit.summary.file_count} files - scanned ${new Date().toLocaleString()}`;
   renderCleanupPlan(audit, data.estimated_reducible_human);
 }
 
@@ -206,16 +219,16 @@ function renderCleanupPlan(audit, estimatedReducibleHuman) {
   const opportunities = audit.opportunities;
   elements.planConfidence.textContent = `${opportunities.estimated_recoverable_human} review opportunity`;
   elements.planDuplicates.textContent = opportunities.duplicate_count
-    ? `${opportunities.duplicate_human} duplicate review`
+    ? opportunities.duplicate_human
     : "No duplicates found";
   elements.planDuplicatesDetail.textContent = opportunities.duplicate_count
     ? `${opportunities.duplicate_count} extra copies found. Verified matches are the safest place to start.`
     : "CloudSaver did not find duplicate candidates in this scan.";
-  elements.planImages.textContent = `${estimatedReducibleHuman} image reduction`;
+  elements.planImages.textContent = estimatedReducibleHuman;
   elements.planImagesDetail.textContent = opportunities.image_optimization_count
     ? `${opportunities.image_optimization_count} images can be copied at smaller size without changing originals.`
     : "No large reducible images were found in this scan.";
-  elements.planLargeFiles.textContent = `${opportunities.large_file_count} large files`;
+  elements.planLargeFiles.textContent = opportunities.large_file_human || `${opportunities.large_file_count} files`;
   elements.planLargeFilesDetail.textContent = opportunities.large_file_count
     ? `${opportunities.large_file_human} in large files needs manual review before moving.`
     : "No files over the large-file threshold were found.";
@@ -236,7 +249,7 @@ function renderCategories(audit) {
         </div>
       `;
     })
-    .join("") || "<div class='empty-state'>No categories found.</div>";
+    .join("") || emptyState("overview", "Choose a folder to begin your storage audit");
 }
 
 function renderFolders(audit) {
@@ -250,7 +263,7 @@ function renderFolders(audit) {
         <span>${formatBytes(folder.bytes)}</span>
       </div>
     `)
-    .join("") || "<div class='empty-state'>No folders found.</div>";
+    .join("") || emptyState("overview", "Largest folders will appear after scanning");
 }
 
 function categoryColor(category) {
@@ -267,7 +280,7 @@ function categoryColor(category) {
 
 function renderTreemap(files, audit = state.audit) {
   if (!audit) {
-    elements.treemap.innerHTML = "<div class='empty-state'>Run a scan to visualize storage usage.</div>";
+    elements.treemap.innerHTML = emptyState("map", "Scan to see where your storage is going");
     return;
   }
 
@@ -298,7 +311,7 @@ function renderTreemap(files, audit = state.audit) {
 
   const totalBytes = items.reduce((total, item) => total + item.bytes, 0);
   if (!items.length || totalBytes <= 0) {
-    elements.treemap.innerHTML = "<div class='empty-state'>No files to visualize.</div>";
+    elements.treemap.innerHTML = emptyState("map", "No files to visualize");
     return;
   }
 
@@ -387,7 +400,7 @@ function renderDuplicates(audit) {
         </div>
       `;
     })
-    .join("") || "<div class='empty-state'>No duplicate candidates found.</div>";
+    .join("") || emptyState("duplicate", "No duplicates found yet");
 }
 
 function selectDuplicateExtras(index) {
@@ -429,7 +442,7 @@ function filterFiles() {
 function renderFiles() {
   elements.fileCount.textContent = `${state.filteredFiles.length} files`;
   if (!state.filteredFiles.length) {
-    elements.fileTableBody.innerHTML = "<tr><td colspan='7' class='empty-state'>No files match the current filter.</td></tr>";
+    elements.fileTableBody.innerHTML = `<tr><td colspan='7'>${emptyState("table", state.audit ? "No files match the current filter" : "Files will appear here after scanning")}</td></tr>`;
     updateSelectionSummary();
     return;
   }
@@ -749,6 +762,11 @@ elements.modalTriggers.forEach((trigger) => {
   });
 });
 document.addEventListener("click", (event) => {
+  const focusScanButton = event.target.closest("[data-focus-scan]");
+  if (focusScanButton) {
+    elements.pathInput.focus();
+    return;
+  }
   const closeButton = event.target.closest("[data-modal-close]");
   if (closeButton) {
     closeButton.closest("dialog")?.close();
