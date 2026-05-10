@@ -1,0 +1,12 @@
+{
+  "name": "cloudsaver-ui",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "check:js": "node --check web/app.js",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
