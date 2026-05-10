@@ -21,6 +21,7 @@ const elements = {
   status: document.querySelector("#scan-status"),
   scanStateLabel: document.querySelector("#scan-state-label"),
   scanStateTitle: document.querySelector("#scan-state-title"),
+  scanStateCard: document.querySelector(".scan-state-card"),
   metricTotal: document.querySelector("#metric-total"),
   metricTotalDetail: document.querySelector("#metric-total-detail"),
   metricFiles: document.querySelector("#metric-files"),
@@ -65,6 +66,7 @@ const elements = {
   sidebar: document.querySelector("#sidebar"),
   sidebarToggle: document.querySelector("#sidebar-toggle"),
   modalTriggers: document.querySelectorAll("[data-modal-target]"),
+  toastRegion: document.querySelector("#toast-region"),
 };
 
 function formatBytes(bytes) {
@@ -97,9 +99,21 @@ function scanStateForTone(tone) {
 function setStatus(message, tone = "neutral") {
   elements.status.textContent = message;
   elements.status.dataset.tone = tone;
+  elements.scanStateCard.dataset.tone = tone;
   const [label, title] = scanStateForTone(tone);
   elements.scanStateLabel.textContent = label;
   elements.scanStateTitle.textContent = title;
+}
+
+function showToast(message, tone = "success") {
+  const toast = document.createElement("div");
+  toast.className = `toast ${tone}`;
+  toast.textContent = message;
+  elements.toastRegion.append(toast);
+  window.setTimeout(() => {
+    toast.classList.add("leaving");
+    window.setTimeout(() => toast.remove(), 180);
+  }, 4000);
 }
 
 function setWorkspaceView(view) {
@@ -592,9 +606,11 @@ async function runScanForPath(path, startingMessage = "Refreshing scan...") {
     renderFiles();
     loadHistory();
     setStatus(`Scan complete. ${data.files.length} files analyzed.`, "complete");
+    showToast(`Scan complete: ${data.files.length} files analyzed.`);
     return data;
   } catch (error) {
     setStatus(error.message, "error");
+    showToast(error.message, "error");
     throw error;
   } finally {
     elements.form.querySelector("button").disabled = false;
@@ -622,7 +638,7 @@ async function waitForScan(jobId) {
       return job.result;
     }
     const current = job.current_folder || job.current_path || "Preparing scan...";
-    setStatus(`Scanning ${job.files_scanned || 0} files... ${current}`, "scanning");
+    setStatus(`${current} - ${job.files_scanned || 0} files scanned`, "scanning");
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
@@ -645,8 +661,10 @@ async function reduceSelected() {
     });
     const reduced = result.results.filter((item) => item.status === "reduced").length;
     setStatus(`${reduced} reduced copies created. Actual image-copy savings: ${result.total_saved_human}.`, "complete");
+    showToast(`${reduced} reduced copies created.`);
   } catch (error) {
     setStatus(error.message, "error");
+    showToast(error.message, "error");
   } finally {
     updateSelectionSummary();
   }
@@ -665,6 +683,7 @@ async function quarantineSelected() {
       file_ids: fileIds,
     });
     setStatus(`${result.quarantined_count} files moved to review. Manifest: ${result.manifest_path}`, "complete");
+    showToast(`${result.quarantined_count} files moved to review folder.`);
     state.reviewBatches.unshift({
       manifestPath: result.manifest_path,
       count: result.quarantined_count,
@@ -676,6 +695,7 @@ async function quarantineSelected() {
     await refreshCurrentScan("Refreshing scan after moving files to review...");
   } catch (error) {
     setStatus(error.message, "error");
+    showToast(error.message, "error");
   } finally {
     updateSelectionSummary();
   }
@@ -705,8 +725,10 @@ async function revealPath(path) {
   try {
     await postJson("/api/reveal", { path });
     setStatus("Opened the file location.", "complete");
+    showToast("Opened the file location.");
   } catch (error) {
     setStatus(error.message, "error");
+    showToast(error.message, "error");
   }
 }
 
@@ -722,11 +744,13 @@ async function restoreManifest() {
     const result = await postJson("/api/restore", { manifest_path: manifestPath });
     const restored = result.results.filter((item) => item.status === "restored").length;
     setStatus(`${restored} files restored from review.`, "complete");
+    showToast(`${restored} files restored from review.`);
     state.reviewBatches = state.reviewBatches.filter((batch) => batch.manifestPath !== manifestPath);
     renderReviewBatches();
     await refreshCurrentScan("Refreshing scan after restore...");
   } catch (error) {
     setStatus(error.message, "error");
+    showToast(error.message, "error");
   } finally {
     elements.restoreButton.disabled = false;
   }

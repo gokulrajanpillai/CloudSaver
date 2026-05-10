@@ -62,6 +62,7 @@
         <div class="scan-state-card" aria-label="Scan state">
           <span id="scan-state-label">Idle</span>
           <strong id="scan-state-title">No scan yet</strong>
+          <div class="scan-progress" aria-hidden="true"><i></i></div>
           <p id="scan-status" role="status">Choose a folder to begin.</p>
         </div>
       </section>
@@ -332,6 +333,8 @@
       </div>
     </div>
   </dialog>
+
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
 
   <script src="/app.js"></script>
 </body>
