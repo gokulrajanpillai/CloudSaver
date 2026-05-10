@@ -75,18 +75,18 @@
           <h2>Storage Workspace</h2>
         </div>
         <nav class="workspace-tabs" aria-label="Workspace sections">
-          <a href="#dashboard">Dashboard</a>
-          <a href="#storage-map">Map</a>
-          <a href="#duplicates">Duplicates</a>
-          <a href="#cleanup">Cleanup</a>
-          <a href="#files">Files</a>
-          <a href="#history">History</a>
-          <a href="#settings">Settings</a>
-          <a href="#support">Support</a>
+          <button type="button" class="active" data-view-target="recommended">Recommended</button>
+          <button type="button" data-view-target="map">Map</button>
+          <button type="button" data-view-target="duplicates">Duplicates</button>
+          <button type="button" data-view-target="files">Files</button>
+          <button type="button" data-view-target="history">History</button>
+          <button type="button" data-view-target="cleanup">Undo</button>
+          <button type="button" data-view-target="settings">Safety</button>
+          <button type="button" data-view-target="support">Support</button>
         </nav>
       </header>
 
-      <div id="view-recommended" class="workspace-view" data-view="recommended">
+      <div id="view-recommended" class="workspace-view active" data-view="recommended">
         <section id="dashboard" class="summary-band" aria-label="Storage summary">
           <div class="metric">
             <span>Total storage</span>
