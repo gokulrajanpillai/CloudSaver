@@ -1404,24 +1404,26 @@ tbody tr:hover {
     min-height: 42px;
     width: 100%;
     border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-    background: #17212b;
+    background: var(--sidebar-bg);
     color: #f9fbfc;
     font-weight: 800;
   }
 
   .sidebar {
-    display: none;
-    position: static;
-    height: auto;
+    position: fixed;
+    top: 42px;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    width: min(280px, calc(100vw - 36px));
+    height: calc(100vh - 42px);
+    transform: translateX(-100%);
+    transition: transform 300ms ease;
+    box-shadow: 18px 0 38px rgba(17, 24, 39, 0.2);
   }
 
   .sidebar.open {
-    display: block;
-  }
-
-  .summary-band,
-  .content-grid {
-    grid-template-columns: 1fr 1fr;
+    transform: translateX(0);
   }
 
   .map-workspace {
@@ -1433,16 +1435,23 @@ tbody tr:hover {
   }
 }
 
+@media (max-width: 900px) {
+  .summary-band,
+  .content-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .plan-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 720px) {
   .workspace,
   .sidebar {
     padding: 16px;
-  }
-
-  .summary-band,
-  .content-grid,
-  .field-grid {
-    grid-template-columns: 1fr;
   }
 
   .action-bar {
@@ -1465,7 +1474,6 @@ tbody tr:hover {
 
   .settings-grid,
   .cleanup-grid,
-  .plan-grid,
   .restore-row {
     grid-template-columns: 1fr;
   }
@@ -1481,5 +1489,36 @@ tbody tr:hover {
 
   .support-callout a {
     text-align: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .summary-band,
+  .content-grid,
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .primary-action,
+  .secondary-action,
+  .danger-action,
+  .tertiary-action,
+  .plan-action,
+  .table-action,
+  .duplicate-action,
+  .workspace-tabs button,
+  .quick-locations button {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
