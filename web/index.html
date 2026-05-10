@@ -178,17 +178,26 @@
           <h2>Storage Map</h2>
           <span>Largest files by area</span>
         </div>
-        <div id="treemap-breadcrumbs" class="treemap-breadcrumbs"></div>
-        <div class="treemap-legend" aria-label="Storage map legend">
-          <span><i style="background:#16806a"></i>Image</span>
-          <span><i style="background:#8f5fe8"></i>Video</span>
-          <span><i style="background:#b7791f"></i>Audio</span>
-          <span><i style="background:#1f6fb2"></i>Document</span>
-          <span><i style="background:#596579"></i>Archive</span>
-          <span><i style="background:#7a8794"></i>Other</span>
-        </div>
-        <div id="treemap" class="treemap">
-          <div class="empty-state">Run a scan to visualize storage usage.</div>
+        <div class="map-workspace">
+          <div>
+            <div id="treemap-breadcrumbs" class="treemap-breadcrumbs"></div>
+            <div class="treemap-legend" aria-label="Storage map legend">
+              <span><i style="background:#16806a"></i>Image</span>
+              <span><i style="background:#8f5fe8"></i>Video</span>
+              <span><i style="background:#b7791f"></i>Audio</span>
+              <span><i style="background:#1f6fb2"></i>Document</span>
+              <span><i style="background:#596579"></i>Archive</span>
+              <span><i style="background:#7a8794"></i>Other</span>
+            </div>
+            <div id="treemap" class="treemap">
+              <div class="empty-state">Run a scan to visualize storage usage.</div>
+            </div>
+          </div>
+          <aside id="map-detail" class="map-detail" aria-label="Storage map selection">
+            <span>Selection</span>
+            <strong>No item selected</strong>
+            <p>Click a folder or file in the map to inspect it.</p>
+          </aside>
         </div>
       </section>
 

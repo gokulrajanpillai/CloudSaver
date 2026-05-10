@@ -535,8 +535,14 @@ output {
   margin-top: 16px;
 }
 
+.map-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 14px;
+}
+
 .treemap {
-  min-height: 280px;
+  min-height: 430px;
   display: flex;
   flex-wrap: wrap;
   align-content: stretch;
@@ -546,6 +552,49 @@ output {
   border-radius: 7px;
   overflow: hidden;
   padding: 4px;
+}
+
+.map-detail {
+  align-self: stretch;
+  border: 1px solid #e5eaf0;
+  border-radius: 7px;
+  background: var(--surface-2);
+  padding: 14px;
+}
+
+.map-detail span,
+.map-detail strong,
+.map-detail p {
+  display: block;
+}
+
+.map-detail span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.map-detail strong {
+  margin-top: 6px;
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-detail p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.map-detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .treemap-tile {
