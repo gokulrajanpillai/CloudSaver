@@ -8,6 +8,7 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 
 - Added an embedded desktop shell entry point that reuses the local CloudSaver web UI with a browser fallback.
 - Added cross-platform desktop artifact packaging for Windows, macOS, and Linux release builds.
+- Marked the package maturity as Beta until signed desktop builds and consumer cleanup flows are proven.
 
 ## 1.0.0 - 2026-05-09
 
