@@ -66,10 +66,14 @@ const elements = {
   sidebar: document.querySelector("#sidebar"),
   sidebarToggle: document.querySelector("#sidebar-toggle"),
   modalTriggers: document.querySelectorAll("[data-modal-target]"),
+  themeButtons: document.querySelectorAll("[data-theme-option]"),
   toastRegion: document.querySelector("#toast-region"),
   workspaceSubtitle: document.querySelector("#workspace-subtitle"),
   reviewQueueBadge: document.querySelector("#review-queue-badge"),
 };
+
+const THEME_STORAGE_KEY = "cloudsaver-theme";
+const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
 function formatBytes(bytes) {
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -96,6 +100,32 @@ function scanStateForTone(tone) {
     error: ["Needs attention", "Check scan input"],
   };
   return states[tone] || states.neutral;
+}
+
+function effectiveTheme(preference) {
+  if (preference === "light" || preference === "dark") {
+    return preference;
+  }
+  return systemThemeQuery.matches ? "dark" : "light";
+}
+
+function storedThemePreference() {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  return ["system", "light", "dark"].includes(stored) ? stored : "system";
+}
+
+function applyTheme(preference = storedThemePreference()) {
+  const theme = effectiveTheme(preference);
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.themePreference = preference;
+  elements.themeButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.themeOption === preference));
+  });
+}
+
+function setThemePreference(preference) {
+  localStorage.setItem(THEME_STORAGE_KEY, preference);
+  applyTheme(preference);
 }
 
 function setStatus(message, tone = "neutral") {
@@ -804,6 +834,14 @@ elements.workspaceTabs.addEventListener("click", (event) => {
 elements.sidebarToggle.addEventListener("click", () => {
   setSidebarOpen(!elements.sidebar.classList.contains("open"));
 });
+elements.themeButtons.forEach((button) => {
+  button.addEventListener("click", () => setThemePreference(button.dataset.themeOption));
+});
+systemThemeQuery.addEventListener("change", () => {
+  if (storedThemePreference() === "system") {
+    applyTheme("system");
+  }
+});
 elements.modalTriggers.forEach((trigger) => {
   trigger.addEventListener("click", () => {
     const modal = document.querySelector(`#${trigger.dataset.modalTarget}`);
@@ -950,3 +988,4 @@ elements.selectAll.addEventListener("change", () => {
 
 loadLocations().catch(() => setStatus("Location suggestions are unavailable.", "error"));
 loadHistory().catch(() => {});
+applyTheme();

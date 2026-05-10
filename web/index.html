@@ -4,6 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CloudSaver</title>
+  <script>
+    (() => {
+      const storedTheme = localStorage.getItem("cloudsaver-theme") || "system";
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = storedTheme === "system" ? (systemDark ? "dark" : "light") : storedTheme;
+      document.documentElement.dataset.themePreference = storedTheme;
+    })();
+  </script>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -78,8 +86,15 @@
       </section>
 
       <footer class="sidebar-footer" aria-label="Utility links">
-        <button type="button" data-modal-target="safety-modal">Safety</button>
-        <a href="https://github.com/sponsors/gokulrajanpillai" target="_blank" rel="noreferrer">Sponsor</a>
+        <div class="theme-control" role="group" aria-label="Color theme">
+          <button type="button" data-theme-option="system" aria-pressed="true">System</button>
+          <button type="button" data-theme-option="light" aria-pressed="false">Light</button>
+          <button type="button" data-theme-option="dark" aria-pressed="false">Dark</button>
+        </div>
+        <div class="sidebar-links">
+          <button type="button" data-modal-target="safety-modal">Safety</button>
+          <a href="https://github.com/sponsors/gokulrajanpillai" target="_blank" rel="noreferrer">Sponsor</a>
+        </div>
       </footer>
     </aside>
 
