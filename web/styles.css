@@ -5,6 +5,7 @@
   --text: #15202b;
   --muted: #5d6b78;
   --line: #d7dde3;
+  --line-strong: #b6c6d5;
   --blue: #1f6fb2;
   --teal: #16806a;
   --amber: #a86600;
@@ -38,6 +39,14 @@ select {
 button {
   border: 0;
   cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(31, 111, 178, 0.24);
+  outline-offset: 2px;
 }
 
 button:disabled {
@@ -401,7 +410,7 @@ output {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 8px 22px rgba(18, 38, 63, 0.06);
 }
 
 .metric {
@@ -419,6 +428,11 @@ output {
 .metric strong {
   font-size: 26px;
   line-height: 1.1;
+}
+
+.workspace-view > .panel:first-child,
+.workspace-view > .summary-band:first-child {
+  margin-top: 0;
 }
 
 .action-bar {
@@ -686,6 +700,16 @@ output {
 .panel {
   min-width: 0;
   padding: 16px;
+}
+
+.workspace-view > .panel,
+.workspace-view > .content-grid,
+.workspace-view > .action-bar {
+  margin-top: 16px;
+}
+
+.workspace-view > .summary-band + .action-bar {
+  margin-top: 16px;
 }
 
 .panel-heading {
@@ -1111,6 +1135,14 @@ th {
   .summary-band,
   .content-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .map-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .map-detail {
+    min-height: 140px;
   }
 }
 
