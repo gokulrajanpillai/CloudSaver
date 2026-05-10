@@ -395,11 +395,19 @@ output {
 .sidebar-footer button,
 .sidebar-footer a {
   min-height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
   color: #d5dee6;
   background: transparent;
   font-size: 13px;
   font-weight: 750;
   text-decoration: none;
+}
+
+.sidebar-footer button:hover,
+.sidebar-footer a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f9fbfc;
 }
 
 .sidebar-recent-scans {
@@ -518,6 +526,23 @@ output {
 .workspace-tabs button.active {
   border-color: var(--border-strong);
   color: var(--accent);
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 5px;
+  padding: 0 4px;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 999px;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .summary-band {
@@ -1279,14 +1304,13 @@ tbody tr:hover {
   background: var(--accent-surface);
 }
 
-.empty-state span {
+.empty-icon {
   display: block;
-  width: 48px;
-  height: 36px;
-  margin: 0 auto 12px;
-  border: 2px solid #99f6e4;
-  border-radius: 8px;
-  opacity: 0.9;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  color: var(--accent);
+  opacity: 0.7;
 }
 
 .empty-state strong {
@@ -1308,23 +1332,16 @@ tbody tr:hover {
   margin-top: 16px;
 }
 
-.overview-empty-state span {
-  border-radius: 18px 18px 8px 8px;
+.plan-icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 10px;
 }
 
-.map-empty span {
-  background: linear-gradient(135deg, transparent 20%, rgba(13, 148, 136, 0.18) 20% 40%, transparent 40% 60%, rgba(13, 148, 136, 0.18) 60%);
-}
-
-.duplicate-empty span {
-  box-shadow: 10px 8px 0 rgba(13, 148, 136, 0.16);
-}
-
-.table-empty span {
-  background:
-    linear-gradient(#99f6e4 0 0) 8px 10px / 30px 2px no-repeat,
-    linear-gradient(#99f6e4 0 0) 8px 20px / 24px 2px no-repeat;
-}
+.plan-card.high .plan-icon { color: #0d9488; }
+.plan-card.medium .plan-icon { color: #2563eb; }
+.plan-card.review .plan-icon { color: #d97706; }
 
 .toast-region {
   position: fixed;

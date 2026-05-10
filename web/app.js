@@ -67,6 +67,8 @@ const elements = {
   sidebarToggle: document.querySelector("#sidebar-toggle"),
   modalTriggers: document.querySelectorAll("[data-modal-target]"),
   toastRegion: document.querySelector("#toast-region"),
+  workspaceSubtitle: document.querySelector("#workspace-subtitle"),
+  reviewQueueBadge: document.querySelector("#review-queue-badge"),
 };
 
 function formatBytes(bytes) {
@@ -114,6 +116,15 @@ function showToast(message, tone = "success") {
     toast.classList.add("leaving");
     window.setTimeout(() => toast.remove(), 180);
   }, 4000);
+}
+
+function updateReviewQueueBadge() {
+  if (!elements.reviewQueueBadge) {
+    return;
+  }
+  const count = state.reviewBatches.length;
+  elements.reviewQueueBadge.hidden = count === 0;
+  elements.reviewQueueBadge.textContent = count > 9 ? "9+" : String(count);
 }
 
 function setWorkspaceView(view) {
@@ -226,6 +237,9 @@ function renderSummary(data) {
   elements.currentRoot.textContent = data.root_path;
   elements.overviewEmpty.hidden = true;
   elements.scanMeta.textContent = `${audit.summary.file_count} files - scanned ${new Date().toLocaleString()}`;
+  if (elements.workspaceSubtitle) {
+    elements.workspaceSubtitle.textContent = data.root_path;
+  }
   renderCleanupPlan(audit, data.estimated_reducible_human);
 }
 
@@ -505,6 +519,18 @@ function updateSelectionSummary() {
   elements.quarantineButton.disabled = selectedFiles.length === 0;
   elements.exportJsonButton.disabled = !state.audit;
   elements.exportCsvButton.disabled = !state.audit;
+  const visibleReducible = state.filteredFiles.filter((file) => file.reduction.supported);
+  const selectedVisibleReducible = visibleReducible.filter((file) => state.selected.has(file.id));
+  if (selectedVisibleReducible.length === 0) {
+    elements.selectAll.checked = false;
+    elements.selectAll.indeterminate = false;
+  } else if (selectedVisibleReducible.length === visibleReducible.length) {
+    elements.selectAll.checked = true;
+    elements.selectAll.indeterminate = false;
+  } else {
+    elements.selectAll.checked = false;
+    elements.selectAll.indeterminate = true;
+  }
 }
 
 function reportFilename(extension) {
@@ -716,6 +742,7 @@ function renderReviewBatches() {
       `;
     })
     .join("") || "<div class='empty-state'>Moved files will appear here for quick restore.</div>";
+  updateReviewQueueBadge();
 }
 
 async function revealPath(path) {
@@ -825,9 +852,10 @@ elements.sidebarRecentScans.addEventListener("click", (event) => {
   if (!button) {
     return;
   }
-  elements.pathInput.value = button.dataset.path;
-  setStatus("Ready to rescan recent folder.", "ready");
+  const path = button.dataset.path;
+  elements.pathInput.value = path;
   setSidebarOpen(false);
+  runScanForPath(path, "Rescanning recent folder...").catch(() => {});
 });
 elements.treemap.addEventListener("click", (event) => {
   const tile = event.target.closest("[data-folder]");
