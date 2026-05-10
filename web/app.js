@@ -269,12 +269,12 @@ function renderFolders(audit) {
 
 function categoryColor(category) {
   const colors = {
-    image: "#16806a",
-    video: "#8f5fe8",
-    audio: "#b7791f",
-    document: "#1f6fb2",
-    archive: "#596579",
-    other: "#7a8794",
+    image: "#0d9488",
+    video: "#7c3aed",
+    audio: "#d97706",
+    document: "#2563eb",
+    archive: "#64748b",
+    other: "#94a3b8",
   };
   return colors[category] || colors.other;
 }
