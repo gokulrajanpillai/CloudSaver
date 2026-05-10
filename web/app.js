@@ -6,6 +6,7 @@ const state = {
   audit: null,
   treemapFolder: "",
   reviewBatches: [],
+  duplicateGroups: [],
 };
 
 const elements = {
@@ -303,9 +304,10 @@ function setTreemapFolder(folder) {
 
 function renderDuplicates(audit) {
   const groups = audit.duplicate_candidates || [];
+  state.duplicateGroups = groups;
   elements.duplicateCount.textContent = `${groups.length} groups`;
   elements.duplicateList.innerHTML = groups
-    .map((group) => {
+    .map((group, index) => {
       const status = group.verification_status || "candidate";
       const confidence = group.confidence || "medium";
       const files = (group.files || [])
@@ -322,10 +324,22 @@ function renderDuplicates(audit) {
             <span class="status-pill ${status === "verified" ? "" : "unsupported"}">${escapeHtml(status)} / ${escapeHtml(confidence)}</span>
           </div>
           <ul>${files}</ul>
+          <button class="duplicate-action" type="button" data-duplicate-index="${index}">Select extra copies</button>
         </div>
       `;
     })
     .join("") || "<div class='empty-state'>No duplicate candidates found.</div>";
+}
+
+function selectDuplicateExtras(index) {
+  const group = state.duplicateGroups[index];
+  if (!group || !Array.isArray(group.files)) {
+    return;
+  }
+  const extraFiles = group.files.slice(1);
+  extraFiles.forEach((file) => state.selected.add(file.id));
+  renderFiles();
+  setStatus(`${extraFiles.length} duplicate extra copies selected for review.`);
 }
 
 function filterFiles() {
@@ -668,6 +682,13 @@ elements.treemapBreadcrumbs.addEventListener("click", (event) => {
     return;
   }
   setTreemapFolder(button.dataset.folder);
+});
+elements.duplicateList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-duplicate-index]");
+  if (!button) {
+    return;
+  }
+  selectDuplicateExtras(Number(button.dataset.duplicateIndex));
 });
 elements.fileTableBody.addEventListener("change", (event) => {
   const checkbox = event.target.closest("input[type='checkbox'][data-file-id]");
