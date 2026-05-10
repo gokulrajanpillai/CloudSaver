@@ -203,7 +203,7 @@ output {
   width: 18px;
 }
 
-.scan-status {
+.scan-state-card {
   margin-top: 18px;
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -214,7 +214,39 @@ output {
   line-height: 1.45;
 }
 
-.support-box,
+.scan-state-card span,
+.scan-state-card strong,
+.scan-state-card p {
+  display: block;
+  margin: 0;
+}
+
+.scan-state-card span {
+  color: #9be0d1;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.scan-state-card strong {
+  color: #f9fbfc;
+  font-size: 15px;
+  margin-top: 4px;
+}
+
+.scan-state-card p {
+  margin-top: 6px;
+}
+
+.scan-state-card p[data-tone="error"] {
+  color: #ffc7c2;
+}
+
+.scan-state-card p[data-tone="complete"] {
+  color: #bdf2d7;
+}
+
+.safety-box,
 .starter-box {
   margin-top: 14px;
   padding: 12px;
@@ -226,28 +258,16 @@ output {
   line-height: 1.45;
 }
 
-.support-box strong,
-.support-box p,
+.safety-box strong,
+.safety-box p,
 .starter-box strong,
 .starter-box p {
   margin: 0;
 }
 
-.support-box p,
+.safety-box p,
 .starter-box p {
   margin-top: 4px;
-}
-
-.support-box a {
-  display: inline-block;
-  margin-top: 8px;
-  color: #9be0d1;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.support-box a:hover {
-  text-decoration: underline;
 }
 
 .scan-starters {

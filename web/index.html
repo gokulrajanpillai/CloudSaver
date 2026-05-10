@@ -50,7 +50,11 @@
         </button>
       </form>
 
-      <div class="scan-status" id="scan-status" role="status">Choose a folder to begin.</div>
+      <div class="scan-state-card" aria-label="Scan state">
+        <span id="scan-state-label">No scan</span>
+        <strong id="scan-state-title">Choose a folder</strong>
+        <p id="scan-status" role="status">Choose a folder to begin.</p>
+      </div>
 
       <div class="starter-box" aria-label="Quick scan starters">
         <strong>Quick start</strong>
@@ -58,10 +62,9 @@
         <div id="scan-starters" class="scan-starters"></div>
       </div>
 
-      <div class="support-box" aria-label="Support CloudSaver">
-        <strong>Open source</strong>
-        <p>CloudSaver is free, local-first, and sponsor-supported.</p>
-        <a href="https://github.com/sponsors/gokulrajanpillai" target="_blank" rel="noreferrer">Support development</a>
+      <div class="safety-box" aria-label="Privacy and cleanup safety">
+        <strong>Local and reversible</strong>
+        <p>No accounts, telemetry, or file uploads. Cleanup moves files to a local review folder first.</p>
       </div>
     </aside>
 
