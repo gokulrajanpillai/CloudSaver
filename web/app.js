@@ -19,6 +19,8 @@ const elements = {
   qualityOutput: document.querySelector("#quality-output"),
   resolutionInput: document.querySelector("#resolution-input"),
   status: document.querySelector("#scan-status"),
+  scanStateLabel: document.querySelector("#scan-state-label"),
+  scanStateTitle: document.querySelector("#scan-state-title"),
   metricTotal: document.querySelector("#metric-total"),
   metricFiles: document.querySelector("#metric-files"),
   metricReducible: document.querySelector("#metric-reducible"),
@@ -72,9 +74,23 @@ function resolution() {
   return { max_width: maxWidth, max_height: maxHeight };
 }
 
+function scanStateForTone(tone) {
+  const states = {
+    neutral: ["Ready", "Choose a folder"],
+    ready: ["Ready", "Ready to scan"],
+    scanning: ["Scanning", "Scan in progress"],
+    complete: ["Complete", "Scan complete"],
+    error: ["Needs attention", "Check scan input"],
+  };
+  return states[tone] || states.neutral;
+}
+
 function setStatus(message, tone = "neutral") {
   elements.status.textContent = message;
   elements.status.dataset.tone = tone;
+  const [label, title] = scanStateForTone(tone);
+  elements.scanStateLabel.textContent = label;
+  elements.scanStateTitle.textContent = title;
 }
 
 function escapeHtml(value) {
@@ -339,7 +355,7 @@ function selectDuplicateExtras(index) {
   const extraFiles = group.files.slice(1);
   extraFiles.forEach((file) => state.selected.add(file.id));
   renderFiles();
-  setStatus(`${extraFiles.length} duplicate extra copies selected for review.`);
+  setStatus(`${extraFiles.length} duplicate extra copies selected for review.`, "ready");
 }
 
 function filterFiles() {
@@ -479,7 +495,7 @@ async function scan(event) {
 }
 
 async function runScanForPath(path, startingMessage = "Refreshing scan...") {
-  setStatus(startingMessage);
+  setStatus(startingMessage, "scanning");
   elements.form.querySelector("button").disabled = true;
   try {
     const start = await postJson("/api/scan/start", {
@@ -501,7 +517,7 @@ async function runScanForPath(path, startingMessage = "Refreshing scan...") {
     renderDuplicates(data.audit);
     renderFiles();
     loadHistory();
-    setStatus(`Scan complete. ${data.files.length} files analyzed.`);
+    setStatus(`Scan complete. ${data.files.length} files analyzed.`, "complete");
     return data;
   } catch (error) {
     setStatus(error.message, "error");
@@ -532,7 +548,7 @@ async function waitForScan(jobId) {
       return job.result;
     }
     const current = job.current_folder || job.current_path || "Preparing scan...";
-    setStatus(`Scanning ${job.files_scanned || 0} files... ${current}`);
+    setStatus(`Scanning ${job.files_scanned || 0} files... ${current}`, "scanning");
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
@@ -545,7 +561,7 @@ async function reduceSelected() {
     return;
   }
   elements.reduceButton.disabled = true;
-  setStatus("Creating reduced image copies...");
+  setStatus("Creating reduced image copies...", "scanning");
   try {
     const result = await postJson("/api/reduce", {
       root_path: state.rootPath,
@@ -554,7 +570,7 @@ async function reduceSelected() {
       ...resolution(),
     });
     const reduced = result.results.filter((item) => item.status === "reduced").length;
-    setStatus(`${reduced} reduced copies created. Actual image-copy savings: ${result.total_saved_human}.`);
+    setStatus(`${reduced} reduced copies created. Actual image-copy savings: ${result.total_saved_human}.`, "complete");
   } catch (error) {
     setStatus(error.message, "error");
   } finally {
@@ -568,13 +584,13 @@ async function quarantineSelected() {
     return;
   }
   elements.quarantineButton.disabled = true;
-  setStatus("Moving selected files to the local review folder...");
+  setStatus("Moving selected files to the local review folder...", "scanning");
   try {
     const result = await postJson("/api/quarantine", {
       root_path: state.rootPath,
       file_ids: fileIds,
     });
-    setStatus(`${result.quarantined_count} files moved to review. Manifest: ${result.manifest_path}`);
+    setStatus(`${result.quarantined_count} files moved to review. Manifest: ${result.manifest_path}`, "complete");
     state.reviewBatches.unshift({
       manifestPath: result.manifest_path,
       count: result.quarantined_count,
@@ -614,7 +630,7 @@ async function revealPath(path) {
   }
   try {
     await postJson("/api/reveal", { path });
-    setStatus("Opened the file location.");
+    setStatus("Opened the file location.", "complete");
   } catch (error) {
     setStatus(error.message, "error");
   }
@@ -627,11 +643,11 @@ async function restoreManifest() {
     return;
   }
   elements.restoreButton.disabled = true;
-  setStatus("Restoring files from manifest...");
+  setStatus("Restoring files from manifest...", "scanning");
   try {
     const result = await postJson("/api/restore", { manifest_path: manifestPath });
     const restored = result.results.filter((item) => item.status === "restored").length;
-    setStatus(`${restored} files restored from review.`);
+    setStatus(`${restored} files restored from review.`, "complete");
     state.reviewBatches = state.reviewBatches.filter((batch) => batch.manifestPath !== manifestPath);
     renderReviewBatches();
     await refreshCurrentScan("Refreshing scan after restore...");
@@ -659,7 +675,7 @@ elements.quickLocations.addEventListener("click", (event) => {
     return;
   }
   elements.pathInput.value = button.dataset.path;
-  setStatus(`Ready to scan ${button.textContent}.`);
+  setStatus(`Ready to scan ${button.textContent}.`, "ready");
 });
 elements.scanStarters.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-path]");
@@ -667,7 +683,7 @@ elements.scanStarters.addEventListener("click", (event) => {
     return;
   }
   elements.pathInput.value = button.dataset.path;
-  setStatus(`Ready to scan ${button.querySelector("strong").textContent}.`);
+  setStatus(`Ready to scan ${button.querySelector("strong").textContent}.`, "ready");
 });
 elements.treemap.addEventListener("click", (event) => {
   const tile = event.target.closest("[data-folder]");

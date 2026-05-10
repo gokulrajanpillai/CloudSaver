@@ -14,6 +14,7 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 - Added duplicate-group actions that select recoverable extra copies for review from the duplicate panel.
 - Moved default generated reports and reduced image copies to `~/.cloudsaver/output`, with `CLOUDSAVER_HOME` available for overrides.
 - Grouped the long dashboard into named workspace views as the foundation for a tabbed cleanup workflow.
+- Redesigned the sidebar around scan state and local-first safety instead of showing sponsorship before scan value.
 
 ## 1.0.0 - 2026-05-09
 
