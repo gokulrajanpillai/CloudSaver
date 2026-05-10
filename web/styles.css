@@ -445,7 +445,7 @@ output {
 
 .actions {
   display: grid;
-  grid-template-columns: minmax(180px, 260px) auto auto auto auto;
+  grid-template-columns: minmax(180px, 260px) auto auto;
   gap: 10px;
   align-items: center;
 }
@@ -699,6 +699,13 @@ output {
 .panel-heading span {
   color: var(--muted);
   font-size: 13px;
+}
+
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .category-bars {
