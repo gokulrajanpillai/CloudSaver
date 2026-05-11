@@ -35,6 +35,7 @@ const elements = {
   scanMeta: document.querySelector("#scan-meta"),
   selectionSummary: document.querySelector("#selection-summary"),
   filterInput: document.querySelector("#filter-input"),
+  categoryFilter: document.querySelector("#category-filter"),
   reduceButton: document.querySelector("#reduce-button"),
   convertWebpButton: document.querySelector("#convert-webp-button"),
   quarantineButton: document.querySelector("#quarantine-button"),
@@ -47,6 +48,10 @@ const elements = {
   planImagesDetail: document.querySelector("#plan-images-detail"),
   planLargeFiles: document.querySelector("#plan-large-files"),
   planLargeFilesDetail: document.querySelector("#plan-large-files-detail"),
+  planVideo: document.querySelector("#plan-video"),
+  planVideoDetail: document.querySelector("#plan-video-detail"),
+  planAudio: document.querySelector("#plan-audio"),
+  planAudioDetail: document.querySelector("#plan-audio-detail"),
   recommendedPlan: document.querySelector("#recommended-plan"),
   categoryCount: document.querySelector("#category-count"),
   categoryBars: document.querySelector("#category-bars"),
@@ -295,6 +300,14 @@ function renderCleanupPlan(audit, estimatedReducibleHuman) {
   elements.planLargeFilesDetail.textContent = opportunities.large_file_count
     ? `${opportunities.large_file_human} in large files needs manual review before moving.`
     : "No files over the large-file threshold were found.";
+  elements.planVideo.textContent = opportunities.video_optimization_human || "0.00 B";
+  elements.planVideoDetail.textContent = opportunities.video_optimization_count
+    ? `${opportunities.video_optimization_count} video files could benefit from H.265/HEVC re-encoding.`
+    : "Install FFprobe to estimate video savings, or scan a folder with video files.";
+  elements.planAudio.textContent = opportunities.audio_optimization_human || "0.00 B";
+  elements.planAudioDetail.textContent = opportunities.audio_optimization_count
+    ? `${opportunities.audio_optimization_count} audio files could benefit from OPUS conversion.`
+    : "Install FFprobe to estimate audio savings, or scan a folder with audio files.";
 }
 
 function renderCategories(audit) {
@@ -530,16 +543,29 @@ function selectReducibleImages() {
 
 function filterFiles() {
   const query = elements.filterInput.value.trim().toLowerCase();
-  state.filteredFiles = query
-    ? state.files.filter((file) => `${file.name} ${file.path} ${file.category}`.toLowerCase().includes(query))
-    : [...state.files];
+  const categoryQuery = query.startsWith("category:") ? query.replace("category:", "").trim() : elements.categoryFilter.value;
+  const textQuery = query.startsWith("category:") ? "" : query;
+  state.filteredFiles = state.files.filter((file) => {
+    const categoryMatches = categoryQuery ? file.category === categoryQuery : true;
+    const textMatches = textQuery
+      ? `${file.name} ${file.path} ${file.category}`.toLowerCase().includes(textQuery)
+      : true;
+    return categoryMatches && textMatches;
+  });
   renderFiles();
+}
+
+function applyCategoryFilter(category) {
+  elements.categoryFilter.value = category;
+  elements.filterInput.value = `category:${category}`;
+  filterFiles();
+  setWorkspaceView("files");
 }
 
 function renderFiles() {
   elements.fileCount.textContent = `${state.filteredFiles.length} files`;
   if (!state.filteredFiles.length) {
-    elements.fileTableBody.innerHTML = `<tr><td colspan='7'>${emptyState("table", state.audit ? "No files match the current filter" : "Files will appear here after scanning")}</td></tr>`;
+    elements.fileTableBody.innerHTML = `<tr><td colspan='8'>${emptyState("table", state.audit ? "No files match the current filter" : "Files will appear here after scanning")}</td></tr>`;
     updateSelectionSummary();
     return;
   }
@@ -553,6 +579,7 @@ function renderFiles() {
       const expected = supported
         ? `${file.reduction.estimated_saved_human} (${file.reduction.estimated_reduction_percent}%)`
         : "-";
+      const codec = codecLabel(file);
       return `
         <tr>
           <td class="select-cell">
@@ -565,6 +592,7 @@ function renderFiles() {
           <td>${escapeHtml(file.category)}</td>
           <td>${formatBytes(file.size_bytes)}</td>
           <td>${expected}</td>
+          <td>${codec}</td>
           <td><span class="${statusClass}">${statusText}</span></td>
           <td><button class="table-action" type="button" data-reveal-path="${escapeHtml(file.path)}">Reveal</button></td>
         </tr>
@@ -572,6 +600,20 @@ function renderFiles() {
     })
     .join("");
   updateSelectionSummary();
+}
+
+function codecLabel(file) {
+  const video = file.video_estimate || {};
+  if (video.codec_name) {
+    const size = video.width && video.height ? `${video.width}x${video.height}` : "video";
+    return `<span class="codec-pill video">${escapeHtml(video.codec_name.toUpperCase())} · ${escapeHtml(size)}</span>`;
+  }
+  const audio = file.audio_estimate || {};
+  if (audio.codec_name) {
+    const rate = audio.sample_rate ? `${audio.sample_rate}Hz` : "audio";
+    return `<span class="codec-pill audio">${escapeHtml(audio.codec_name.toUpperCase())} · ${escapeHtml(rate)}</span>`;
+  }
+  return "-";
 }
 
 function updateSelectionSummary() {
@@ -913,6 +955,7 @@ elements.qualityInput.addEventListener("input", () => {
   elements.qualityOutput.textContent = elements.qualityInput.value;
 });
 elements.filterInput.addEventListener("input", filterFiles);
+elements.categoryFilter.addEventListener("change", filterFiles);
 elements.reduceButton.addEventListener("click", reduceSelected);
 elements.convertWebpButton.addEventListener("click", convertSelectedToWebp);
 elements.quarantineButton.addEventListener("click", quarantineSelected);
@@ -959,6 +1002,11 @@ document.addEventListener("click", (event) => {
 });
 elements.form.addEventListener("submit", () => setSidebarOpen(false));
 elements.recommendedPlan.addEventListener("click", (event) => {
+  const categoryButton = event.target.closest("[data-category-filter]");
+  if (categoryButton) {
+    applyCategoryFilter(categoryButton.dataset.categoryFilter);
+    return;
+  }
   const viewButton = event.target.closest("[data-view-target]");
   if (viewButton) {
     setWorkspaceView(viewButton.dataset.viewTarget);

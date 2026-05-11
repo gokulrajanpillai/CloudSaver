@@ -158,3 +158,32 @@ def test_perceptual_scan_endpoint_degrades_when_dependency_missing(tmp_path):
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_scan_start_includes_media_opportunity_fields_when_ffprobe_missing(tmp_path):
+    root = tmp_path / "scan"
+    root.mkdir()
+    (root / "clip.mp4").write_bytes(b"not a real video")
+    (root / "song.flac").write_bytes(b"not real audio")
+
+    server, base_url = run_test_server()
+    try:
+        started = post_json(base_url, "/api/scan/start", {"path": str(root)})
+        deadline = time.time() + 5
+        result = None
+        while time.time() < deadline:
+            status = get_json(base_url, f"/api/scan/status?{urlencode({'job_id': started['job_id']})}")
+            if status["status"] == "complete":
+                result = status["result"]
+                break
+            time.sleep(0.05)
+
+        assert result is not None
+        opportunities = result["audit"]["opportunities"]
+        assert "video_optimization_bytes" in opportunities
+        assert "audio_optimization_bytes" in opportunities
+        assert opportunities["video_optimization_bytes"] >= 0
+        assert opportunities["audio_optimization_bytes"] >= 0
+    finally:
+        server.shutdown()
+        server.server_close()

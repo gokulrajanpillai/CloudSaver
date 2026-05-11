@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from html import escape
 from pathlib import Path
@@ -15,7 +16,7 @@ from typing import Callable, Iterable, List
 
 from PIL import Image
 
-from cloudsaver.config import IMAGE_EXPANSION, SMART_SCAN_FOUNDATION
+from cloudsaver.config import IMAGE_EXPANSION, MEDIA_ANALYSIS, SMART_SCAN_FOUNDATION
 from cloudsaver.history import load_file_cache, prune_file_cache, save_file_cache
 
 # Optional: install with `python -m pip install "cloudsaver[avif]"`.
@@ -69,6 +70,7 @@ if AVIF_AVAILABLE:
 DEFAULT_IMAGE_QUALITY = 82
 HASH_CHUNK_SIZE = 1024 * 1024
 OXIPNG_AVAILABLE = shutil.which("oxipng") is not None
+FFPROBE_AVAILABLE = shutil.which("ffprobe") is not None
 
 
 @dataclass
@@ -147,6 +149,158 @@ def hash_file_partial(
             file.seek(max(size - tail_bytes, 0))
             digest.update(file.read(tail_bytes))
     return digest.hexdigest()
+
+
+def probe_media_file(path: str | Path) -> dict | None:
+    """Return ffprobe JSON for a media file, or None when probing is unavailable."""
+
+    if not MEDIA_ANALYSIS or not FFPROBE_AVAILABLE:
+        return None
+    try:
+        completed = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "quiet",
+                "-print_format",
+                "json",
+                "-show_streams",
+                "-show_format",
+                str(path),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0 or not completed.stdout.strip():
+        return None
+    try:
+        return json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return None
+
+
+def _media_format_size(ffprobe_result: dict | None) -> int:
+    if not ffprobe_result:
+        return 0
+    try:
+        return int(float((ffprobe_result.get("format") or {}).get("size") or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def estimate_video_savings(ffprobe_result: dict | None) -> dict:
+    """Estimate video re-encoding savings from ffprobe stream metadata."""
+
+    empty = {
+        "codec_name": "",
+        "width": None,
+        "height": None,
+        "bit_rate": None,
+        "duration": None,
+        "estimated_hevc_savings_bytes": 0,
+        "estimated_av1_savings_bytes": 0,
+        "transcoding_recommended": False,
+        "container_format": "",
+    }
+    if not ffprobe_result:
+        return empty
+    streams = ffprobe_result.get("streams") or []
+    stream = next((item for item in streams if item.get("codec_type") == "video"), None)
+    if not stream:
+        return empty
+    size_bytes = _media_format_size(ffprobe_result)
+    codec = stream.get("codec_name") or ""
+    if codec in {"h264", "mpeg4", "wmv1", "wmv2", "wmv3"}:
+        hevc_rate = 0.45
+    elif codec == "vp9":
+        hevc_rate = 0.15
+    else:
+        hevc_rate = 0
+    av1_rate = 0 if codec == "av1" else 0.55
+    hevc_savings = int(size_bytes * hevc_rate)
+    av1_savings = int(size_bytes * av1_rate)
+    return {
+        "codec_name": codec,
+        "width": stream.get("width"),
+        "height": stream.get("height"),
+        "bit_rate": stream.get("bit_rate") or (ffprobe_result.get("format") or {}).get("bit_rate"),
+        "duration": stream.get("duration") or (ffprobe_result.get("format") or {}).get("duration"),
+        "estimated_hevc_savings_bytes": hevc_savings,
+        "estimated_av1_savings_bytes": av1_savings,
+        "transcoding_recommended": hevc_savings > LARGE_FILE_THRESHOLD_BYTES,
+        "container_format": (ffprobe_result.get("format") or {}).get("format_name") or "",
+    }
+
+
+def estimate_audio_savings(ffprobe_result: dict | None) -> dict:
+    """Estimate audio re-encoding savings from ffprobe stream metadata."""
+
+    empty = {
+        "codec_name": "",
+        "sample_rate": None,
+        "bit_rate": None,
+        "channels": None,
+        "duration": None,
+        "is_lossless": False,
+        "estimated_opus_savings_bytes": 0,
+    }
+    if not ffprobe_result:
+        return empty
+    streams = ffprobe_result.get("streams") or []
+    stream = next((item for item in streams if item.get("codec_type") == "audio"), None)
+    if not stream:
+        return empty
+    codec = stream.get("codec_name") or ""
+    size_bytes = _media_format_size(ffprobe_result)
+    is_lossless = codec == "flac" or codec == "wav" or codec.startswith("pcm")
+    try:
+        bit_rate = int(stream.get("bit_rate") or (ffprobe_result.get("format") or {}).get("bit_rate") or 0)
+    except (TypeError, ValueError):
+        bit_rate = 0
+    if is_lossless:
+        savings_rate = 0.85
+    elif codec != "opus" and bit_rate > 256000:
+        savings_rate = 0.40
+    else:
+        savings_rate = 0
+    return {
+        "codec_name": codec,
+        "sample_rate": stream.get("sample_rate"),
+        "bit_rate": bit_rate or None,
+        "channels": stream.get("channels"),
+        "duration": stream.get("duration") or (ffprobe_result.get("format") or {}).get("duration"),
+        "is_lossless": is_lossless,
+        "estimated_opus_savings_bytes": int(size_bytes * savings_rate),
+    }
+
+
+def _attach_media_probe(files: list[dict], cache: dict) -> None:
+    if not MEDIA_ANALYSIS:
+        return
+    media_files = [
+        file
+        for file in files
+        if file.get("mimeType", "").startswith(("video/", "audio/"))
+    ]
+    if not media_files:
+        return
+    for file in media_files:
+        cached = cache.get(file["id"]) if cache else None
+        if cached and cached.get("ffprobe_json") and file.get("cached_hash"):
+            file["media_probe"] = cached["ffprobe_json"]
+    to_probe = [file for file in media_files if "media_probe" not in file]
+    if not FFPROBE_AVAILABLE or not to_probe:
+        return
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        future_map = {executor.submit(probe_media_file, file["path"]): file for file in to_probe}
+        for future in as_completed(future_map):
+            probe = future.result()
+            if probe:
+                future_map[future]["media_probe"] = probe
 
 
 def scan_local_folder(
@@ -248,6 +402,8 @@ def scan_local_folder(
         print("❌ No files found in the selected folder.")
     else:
         print(f"✅ Found {len(files)} files.\n")
+    if MEDIA_ANALYSIS:
+        _attach_media_probe(files, cache)
     if SMART_SCAN_FOUNDATION and use_cache:
         if cache_db_path:
             save_file_cache(str(root), files, db_path=cache_db_path)
@@ -498,6 +654,11 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
                 "parents": file.get("parents") or ["root"],
             }
         )
+    for file in normalized_files:
+        if file["category"] == "video":
+            file["video_estimate"] = estimate_video_savings(file.get("media_probe"))
+        elif file["category"] == "audio":
+            file["audio_estimate"] = estimate_audio_savings(file.get("media_probe"))
 
     total_bytes = sum(file["size_bytes"] for file in normalized_files if file.get("included"))
     included_bytes = total_bytes
@@ -686,6 +847,24 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
         :top_n
     ]
     estimated_recoverable_bytes = duplicate_bytes + image_optimization_bytes
+    video_optimization_files = [
+        file
+        for file in normalized_files
+        if (file.get("video_estimate") or {}).get("transcoding_recommended")
+    ]
+    video_optimization_bytes = sum(
+        int((file.get("video_estimate") or {}).get("estimated_hevc_savings_bytes") or 0)
+        for file in video_optimization_files
+    )
+    audio_optimization_files = [
+        file
+        for file in normalized_files
+        if int((file.get("audio_estimate") or {}).get("estimated_opus_savings_bytes") or 0) > 0
+    ]
+    audio_optimization_bytes = sum(
+        int((file.get("audio_estimate") or {}).get("estimated_opus_savings_bytes") or 0)
+        for file in audio_optimization_files
+    )
     estimated_monthly_cost_avoided = estimate_monthly_storage_cost_usd(
         estimated_recoverable_bytes
     )
@@ -720,6 +899,12 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
             "large_file_human": human_readable_size(
                 sum(file["size_bytes"] for file in large_files)
             ),
+            "video_optimization_count": len(video_optimization_files),
+            "video_optimization_bytes": video_optimization_bytes,
+            "video_optimization_human": human_readable_size(video_optimization_bytes),
+            "audio_optimization_count": len(audio_optimization_files),
+            "audio_optimization_bytes": audio_optimization_bytes,
+            "audio_optimization_human": human_readable_size(audio_optimization_bytes),
             "estimated_recoverable_bytes": estimated_recoverable_bytes,
             "estimated_recoverable_human": human_readable_size(
                 estimated_recoverable_bytes

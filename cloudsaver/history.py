@@ -44,6 +44,12 @@ def connect_history(db_path: str | Path = DEFAULT_HISTORY_DB) -> sqlite3.Connect
         )
         """
     )
+    columns = {
+        row[1]
+        for row in connection.execute("PRAGMA table_info(file_cache)").fetchall()
+    }
+    if "ffprobe_json" not in columns:
+        connection.execute("ALTER TABLE file_cache ADD COLUMN ffprobe_json TEXT")
     return connection
 
 
@@ -132,6 +138,7 @@ def save_file_cache(
             or (file.get("duplicate_verification") or {}).get("content_hash"),
             float(file.get("atime", 0) or 0),
             now,
+            json.dumps(file.get("media_probe")) if file.get("media_probe") else None,
         )
         for file in files
         if file.get("id")
@@ -148,15 +155,17 @@ def save_file_cache(
                 size_bytes,
                 sha256,
                 atime,
-                last_seen
+                last_seen,
+                ffprobe_json
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(root_path, relative_id) DO UPDATE SET
                 mtime = excluded.mtime,
                 size_bytes = excluded.size_bytes,
                 sha256 = excluded.sha256,
                 atime = excluded.atime,
-                last_seen = excluded.last_seen
+                last_seen = excluded.last_seen,
+                ffprobe_json = excluded.ffprobe_json
             """,
             rows,
         )
@@ -171,7 +180,7 @@ def load_file_cache(
     with connect_history(db_path) as connection:
         rows = connection.execute(
             """
-            SELECT relative_id, mtime, size_bytes, sha256, atime, last_seen
+            SELECT relative_id, mtime, size_bytes, sha256, atime, last_seen, ffprobe_json
             FROM file_cache
             WHERE root_path = ?
             """,
@@ -185,6 +194,7 @@ def load_file_cache(
             "sha256": row[3],
             "atime": row[4],
             "last_seen": row[5],
+            "ffprobe_json": json.loads(row[6]) if row[6] else None,
         }
         for row in rows
     }

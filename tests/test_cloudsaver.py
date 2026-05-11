@@ -8,8 +8,10 @@ from cloudsaver.core import (
     attach_duplicate_verification,
     build_storage_audit,
     convert_image_format,
-    estimate_reduction_for_file,
+    estimate_audio_savings,
     estimate_monthly_storage_cost_usd,
+    estimate_reduction_for_file,
+    estimate_video_savings,
     export_storage_audit_dashboard,
     export_to_json_file,
     hash_file_partial,
@@ -432,6 +434,89 @@ def test_perceptual_duplicates_gracefully_degrade_without_optional_dependency(tm
 
     with patch("cloudsaver.core.PERCEPTUAL_HASH_AVAILABLE", False):
         assert find_perceptual_duplicates(files) == []
+
+
+def test_estimate_video_savings_for_h264_probe():
+    probe = {
+        "streams": [
+            {
+                "codec_type": "video",
+                "codec_name": "h264",
+                "width": 3840,
+                "height": 2160,
+                "bit_rate": "20000000",
+                "duration": "120",
+            }
+        ],
+        "format": {"size": str(300 * 1024 * 1024), "format_name": "mp4"},
+    }
+
+    estimate = estimate_video_savings(probe)
+
+    assert estimate["codec_name"] == "h264"
+    assert estimate["estimated_hevc_savings_bytes"] > 100 * 1024 * 1024
+    assert estimate["transcoding_recommended"] is True
+
+
+def test_estimate_audio_savings_for_flac_probe():
+    probe = {
+        "streams": [
+            {
+                "codec_type": "audio",
+                "codec_name": "flac",
+                "sample_rate": "48000",
+                "channels": 2,
+                "duration": "90",
+            }
+        ],
+        "format": {"size": str(80 * 1024 * 1024), "bit_rate": "4000000"},
+    }
+
+    estimate = estimate_audio_savings(probe)
+
+    assert estimate["codec_name"] == "flac"
+    assert estimate["is_lossless"] is True
+    assert estimate["estimated_opus_savings_bytes"] > 0
+
+
+def test_build_storage_audit_includes_video_audio_opportunities():
+    video_probe = {
+        "streams": [{"codec_type": "video", "codec_name": "h264", "width": 1920, "height": 1080}],
+        "format": {"size": str(400 * 1024 * 1024), "format_name": "mp4"},
+    }
+    audio_probe = {
+        "streams": [{"codec_type": "audio", "codec_name": "flac", "sample_rate": "44100"}],
+        "format": {"size": str(40 * 1024 * 1024), "bit_rate": "2000000"},
+    }
+    audit = build_storage_audit(
+        [
+            {
+                "id": "video.mp4",
+                "name": "video.mp4",
+                "path": "/tmp/video.mp4",
+                "size_bytes": 400 * 1024 * 1024,
+                "mimeType": "video/mp4",
+                "included": True,
+                "parents": ["root"],
+                "media_probe": video_probe,
+            },
+            {
+                "id": "audio.flac",
+                "name": "audio.flac",
+                "path": "/tmp/audio.flac",
+                "size_bytes": 40 * 1024 * 1024,
+                "mimeType": "audio/flac",
+                "included": True,
+                "parents": ["root"],
+                "media_probe": audio_probe,
+            },
+        ]
+    )
+
+    assert audit["opportunities"]["video_optimization_count"] == 1
+    assert audit["opportunities"]["video_optimization_bytes"] > 0
+    assert audit["opportunities"]["audio_optimization_count"] == 1
+    assert audit["opportunities"]["audio_optimization_bytes"] > 0
 
 
 def test_quarantine_selected_files_can_restore(tmp_path):
