@@ -18,7 +18,7 @@ def run_test_server():
 
 def get_json(base_url, path):
     with urlopen(f"{base_url}{path}", timeout=5) as response:
-      return json.loads(response.read().decode("utf-8"))
+        return json.loads(response.read().decode("utf-8"))
 
 
 def post_json(base_url, path, payload):
@@ -92,7 +92,13 @@ def test_scan_start_completes_for_temp_directory(tmp_path):
         assert result is not None
         assert result["root_path"] == str(root.resolve())
         assert result["audit"]["summary"]["file_count"] == 1
+        assert "included_count" in result["audit"]["summary"]
+        assert "hardlink_count" in result["audit"]["summary"]
+        assert "sparse_file_count" in result["audit"]["summary"]
+        assert "cache_hits" in status
         assert result["files"][0]["name"] == "notes.txt"
+        assert "atime" in result["files"][0]
+        assert "mtime" in result["files"][0]
     finally:
         server.shutdown()
         server.server_close()

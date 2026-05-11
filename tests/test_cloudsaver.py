@@ -1,5 +1,6 @@
 import json
 import os
+import pytest
 from unittest.mock import patch
 
 from cloudsaver.core import (
@@ -10,6 +11,7 @@ from cloudsaver.core import (
     estimate_monthly_storage_cost_usd,
     export_storage_audit_dashboard,
     export_to_json_file,
+    hash_file_partial,
     quarantine_selected_files,
     reduce_selected_images,
     restore_quarantine,
@@ -72,6 +74,7 @@ def test_scan_local_folder_reports_progress(tmp_path):
     assert progress_events
     assert progress_events[-1]["files_scanned"] == 1
     assert progress_events[-1]["current_path"].endswith("notes.txt")
+    assert "cache_hits" in progress_events[-1]
 
 
 def test_scan_local_folder_skips_review_folder(tmp_path):
@@ -85,6 +88,69 @@ def test_scan_local_folder_skips_review_folder(tmp_path):
     files = scan_local_folder(str(tmp_path))
 
     assert [file["id"] for file in files] == ["keep.txt"]
+
+
+def test_scan_local_folder_marks_hardlinks_and_audit_excludes_duplicate_inode(tmp_path):
+    original = tmp_path / "original.bin"
+    hardlink = tmp_path / "hardlink.bin"
+    original.write_bytes(b"same-inode")
+    try:
+        os.link(original, hardlink)
+    except OSError:
+        pytest.skip("hardlinks are not supported on this filesystem")
+
+    files = scan_local_folder(str(tmp_path), use_cache=False)
+    audit = build_storage_audit(files)
+
+    assert len(files) == 2
+    assert any(file.get("hardlink") is True and file.get("included") is False for file in files)
+    assert audit["summary"]["hardlink_count"] == 1
+    assert audit["summary"]["hardlink_bytes_saved"] == original.stat().st_size
+    assert audit["summary"]["total_bytes"] == original.stat().st_size
+
+
+def test_scan_local_folder_adds_sparse_and_timestamp_metadata(tmp_path):
+    sparse = tmp_path / "sparse.bin"
+    with open(sparse, "wb") as file:
+        file.seek((1024 * 1024) - 1)
+        file.write(b"\0")
+
+    files = scan_local_folder(str(tmp_path), use_cache=False)
+
+    assert files[0]["atime"] > 0
+    assert files[0]["mtime"] > 0
+    assert files[0]["blocks_bytes"] >= 0
+    assert "is_sparse" in files[0]
+
+
+def test_build_storage_audit_ignores_sparse_files_for_duplicates(tmp_path):
+    files = [
+        {
+            "id": "a.bin",
+            "name": "same.bin",
+            "path": str(tmp_path / "a.bin"),
+            "size_bytes": 1024,
+            "mimeType": "application/octet-stream",
+            "included": True,
+            "parents": ["root"],
+            "is_sparse": True,
+        },
+        {
+            "id": "b.bin",
+            "name": "same.bin",
+            "path": str(tmp_path / "b.bin"),
+            "size_bytes": 1024,
+            "mimeType": "application/octet-stream",
+            "included": True,
+            "parents": ["root"],
+            "is_sparse": True,
+        },
+    ]
+
+    audit = build_storage_audit(files)
+
+    assert audit["summary"]["sparse_file_count"] == 2
+    assert audit["duplicate_candidates"] == []
 
 
 def test_build_storage_audit_summarizes_opportunities():
@@ -163,7 +229,7 @@ def test_scan_history_persists_recent_scans(tmp_path):
 def test_duplicate_verification_confirms_matching_file_content(tmp_path):
     first_dir = tmp_path / "first"
     second_dir = tmp_path / "second"
-    first_dir.mkdir()
+    first_dir.mkdir(parents=True)
     second_dir.mkdir()
     first = first_dir / "copy.txt"
     second = second_dir / "copy.txt"
@@ -177,6 +243,38 @@ def test_duplicate_verification_confirms_matching_file_content(tmp_path):
     assert audit["opportunities"]["duplicate_count"] == 1
     assert audit["duplicate_candidates"][0]["verification_status"] == "verified"
     assert audit["duplicate_candidates"][0]["verification_algorithm"] == "sha256"
+
+
+def test_build_storage_audit_detects_cross_name_duplicates(tmp_path):
+    first = tmp_path / "first.txt"
+    second = tmp_path / "second.txt"
+    first.write_text("same content")
+    second.write_text("same content")
+
+    files = scan_local_folder(str(tmp_path), use_cache=False)
+    verified_files = attach_duplicate_verification(files)
+    audit = build_storage_audit(verified_files)
+
+    assert audit["opportunities"]["duplicate_count"] == 1
+    assert audit["duplicate_candidates"][0]["verification_status"] == "cross-name"
+    assert audit["duplicate_candidates"][0]["confidence"] == "high"
+
+
+def test_partial_hash_rejects_same_name_size_different_content(tmp_path):
+    first_dir = tmp_path / "first"
+    second_dir = tmp_path / "second"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    first = first_dir / "copy.txt"
+    second = second_dir / "copy.txt"
+    first.write_text("aa")
+    second.write_text("bb")
+
+    assert hash_file_partial(first) != hash_file_partial(second)
+    files = scan_local_folder(str(tmp_path), use_cache=False)
+    verified_files = attach_duplicate_verification(files)
+
+    assert {file["duplicate_verification"]["status"] for file in verified_files} == {"rejected"}
 
 
 def test_duplicate_verification_rejects_same_name_and_size_with_different_content(tmp_path):
@@ -195,6 +293,26 @@ def test_duplicate_verification_rejects_same_name_and_size_with_different_conten
 
     assert audit["opportunities"]["duplicate_count"] == 0
     assert audit["duplicate_candidates"] == []
+
+
+def test_scan_cache_reuses_hashes_for_unchanged_files(tmp_path):
+    root = tmp_path / "scan"
+    first_dir = root / "first"
+    second_dir = root / "second"
+    first_dir.mkdir(parents=True)
+    second_dir.mkdir()
+    (first_dir / "copy.txt").write_text("same content")
+    (second_dir / "copy.txt").write_text("same content")
+    db_path = tmp_path / "history.sqlite3"
+
+    first_scan = scan_local_folder(str(root), cache_db_path=db_path)
+    attach_duplicate_verification(first_scan, cache_db_path=db_path)
+    progress_events = []
+    second_scan = scan_local_folder(str(root), progress_events.append, cache_db_path=db_path)
+
+    assert len(second_scan) == 2
+    assert all(file.get("cached_hash") for file in second_scan)
+    assert progress_events[-1]["cache_hits"] == 2
 
 
 def test_export_storage_audit_dashboard_creates_json_and_html(tmp_path):

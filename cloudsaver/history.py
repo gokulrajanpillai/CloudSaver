@@ -30,6 +30,20 @@ def connect_history(db_path: str | Path = DEFAULT_HISTORY_DB) -> sqlite3.Connect
         )
         """
     )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS file_cache (
+            root_path TEXT NOT NULL,
+            relative_id TEXT NOT NULL,
+            mtime REAL NOT NULL,
+            size_bytes INTEGER NOT NULL,
+            sha256 TEXT,
+            atime REAL,
+            last_seen REAL NOT NULL,
+            PRIMARY KEY (root_path, relative_id)
+        )
+        """
+    )
     return connection
 
 
@@ -98,3 +112,102 @@ def list_scan_history(
         }
         for row in rows
     ]
+
+
+def save_file_cache(
+    root_path: str,
+    files: list[dict[str, Any]],
+    db_path: str | Path = DEFAULT_HISTORY_DB,
+) -> None:
+    """Upsert file metadata used to skip unchanged hash work on future scans."""
+
+    now = time.time()
+    rows = [
+        (
+            root_path,
+            file.get("id") or "",
+            float(file.get("mtime", 0) or 0),
+            int(file.get("size_bytes", 0) or 0),
+            file.get("cached_hash")
+            or (file.get("duplicate_verification") or {}).get("content_hash"),
+            float(file.get("atime", 0) or 0),
+            now,
+        )
+        for file in files
+        if file.get("id")
+    ]
+    if not rows:
+        return
+    with connect_history(db_path) as connection:
+        connection.executemany(
+            """
+            INSERT INTO file_cache (
+                root_path,
+                relative_id,
+                mtime,
+                size_bytes,
+                sha256,
+                atime,
+                last_seen
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(root_path, relative_id) DO UPDATE SET
+                mtime = excluded.mtime,
+                size_bytes = excluded.size_bytes,
+                sha256 = excluded.sha256,
+                atime = excluded.atime,
+                last_seen = excluded.last_seen
+            """,
+            rows,
+        )
+
+
+def load_file_cache(
+    root_path: str,
+    db_path: str | Path = DEFAULT_HISTORY_DB,
+) -> dict[str, dict[str, Any]]:
+    """Return cached file metadata keyed by scan-relative id."""
+
+    with connect_history(db_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT relative_id, mtime, size_bytes, sha256, atime, last_seen
+            FROM file_cache
+            WHERE root_path = ?
+            """,
+            (root_path,),
+        ).fetchall()
+
+    return {
+        row[0]: {
+            "mtime": row[1],
+            "size_bytes": row[2],
+            "sha256": row[3],
+            "atime": row[4],
+            "last_seen": row[5],
+        }
+        for row in rows
+    }
+
+
+def prune_file_cache(
+    root_path: str,
+    current_ids: set[str] | list[str],
+    db_path: str | Path = DEFAULT_HISTORY_DB,
+) -> None:
+    """Remove cached rows not present in the current scan."""
+
+    current_ids = set(current_ids)
+    with connect_history(db_path) as connection:
+        if not current_ids:
+            connection.execute("DELETE FROM file_cache WHERE root_path = ?", (root_path,))
+            return
+        placeholders = ",".join("?" for _ in current_ids)
+        connection.execute(
+            f"""
+            DELETE FROM file_cache
+            WHERE root_path = ?
+            AND relative_id NOT IN ({placeholders})
+            """,
+            (root_path, *current_ids),
+        )
