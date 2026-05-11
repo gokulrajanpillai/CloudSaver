@@ -18,3 +18,4 @@ def feature_enabled(feature_name: str, default: bool = True) -> bool:
 
 SMART_SCAN_FOUNDATION = feature_enabled("SMART_SCAN_FOUNDATION")
 IMAGE_EXPANSION = feature_enabled("IMAGE_EXPANSION")
+MEDIA_ANALYSIS = feature_enabled("MEDIA_ANALYSIS")
