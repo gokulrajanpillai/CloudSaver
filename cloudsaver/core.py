@@ -14,6 +14,9 @@ from typing import Callable, Iterable, List
 
 from PIL import Image
 
+from cloudsaver.config import SMART_SCAN_FOUNDATION
+from cloudsaver.history import load_file_cache, prune_file_cache, save_file_cache
+
 
 APP_DATA_DIR = Path(os.environ.get("CLOUDSAVER_HOME", Path.home() / ".cloudsaver")).expanduser()
 OUTPUT_DIR = str(APP_DATA_DIR / "output")
@@ -95,8 +98,30 @@ def hash_file_sha256(path: str | Path) -> str:
     return digest.hexdigest()
 
 
+def hash_file_partial(
+    path: str | Path,
+    head_bytes: int = 65536,
+    tail_bytes: int = 65536,
+) -> str:
+    """Return a quick SHA-256 digest of the first and last bytes of a file."""
+
+    path = Path(path)
+    size = path.stat().st_size
+    digest = hashlib.sha256()
+    with open(path, "rb") as file:
+        head = file.read(head_bytes)
+        digest.update(head)
+        if size > head_bytes:
+            file.seek(max(size - tail_bytes, 0))
+            digest.update(file.read(tail_bytes))
+    return digest.hexdigest()
+
+
 def scan_local_folder(
-    root_path: str, progress_callback: Callable[[dict], None] | None = None
+    root_path: str,
+    progress_callback: Callable[[dict], None] | None = None,
+    use_cache: bool = True,
+    cache_db_path: str | Path | None = None,
 ) -> List[dict]:
     """Scan a local or mounted folder and return file metadata for audits."""
 
@@ -108,6 +133,12 @@ def scan_local_folder(
 
     files: List[dict] = []
     count = 0
+    cache_hits = 0
+    seen_inodes = set()
+    cache = {}
+    if SMART_SCAN_FOUNDATION and use_cache:
+        cache = load_file_cache(str(root), db_path=cache_db_path) if cache_db_path else load_file_cache(str(root))
+
     print(f"📦 Scanning local folder: {root}")
     for current_root, dirnames, filenames in os.walk(root):
         dirnames[:] = [dirname for dirname in dirnames if dirname != QUARANTINE_DIR_NAME]
@@ -125,16 +156,49 @@ def scan_local_folder(
             relative_path = path.relative_to(root)
             relative_id = relative_path.as_posix()
             parent = relative_path.parent.as_posix() if str(relative_path.parent) != "." else "root"
+            blocks_bytes = int(getattr(stat, "st_blocks", 0) or 0) * 512
+            if blocks_bytes <= 0:
+                blocks_bytes = int(stat.st_size)
+            inode_key = (getattr(stat, "st_dev", None), getattr(stat, "st_ino", None))
+            hardlink = (
+                SMART_SCAN_FOUNDATION
+                and inode_key[0] is not None
+                and inode_key[1] is not None
+                and inode_key in seen_inodes
+            )
+            if SMART_SCAN_FOUNDATION and inode_key[0] is not None and inode_key[1] is not None:
+                seen_inodes.add(inode_key)
             local_file = LocalFile(
                 id=relative_id,
                 name=path.name,
                 path=str(path),
                 size_bytes=stat.st_size,
                 mimeType=guess_mime_type(path),
-                included=True,
+                included=not hardlink,
                 parents=[parent],
             )
-            files.append(asdict(local_file))
+            file_dict = asdict(local_file)
+            if SMART_SCAN_FOUNDATION:
+                file_dict.update(
+                    {
+                        "hardlink": hardlink,
+                        "blocks_bytes": blocks_bytes,
+                        "is_sparse": bool(stat.st_size > 0 and blocks_bytes < stat.st_size * 0.5),
+                        "atime": float(stat.st_atime),
+                        "mtime": float(stat.st_mtime),
+                        "scan_root": str(root),
+                    }
+                )
+                cached = cache.get(relative_id)
+                if (
+                    cached
+                    and float(cached.get("mtime", 0) or 0) == float(stat.st_mtime)
+                    and int(cached.get("size_bytes", 0) or 0) == int(stat.st_size)
+                    and cached.get("sha256")
+                ):
+                    file_dict["cached_hash"] = cached["sha256"]
+                    cache_hits += 1
+            files.append(file_dict)
             count += 1
             if progress_callback:
                 progress_callback(
@@ -142,6 +206,7 @@ def scan_local_folder(
                         "files_scanned": count,
                         "current_path": str(path),
                         "current_folder": str(current_dir),
+                        "cache_hits": cache_hits,
                     }
                 )
             if count % 50 == 0:
@@ -151,6 +216,13 @@ def scan_local_folder(
         print("❌ No files found in the selected folder.")
     else:
         print(f"✅ Found {len(files)} files.\n")
+    if SMART_SCAN_FOUNDATION and use_cache:
+        if cache_db_path:
+            save_file_cache(str(root), files, db_path=cache_db_path)
+            prune_file_cache(str(root), {file["id"] for file in files}, db_path=cache_db_path)
+        else:
+            save_file_cache(str(root), files)
+            prune_file_cache(str(root), {file["id"] for file in files})
     return files
 
 
@@ -219,14 +291,17 @@ def attach_reduction_estimates(
     ]
 
 
-def attach_duplicate_verification(files: Iterable[dict]) -> List[dict]:
+def attach_duplicate_verification(
+    files: Iterable[dict],
+    cache_db_path: str | Path | None = None,
+) -> List[dict]:
     """Hash duplicate candidates so readable matches can be treated as verified."""
 
     normalized_files = list(files)
     candidate_groups = {}
     for file in normalized_files:
         size_bytes = int(file.get("size_bytes", 0) or 0)
-        if size_bytes <= 0:
+        if size_bytes <= 0 or file.get("is_sparse") or file.get("included") is False:
             continue
         key = (file.get("name") or "Untitled", size_bytes)
         candidate_groups.setdefault(key, []).append(file)
@@ -237,15 +312,49 @@ def attach_duplicate_verification(files: Iterable[dict]) -> List[dict]:
         if len(group) > 1
         for file in group
     }
+    partial_candidates = set()
+    if SMART_SCAN_FOUNDATION:
+        for group in candidate_groups.values():
+            if len(group) <= 1:
+                continue
+            if any(file.get("cached_hash") for file in group):
+                partial_candidates.update(id(file) for file in group)
+                continue
+            partial_groups = {}
+            for file in group:
+                try:
+                    partial_hash = hash_file_partial(file.get("path") or "")
+                except OSError:
+                    partial_hash = None
+                if partial_hash:
+                    partial_groups.setdefault(partial_hash, []).append(file)
+            partial_candidates.update(
+                id(file)
+                for partial_group in partial_groups.values()
+                if len(partial_group) > 1
+                for file in partial_group
+            )
+
     verified_files = []
     for file in normalized_files:
         if id(file) not in candidate_ids:
             verified_files.append(file)
             continue
+        if SMART_SCAN_FOUNDATION and id(file) not in partial_candidates and not file.get("cached_hash"):
+            verified_files.append(
+                {
+                    **file,
+                    "duplicate_verification": {
+                        "status": "rejected",
+                        "algorithm": "partial-sha256",
+                    },
+                }
+            )
+            continue
 
         path = file.get("path") or ""
         try:
-            content_hash = hash_file_sha256(path)
+            content_hash = file.get("cached_hash") or hash_file_sha256(path)
         except OSError as error:
             verified_files.append(
                 {
@@ -268,6 +377,14 @@ def attach_duplicate_verification(files: Iterable[dict]) -> List[dict]:
                 },
             }
         )
+    if SMART_SCAN_FOUNDATION:
+        roots = {file.get("scan_root") for file in verified_files if file.get("scan_root")}
+        for root in roots:
+            root_files = [file for file in verified_files if file.get("scan_root") == root]
+            if cache_db_path:
+                save_file_cache(str(root), root_files, db_path=cache_db_path)
+            else:
+                save_file_cache(str(root), root_files)
     return verified_files
 
 
@@ -339,15 +456,19 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
             }
         )
 
-    total_bytes = sum(file["size_bytes"] for file in normalized_files)
-    included_bytes = sum(file["size_bytes"] for file in normalized_files if file.get("included"))
+    total_bytes = sum(file["size_bytes"] for file in normalized_files if file.get("included"))
+    included_bytes = total_bytes
+    hardlink_files = [file for file in normalized_files if file.get("hardlink")]
+    sparse_files = [file for file in normalized_files if file.get("is_sparse")]
+    sparse_bytes_nominal = sum(file["size_bytes"] for file in sparse_files)
 
     by_category = {}
     for file in normalized_files:
         category = file["category"]
         category_summary = by_category.setdefault(category, {"count": 0, "bytes": 0})
         category_summary["count"] += 1
-        category_summary["bytes"] += file["size_bytes"]
+        if file.get("included"):
+            category_summary["bytes"] += file["size_bytes"]
 
     by_category = dict(
         sorted(by_category.items(), key=lambda item: item[1]["bytes"], reverse=True)
@@ -358,7 +479,8 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
         for parent in file["parents"]:
             folder_summary = by_folder.setdefault(parent, {"count": 0, "bytes": 0})
             folder_summary["count"] += 1
-            folder_summary["bytes"] += file["size_bytes"]
+            if file.get("included"):
+                folder_summary["bytes"] += file["size_bytes"]
 
     top_folders = [
         {"folder_id": folder_id, **summary}
@@ -369,15 +491,43 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
 
     duplicate_groups = {}
     for file in normalized_files:
-        if file["size_bytes"] <= 0:
+        if (
+            file["size_bytes"] <= 0
+            or file.get("included") is False
+            or file.get("is_sparse")
+        ):
             continue
         key = (file["name"], file["size_bytes"])
         duplicate_groups.setdefault(key, []).append(file)
 
     duplicate_candidates = []
     duplicate_extra_ids = set()
+    duplicate_member_ids = set()
     duplicate_bytes = 0
     duplicate_count = 0
+
+    def add_duplicate_candidate(name: str, size_bytes: int, candidate_set: dict) -> None:
+        nonlocal duplicate_bytes, duplicate_count
+        candidate_files = candidate_set["files"]
+        extra_files = candidate_files[1:]
+        recoverable_bytes = sum(file["size_bytes"] for file in extra_files)
+        duplicate_member_ids.update(file.get("id") or file.get("path") for file in candidate_files)
+        duplicate_extra_ids.update(file.get("id") or file.get("path") for file in extra_files)
+        duplicate_count += len(extra_files)
+        duplicate_bytes += recoverable_bytes
+        duplicate_candidates.append(
+            {
+                "name": name,
+                "size_bytes": size_bytes,
+                "copies": len(candidate_files),
+                "recoverable_bytes": recoverable_bytes,
+                "verification_status": candidate_set["verification_status"],
+                "verification_algorithm": candidate_set["verification_algorithm"],
+                "confidence": candidate_set["confidence"],
+                "files": candidate_files,
+            }
+        )
+
     for (name, size_bytes), group in duplicate_groups.items():
         if len(group) <= 1:
             continue
@@ -389,7 +539,7 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
             content_hash = verification.get("content_hash")
             if verification.get("status") == "verified" and content_hash:
                 verified_groups.setdefault(content_hash, []).append(file)
-            else:
+            elif verification.get("status") != "rejected":
                 unverified_group.append(file)
 
         candidate_sets = [
@@ -413,24 +563,56 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
             )
 
         for candidate_set in candidate_sets:
-            candidate_files = candidate_set["files"]
-            extra_files = candidate_files[1:]
-            recoverable_bytes = sum(file["size_bytes"] for file in extra_files)
-            duplicate_extra_ids.update(file.get("id") or file.get("path") for file in extra_files)
-            duplicate_count += len(extra_files)
-            duplicate_bytes += recoverable_bytes
-            duplicate_candidates.append(
-                {
-                    "name": name,
-                    "size_bytes": size_bytes,
-                    "copies": len(candidate_files),
-                    "recoverable_bytes": recoverable_bytes,
-                    "verification_status": candidate_set["verification_status"],
-                    "verification_algorithm": candidate_set["verification_algorithm"],
-                    "confidence": candidate_set["confidence"],
-                    "files": candidate_files,
-                }
-            )
+            add_duplicate_candidate(name, size_bytes, candidate_set)
+
+    if SMART_SCAN_FOUNDATION:
+        cross_name_groups = {}
+        for file in normalized_files:
+            file_key = file.get("id") or file.get("path")
+            if (
+                file["size_bytes"] <= 0
+                or file.get("included") is False
+                or file.get("is_sparse")
+                or file_key in duplicate_member_ids
+            ):
+                continue
+            cross_name_groups.setdefault(file["size_bytes"], []).append(file)
+
+        for size_bytes, group in cross_name_groups.items():
+            if len(group) <= 1 or len({file["name"] for file in group}) <= 1:
+                continue
+            hash_groups = {}
+            for file in group:
+                verification = file.get("duplicate_verification") or {}
+                content_hash = verification.get("content_hash")
+                if not content_hash:
+                    try:
+                        content_hash = file.get("cached_hash") or hash_file_sha256(file.get("path") or "")
+                    except OSError:
+                        continue
+                hash_groups.setdefault(content_hash, []).append(
+                    {
+                        **file,
+                        "duplicate_verification": {
+                            "status": "verified",
+                            "algorithm": "sha256",
+                            "content_hash": content_hash,
+                        },
+                    }
+                )
+            for hash_group in hash_groups.values():
+                if len(hash_group) <= 1:
+                    continue
+                add_duplicate_candidate(
+                    hash_group[0]["name"],
+                    size_bytes,
+                    {
+                        "files": hash_group,
+                        "verification_status": "cross-name",
+                        "verification_algorithm": "sha256",
+                        "confidence": "high",
+                    },
+                )
 
     duplicate_candidates.sort(key=lambda group: group["recoverable_bytes"], reverse=True)
 
@@ -469,9 +651,14 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
         "summary": {
             "file_count": len(normalized_files),
             "total_bytes": total_bytes,
+            "included_count": sum(1 for file in normalized_files if file.get("included")),
             "included_bytes": included_bytes,
             "total_human": human_readable_size(total_bytes),
             "included_human": human_readable_size(included_bytes),
+            "hardlink_count": len(hardlink_files),
+            "hardlink_bytes_saved": sum(file["size_bytes"] for file in hardlink_files),
+            "sparse_file_count": len(sparse_files),
+            "sparse_bytes_nominal": sparse_bytes_nominal,
         },
         "by_category": by_category,
         "top_files": top_files,
