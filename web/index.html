@@ -162,6 +162,7 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v12H7a2 2 0 0 1-2-2zm2 2v10h12V6zm3 2 2 2.5L14 8l3 4H9zM3 8h2v10h10v2H5a2 2 0 0 1-2-2z"/></svg>
               <span>Create reduced copies</span>
             </button>
+            <button id="convert-webp-button" class="secondary-action" type="button" disabled>Convert to WebP</button>
             <button id="quarantine-button" class="danger-action" type="button" disabled>Move to review</button>
             <p id="selection-summary">Select reducible files after scanning.</p>
           </div>
@@ -265,6 +266,18 @@
         <div id="duplicate-list" class="duplicate-list">
           <div class="empty-state duplicate-empty"><svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="8" width="30" height="36" rx="4"/><rect x="10" y="18" width="30" height="36" rx="4"/><line x1="16" y1="30" x2="34" y2="30"/><line x1="16" y1="37" x2="28" y2="37"/></svg><strong>No duplicates found yet</strong></div>
         </div>
+        <section class="similar-panel" aria-label="Similar images">
+          <div class="panel-heading">
+            <div>
+              <h2>Similar Images (Perceptual)</h2>
+              <span id="perceptual-count">Not scanned</span>
+            </div>
+            <button id="perceptual-scan-button" class="tertiary-action compact-action" type="button" disabled>Find similar images</button>
+          </div>
+          <div id="perceptual-list" class="duplicate-list">
+            <div class="empty-state duplicate-empty"><svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="8" width="30" height="36" rx="4"/><rect x="10" y="18" width="30" height="36" rx="4"/><line x1="16" y1="30" x2="34" y2="30"/><line x1="16" y1="37" x2="28" y2="37"/></svg><strong>Run a scan to find similar images</strong></div>
+          </div>
+        </section>
       </section>
 
       <section id="files" class="panel file-panel workspace-view" data-view="files">
