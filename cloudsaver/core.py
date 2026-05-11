@@ -6,6 +6,7 @@ import json
 import mimetypes
 import os
 import shutil
+import subprocess
 import time
 from dataclasses import asdict, dataclass
 from html import escape
@@ -14,8 +15,36 @@ from typing import Callable, Iterable, List
 
 from PIL import Image
 
-from cloudsaver.config import SMART_SCAN_FOUNDATION
+from cloudsaver.config import IMAGE_EXPANSION, SMART_SCAN_FOUNDATION
 from cloudsaver.history import load_file_cache, prune_file_cache, save_file_cache
+
+# Optional: install with `python -m pip install "cloudsaver[avif]"`.
+try:
+    import pillow_avif  # noqa: F401
+
+    AVIF_AVAILABLE = True
+except ImportError:
+    AVIF_AVAILABLE = False
+
+# Optional: install with `python -m pip install "cloudsaver[image_extras]"`.
+try:
+    import piexif
+
+    PIEXIF_AVAILABLE = True
+except ImportError:
+    piexif = None
+    PIEXIF_AVAILABLE = False
+
+# Optional: install with `python -m pip install "cloudsaver[image_extras]"`.
+try:
+    import imagehash
+    from PIL import Image as _PilImage
+
+    PERCEPTUAL_HASH_AVAILABLE = True
+except ImportError:
+    imagehash = None
+    _PilImage = None
+    PERCEPTUAL_HASH_AVAILABLE = False
 
 
 APP_DATA_DIR = Path(os.environ.get("CLOUDSAVER_HOME", Path.home() / ".cloudsaver")).expanduser()
@@ -35,8 +64,11 @@ SUPPORTED_IMAGE_MIME_TYPES = {
     "image/bmp",
     "image/tiff",
 }
+if AVIF_AVAILABLE:
+    SUPPORTED_IMAGE_MIME_TYPES.add("image/avif")
 DEFAULT_IMAGE_QUALITY = 82
 HASH_CHUNK_SIZE = 1024 * 1024
+OXIPNG_AVAILABLE = shutil.which("oxipng") is not None
 
 
 @dataclass
@@ -261,6 +293,13 @@ def estimate_reduction_for_file(
 
     quality_adjustment = max(0.6, min(1.2, (92 - quality) / 18 + 0.75))
     estimated_saved_bytes = int(size_bytes * min(base_rate * quality_adjustment, 0.72))
+    target_format = None
+    format_conversion_available = IMAGE_EXPANSION and mime_type in {"image/jpeg", "image/png"}
+    if format_conversion_available:
+        target_format = "webp"
+        if mime_type == "image/jpeg":
+            webp_after = int((size_bytes - estimated_saved_bytes) * (1 - 0.28))
+            estimated_saved_bytes = max(estimated_saved_bytes, size_bytes - webp_after)
     estimated_after_bytes = max(size_bytes - estimated_saved_bytes, 0)
 
     return {
@@ -269,6 +308,10 @@ def estimate_reduction_for_file(
         "estimated_saved_bytes": estimated_saved_bytes,
         "estimated_saved_human": human_readable_size(estimated_saved_bytes),
         "estimated_reduction_percent": round((estimated_saved_bytes / size_bytes) * 100, 1),
+        "format_conversion_available": format_conversion_available,
+        "target_format": target_format,
+        "avif_available": AVIF_AVAILABLE,
+        "estimated_exif_bytes": 48 * 1024 if mime_type == "image/jpeg" else 0,
         "max_resolution": f"{max_resolution[0]}x{max_resolution[1]}",
         "quality": quality,
         "reason": "Approximation based on file type, current size, target dimensions, and quality.",
@@ -850,25 +893,64 @@ def reduce_image_copy(
     output_path: str,
     max_resolution: tuple[int, int] = HD_RESOLUTION,
     quality: int = DEFAULT_IMAGE_QUALITY,
+    target_format: str | None = None,
 ) -> tuple[int, int]:
     """Create a reduced image copy without modifying the original file."""
+
+    result = _write_image_copy(input_path, output_path, max_resolution, quality, target_format)
+    return result["before_bytes"], result["after_bytes"]
+
+
+def _write_image_copy(
+    input_path: str,
+    output_path: str,
+    max_resolution: tuple[int, int] = HD_RESOLUTION,
+    quality: int = DEFAULT_IMAGE_QUALITY,
+    target_format: str | None = None,
+) -> dict:
+    """Write an optimized image copy and return detailed size metadata."""
 
     before_size = os.path.getsize(input_path)
     with Image.open(input_path) as img:
         original_format = img.format
         img.thumbnail(max_resolution, Image.LANCZOS)
+        output_format = (target_format or original_format or "").upper()
+        if output_format == "JPG":
+            output_format = "JPEG"
+        if output_format == "AVIF" and not AVIF_AVAILABLE:
+            raise RuntimeError("AVIF conversion is not available.")
         save_kwargs = {}
-        if original_format in {"JPEG", "PNG", "WEBP"}:
+        if output_format in {"JPEG", "PNG", "WEBP", "AVIF"}:
             save_kwargs["optimize"] = True
-        if original_format in {"JPEG", "WEBP"}:
+        if output_format in {"JPEG", "WEBP", "AVIF"}:
             save_kwargs["quality"] = quality
-        if img.mode in {"RGBA", "P"} and original_format == "JPEG":
+        if img.mode in {"RGBA", "P"} and output_format == "JPEG":
             img = img.convert("RGB")
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        if output_format:
+            save_kwargs["format"] = output_format
         img.save(output_path, **save_kwargs)
 
+    exif_bytes_stripped = 0
+    if PIEXIF_AVAILABLE and (target_format or original_format or "").upper() in {"JPEG", "JPG"}:
+        before_strip = os.path.getsize(output_path)
+        try:
+            piexif.remove(output_path)
+            exif_bytes_stripped = max(before_strip - os.path.getsize(output_path), 0)
+        except Exception:
+            exif_bytes_stripped = 0
+
     after_size = os.path.getsize(output_path)
-    return before_size, after_size
+    return {
+        "before_bytes": before_size,
+        "after_bytes": after_size,
+        "exif_bytes_stripped": exif_bytes_stripped,
+    }
+
+
+def converted_image_output_path(output_dir: str | Path, file_id: str, target_format: str) -> Path:
+    output_path = Path(output_dir) / file_id
+    return output_path.with_suffix(f".{target_format.lower()}")
 
 
 def reduce_selected_images(
@@ -936,6 +1018,168 @@ def reduce_selected_images(
         "total_saved_bytes": total_saved,
         "total_saved_human": human_readable_size(total_saved),
     }
+
+
+def convert_image_format(
+    root_path: str,
+    file_ids: Iterable[str],
+    target_format: str,
+    output_dir: str = REDUCED_DIR,
+    max_resolution: tuple[int, int] = HD_RESOLUTION,
+    quality: int = DEFAULT_IMAGE_QUALITY,
+) -> dict:
+    """Convert selected image files into a new format without changing originals."""
+
+    target_format = (target_format or "").lower()
+    if target_format not in {"webp", "avif"}:
+        raise ValueError("Target format must be webp or avif.")
+    if target_format == "avif" and not AVIF_AVAILABLE:
+        raise RuntimeError("AVIF conversion is not available.")
+
+    root = Path(root_path).expanduser().resolve()
+    if not root.exists() or not root.is_dir():
+        raise NotADirectoryError(f"Path is not a folder: {root}")
+
+    results = []
+    total_before = 0
+    total_after = 0
+    for file_id in file_ids:
+        source_path = (root / file_id).resolve()
+        if not is_path_within(source_path, root):
+            results.append({"id": file_id, "status": "skipped", "error": "Path is outside scan root."})
+            continue
+        if not source_path.exists() or not source_path.is_file():
+            results.append({"id": file_id, "status": "skipped", "error": "File no longer exists."})
+            continue
+        mime_type = guess_mime_type(source_path)
+        if mime_type not in SUPPORTED_IMAGE_MIME_TYPES:
+            results.append(
+                {"id": file_id, "status": "skipped", "error": "File type cannot be converted."}
+            )
+            continue
+
+        output_path = converted_image_output_path(output_dir, file_id, target_format)
+        try:
+            details = _write_image_copy(
+                str(source_path),
+                str(output_path),
+                max_resolution,
+                quality,
+                target_format,
+            )
+        except Exception as error:
+            results.append({"id": file_id, "status": "failed", "error": str(error)})
+            continue
+
+        before_size = details["before_bytes"]
+        after_size = details["after_bytes"]
+        saved_bytes = max(before_size - after_size, 0)
+        total_before += before_size
+        total_after += after_size
+        results.append(
+            {
+                "id": file_id,
+                "status": "reduced",
+                "source_path": str(source_path),
+                "output_path": str(output_path),
+                "before_bytes": before_size,
+                "after_bytes": after_size,
+                "saved_bytes": saved_bytes,
+                "saved_human": human_readable_size(saved_bytes),
+                "target_format": target_format,
+                "exif_bytes_stripped": details["exif_bytes_stripped"],
+            }
+        )
+
+    total_saved = max(total_before - total_after, 0)
+    return {
+        "results": results,
+        "total_before_bytes": total_before,
+        "total_after_bytes": total_after,
+        "total_saved_bytes": total_saved,
+        "total_saved_human": human_readable_size(total_saved),
+    }
+
+
+def optimize_png_lossless(path: str | Path) -> tuple[int, int]:
+    """Run oxipng lossless optimization on a PNG path when available."""
+
+    if not OXIPNG_AVAILABLE:
+        raise RuntimeError("oxipng not available")
+    path = Path(path).expanduser().resolve()
+    before_size = path.stat().st_size
+    subprocess.run(
+        ["oxipng", "-o", "4", "--strip", "safe", "--quiet", str(path)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return before_size, path.stat().st_size
+
+
+def compute_perceptual_hashes(files: Iterable[dict]) -> list[dict]:
+    """Compute perceptual image hashes when the optional imagehash dependency exists."""
+
+    if not PERCEPTUAL_HASH_AVAILABLE:
+        return []
+    hashes = []
+    for file in files:
+        if file.get("category") != "image" or int(file.get("size_bytes", 0) or 0) < 102400:
+            continue
+        try:
+            with _PilImage.open(file.get("path") or "") as img:
+                hashes.append({"id": file.get("id"), "phash": str(imagehash.phash(img))})
+        except Exception:
+            continue
+    return hashes
+
+
+def _phash_distance(first: str, second: str) -> int:
+    try:
+        return bin(int(first, 16) ^ int(second, 16)).count("1")
+    except ValueError:
+        return 64
+
+
+def find_perceptual_duplicates(files: Iterable[dict], threshold: int = 10) -> list[dict]:
+    """Find visually similar image groups using pHash Hamming distance."""
+
+    normalized_files = [
+        {**file, "category": file.get("category") or file_category(file.get("mimeType") or "")}
+        for file in files
+        if (file.get("category") or file_category(file.get("mimeType") or "")) == "image"
+    ]
+    if len(normalized_files) >= 5000:
+        return []
+    phashes = compute_perceptual_hashes(normalized_files)
+    by_id = {file.get("id"): file for file in normalized_files}
+    seen = set()
+    groups = []
+    for item in phashes:
+        if item["id"] in seen:
+            continue
+        group = [by_id[item["id"]]]
+        for other in phashes:
+            if other["id"] == item["id"] or other["id"] in seen:
+                continue
+            if _phash_distance(item["phash"], other["phash"]) <= threshold:
+                group.append(by_id[other["id"]])
+        if len(group) > 1:
+            seen.update(file.get("id") for file in group)
+            recoverable_bytes = sum(file.get("size_bytes", 0) for file in group[1:])
+            groups.append(
+                {
+                    "name": group[0].get("name") or "Similar images",
+                    "size_bytes": group[0].get("size_bytes", 0),
+                    "copies": len(group),
+                    "recoverable_bytes": recoverable_bytes,
+                    "verification_status": "perceptual",
+                    "verification_algorithm": "phash",
+                    "confidence": "medium",
+                    "files": group,
+                }
+            )
+    return sorted(groups, key=lambda group: group["recoverable_bytes"], reverse=True)
 
 
 def quarantine_selected_files(

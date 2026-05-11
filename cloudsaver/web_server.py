@@ -20,7 +20,11 @@ from cloudsaver.core import (
     attach_duplicate_verification,
     attach_reduction_estimates,
     build_storage_audit,
+    convert_image_format,
+    find_perceptual_duplicates,
     human_readable_size,
+    is_path_within,
+    optimize_png_lossless,
     quarantine_selected_files,
     reduce_selected_images,
     restore_quarantine,
@@ -107,6 +111,15 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/reduce":
                 self.handle_reduce(payload)
                 return
+            if parsed.path == "/api/convert":
+                self.handle_convert(payload)
+                return
+            if parsed.path == "/api/optimize-png":
+                self.handle_optimize_png(payload)
+                return
+            if parsed.path == "/api/scan/perceptual":
+                self.handle_perceptual_scan_start(payload)
+                return
             if parsed.path == "/api/quarantine":
                 self.handle_quarantine(payload)
                 return
@@ -191,6 +204,84 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             quality=quality,
         )
         self.write_json(result)
+
+    def handle_convert(self, payload: dict) -> None:
+        root_path = payload.get("root_path", "").strip()
+        file_ids = payload.get("file_ids") or []
+        if not root_path:
+            raise ValueError("A scan root path is required.")
+        if not isinstance(file_ids, list) or not file_ids:
+            raise ValueError("Select at least one file to convert.")
+
+        quality = int(payload.get("quality", DEFAULT_IMAGE_QUALITY))
+        max_width = int(payload.get("max_width", HD_RESOLUTION[0]))
+        max_height = int(payload.get("max_height", HD_RESOLUTION[1]))
+        target_format = payload.get("target_format") or "webp"
+        output_dir = payload.get("output_dir") or REDUCED_DIR
+        output_dir = os.path.abspath(os.path.expanduser(output_dir))
+
+        self.write_json(
+            convert_image_format(
+                root_path=root_path,
+                file_ids=file_ids,
+                target_format=target_format,
+                output_dir=output_dir,
+                max_resolution=(max_width, max_height),
+                quality=quality,
+            )
+        )
+
+    def handle_optimize_png(self, payload: dict) -> None:
+        root_path = payload.get("root_path", "").strip()
+        file_ids = payload.get("file_ids") or []
+        if not root_path:
+            raise ValueError("A scan root path is required.")
+        if not isinstance(file_ids, list) or not file_ids:
+            raise ValueError("Select at least one PNG file to optimize.")
+        root = Path(root_path).expanduser().resolve()
+        results = []
+        for file_id in file_ids:
+            path = (root / file_id).resolve()
+            if not path.exists() or not path.is_file() or not str(path).lower().endswith(".png"):
+                results.append({"id": file_id, "status": "skipped", "error": "PNG file not found."})
+                continue
+            if not is_path_within(path, root):
+                results.append({"id": file_id, "status": "skipped", "error": "Path is outside scan root."})
+                continue
+            try:
+                before, after = optimize_png_lossless(path)
+            except RuntimeError as error:
+                results.append({"id": file_id, "status": "unavailable", "error": str(error)})
+                continue
+            results.append(
+                {
+                    "id": file_id,
+                    "status": "optimized",
+                    "before_bytes": before,
+                    "after_bytes": after,
+                    "saved_bytes": max(before - after, 0),
+                }
+            )
+        self.write_json({"results": results})
+
+    def handle_perceptual_scan_start(self, payload: dict) -> None:
+        root_path = payload.get("root_path", "").strip()
+        if not root_path:
+            raise ValueError("A scan root path is required.")
+        job_id = str(uuid.uuid4())
+        with SCAN_JOBS_LOCK:
+            SCAN_JOBS[job_id] = {
+                "id": job_id,
+                "status": "queued",
+                "created_at": time.time(),
+                "updated_at": time.time(),
+                "files_scanned": 0,
+                "current_path": "",
+                "current_folder": "",
+            }
+        thread = threading.Thread(target=run_perceptual_scan_job, args=(job_id, payload), daemon=True)
+        thread.start()
+        self.write_json({"job_id": job_id, "status": "queued"})
 
     def handle_quarantine(self, payload: dict) -> None:
         root_path = payload.get("root_path", "").strip()
@@ -284,6 +375,49 @@ def run_scan_job(job_id: str, payload: dict) -> None:
                 "status": "complete",
                 "result": result,
                 "files_scanned": len(result["files"]),
+                "current_path": "",
+                "current_folder": "",
+                "updated_at": time.time(),
+            }
+        )
+
+
+def run_perceptual_scan_job(job_id: str, payload: dict) -> None:
+    def update_progress(progress: dict) -> None:
+        with SCAN_JOBS_LOCK:
+            job = SCAN_JOBS.get(job_id)
+            if job:
+                job.update(progress)
+                job["status"] = "scanning"
+                job["updated_at"] = time.time()
+
+    with SCAN_JOBS_LOCK:
+        SCAN_JOBS[job_id]["status"] = "scanning"
+        SCAN_JOBS[job_id]["updated_at"] = time.time()
+    try:
+        root_path = payload.get("root_path", "").strip()
+        threshold = int(payload.get("threshold", 10))
+        files = scan_local_folder(root_path, update_progress)
+        files_with_estimates = attach_reduction_estimates(files)
+        audit = build_storage_audit(files_with_estimates)
+        groups = find_perceptual_duplicates(audit["top_files"] + files_with_estimates, threshold)
+        result = {"perceptual_duplicate_groups": groups}
+    except Exception as error:
+        with SCAN_JOBS_LOCK:
+            SCAN_JOBS[job_id].update(
+                {
+                    "status": "failed",
+                    "error": str(error),
+                    "updated_at": time.time(),
+                }
+            )
+        return
+    with SCAN_JOBS_LOCK:
+        SCAN_JOBS[job_id].update(
+            {
+                "status": "complete",
+                "result": result,
+                "files_scanned": len(result["perceptual_duplicate_groups"]),
                 "current_path": "",
                 "current_folder": "",
                 "updated_at": time.time(),

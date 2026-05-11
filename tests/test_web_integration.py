@@ -6,6 +6,8 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from PIL import Image, features
+
 from cloudsaver.web_server import CloudSaverRequestHandler
 
 
@@ -99,6 +101,60 @@ def test_scan_start_completes_for_temp_directory(tmp_path):
         assert result["files"][0]["name"] == "notes.txt"
         assert "atime" in result["files"][0]
         assert "mtime" in result["files"][0]
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_convert_endpoint_creates_webp_copy(tmp_path):
+    if not features.check("webp"):
+        return
+    root = tmp_path / "scan"
+    root.mkdir()
+    image_path = root / "photo.jpg"
+    Image.new("RGB", (1200, 900), color=(80, 120, 160)).save(image_path, quality=95)
+    output_dir = tmp_path / "converted"
+
+    server, base_url = run_test_server()
+    try:
+        result = post_json(
+            base_url,
+            "/api/convert",
+            {
+                "root_path": str(root),
+                "file_ids": ["photo.jpg"],
+                "target_format": "webp",
+                "output_dir": str(output_dir),
+            },
+        )
+
+        assert result["results"][0]["status"] == "reduced"
+        assert (output_dir / "photo.webp").exists()
+        assert result["total_after_bytes"] < result["total_before_bytes"]
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_perceptual_scan_endpoint_degrades_when_dependency_missing(tmp_path):
+    root = tmp_path / "scan"
+    root.mkdir()
+    Image.new("RGB", (420, 420), color=(100, 120, 140)).save(root / "photo.jpg", quality=90)
+
+    server, base_url = run_test_server()
+    try:
+        started = post_json(base_url, "/api/scan/perceptual", {"root_path": str(root)})
+        deadline = time.time() + 5
+        result = None
+        while time.time() < deadline:
+            status = get_json(base_url, f"/api/scan/status?{urlencode({'job_id': started['job_id']})}")
+            if status["status"] == "complete":
+                result = status["result"]
+                break
+            time.sleep(0.05)
+
+        assert result is not None
+        assert "perceptual_duplicate_groups" in result
     finally:
         server.shutdown()
         server.server_close()

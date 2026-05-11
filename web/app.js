@@ -7,6 +7,7 @@ const state = {
   treemapFolder: "",
   reviewBatches: [],
   duplicateGroups: [],
+  perceptualGroups: [],
 };
 
 const elements = {
@@ -35,6 +36,7 @@ const elements = {
   selectionSummary: document.querySelector("#selection-summary"),
   filterInput: document.querySelector("#filter-input"),
   reduceButton: document.querySelector("#reduce-button"),
+  convertWebpButton: document.querySelector("#convert-webp-button"),
   quarantineButton: document.querySelector("#quarantine-button"),
   exportJsonButton: document.querySelector("#export-json-button"),
   exportCsvButton: document.querySelector("#export-csv-button"),
@@ -55,6 +57,9 @@ const elements = {
   historyList: document.querySelector("#history-list"),
   duplicateCount: document.querySelector("#duplicate-count"),
   duplicateList: document.querySelector("#duplicate-list"),
+  perceptualCount: document.querySelector("#perceptual-count"),
+  perceptualList: document.querySelector("#perceptual-list"),
+  perceptualScanButton: document.querySelector("#perceptual-scan-button"),
   restoreManifestInput: document.querySelector("#restore-manifest-input"),
   restoreButton: document.querySelector("#restore-button"),
   reviewBatches: document.querySelector("#review-batches"),
@@ -459,6 +464,40 @@ function renderDuplicates(audit) {
       `;
     })
     .join("") || emptyState("duplicate", "No duplicates found yet");
+  renderPerceptualDuplicates();
+}
+
+function duplicateGroupMarkup(group, badge = "") {
+  const files = (group.files || [])
+    .slice(0, 4)
+    .map((file) => `<li title="${escapeHtml(file.path)}">${escapeHtml(file.path)}</li>`)
+    .join("");
+  const status = group.verification_status || "candidate";
+  const confidence = group.confidence || "medium";
+  const badgeMarkup = badge
+    ? `<span class="status-pill similar-pill">${escapeHtml(badge)}</span>`
+    : `<span class="status-pill ${status === "verified" ? "" : "unsupported"}">${escapeHtml(status)} / ${escapeHtml(confidence)}</span>`;
+  return `
+    <div class="duplicate-group">
+      <div class="duplicate-summary">
+        <div>
+          <strong title="${escapeHtml(group.name)}">${escapeHtml(group.name)}</strong>
+          <span>${group.copies} copies - ${formatBytes(group.recoverable_bytes)} recoverable</span>
+        </div>
+        ${badgeMarkup}
+      </div>
+      <ul>${files}</ul>
+    </div>
+  `;
+}
+
+function renderPerceptualDuplicates() {
+  const groups = state.perceptualGroups || [];
+  elements.perceptualCount.textContent = state.audit ? `${groups.length} groups` : "Not scanned";
+  elements.perceptualScanButton.disabled = !state.rootPath;
+  elements.perceptualList.innerHTML = groups.length
+    ? groups.map((group) => duplicateGroupMarkup(group, "Similar")).join("")
+    : emptyState("duplicate", state.rootPath ? "No similar images found yet" : "Run a scan to find similar images");
 }
 
 function selectDuplicateExtras(index) {
@@ -542,10 +581,12 @@ function updateSelectionSummary() {
     0
   );
   const selectedReducible = selectedFiles.filter((file) => file.reduction.supported);
+  const selectedConvertible = selectedFiles.filter((file) => file.reduction.format_conversion_available);
   elements.selectionSummary.textContent = selectedFiles.length
     ? `${selectedFiles.length} selected, approximately ${formatBytes(estimatedBytes)} image-copy savings`
     : "Select image files to create smaller copies after scanning.";
   elements.reduceButton.disabled = selectedReducible.length === 0;
+  elements.convertWebpButton.disabled = selectedConvertible.length === 0;
   elements.quarantineButton.disabled = selectedFiles.length === 0;
   elements.exportJsonButton.disabled = !state.audit;
   elements.exportCsvButton.disabled = !state.audit;
@@ -652,6 +693,7 @@ async function runScanForPath(path, startingMessage = "Refreshing scan...") {
     state.filteredFiles = [...data.files];
     state.selected.clear();
     state.audit = data.audit;
+    state.perceptualGroups = [];
     state.treemapFolder = "";
     renderMapDetail(null);
     renderSummary(data);
@@ -723,6 +765,58 @@ async function reduceSelected() {
     showToast(error.message, "error");
   } finally {
     updateSelectionSummary();
+  }
+}
+
+async function convertSelectedToWebp() {
+  const fileIds = state.files
+    .filter((file) => state.selected.has(file.id) && file.reduction.format_conversion_available)
+    .map((file) => file.id);
+  if (!fileIds.length) {
+    return;
+  }
+  elements.convertWebpButton.disabled = true;
+  setStatus("Converting selected images to WebP copies...", "scanning");
+  try {
+    const result = await postJson("/api/convert", {
+      root_path: state.rootPath,
+      file_ids: fileIds,
+      target_format: "webp",
+      quality: Number(elements.qualityInput.value),
+      ...resolution(),
+    });
+    const converted = result.results.filter((item) => item.status === "reduced").length;
+    setStatus(`${converted} WebP copies created. Estimated savings: ${result.total_saved_human}.`, "complete");
+    showToast(`${converted} WebP copies created.`);
+  } catch (error) {
+    setStatus(error.message, "error");
+    showToast(error.message, "error");
+  } finally {
+    updateSelectionSummary();
+  }
+}
+
+async function runPerceptualScan() {
+  if (!state.rootPath) {
+    return;
+  }
+  elements.perceptualScanButton.disabled = true;
+  setStatus("Finding visually similar images...", "scanning");
+  try {
+    const start = await postJson("/api/scan/perceptual", {
+      root_path: state.rootPath,
+      threshold: 10,
+    });
+    const data = await waitForScan(start.job_id);
+    state.perceptualGroups = data.perceptual_duplicate_groups || [];
+    renderPerceptualDuplicates();
+    setStatus(`${state.perceptualGroups.length} similar image groups found.`, "complete");
+    showToast(`${state.perceptualGroups.length} similar image groups found.`);
+  } catch (error) {
+    setStatus(error.message, "error");
+    showToast(error.message, "error");
+  } finally {
+    elements.perceptualScanButton.disabled = !state.rootPath;
   }
 }
 
@@ -820,7 +914,9 @@ elements.qualityInput.addEventListener("input", () => {
 });
 elements.filterInput.addEventListener("input", filterFiles);
 elements.reduceButton.addEventListener("click", reduceSelected);
+elements.convertWebpButton.addEventListener("click", convertSelectedToWebp);
 elements.quarantineButton.addEventListener("click", quarantineSelected);
+elements.perceptualScanButton.addEventListener("click", runPerceptualScan);
 elements.restoreButton.addEventListener("click", restoreManifest);
 elements.exportJsonButton.addEventListener("click", exportJsonReport);
 elements.exportCsvButton.addEventListener("click", exportCsvReport);

@@ -7,11 +7,13 @@ from cloudsaver.core import (
     OUTPUT_DIR,
     attach_duplicate_verification,
     build_storage_audit,
+    convert_image_format,
     estimate_reduction_for_file,
     estimate_monthly_storage_cost_usd,
     export_storage_audit_dashboard,
     export_to_json_file,
     hash_file_partial,
+    find_perceptual_duplicates,
     quarantine_selected_files,
     reduce_selected_images,
     restore_quarantine,
@@ -349,6 +351,9 @@ def test_estimate_reduction_for_file_marks_supported_images():
     assert estimate["supported"] is True
     assert estimate["estimated_saved_bytes"] > 0
     assert estimate["estimated_after_bytes"] < 5 * 1024 * 1024
+    assert estimate["format_conversion_available"] is True
+    assert estimate["target_format"] == "webp"
+    assert estimate["estimated_exif_bytes"] > 0
 
 
 def test_estimate_reduction_for_file_marks_unsupported_files():
@@ -380,6 +385,53 @@ def test_reduce_selected_images_creates_reduced_copy(tmp_path):
     assert result["results"][0]["status"] == "reduced"
     assert reduced_path.exists()
     assert result["total_saved_bytes"] > 0
+
+
+def test_convert_image_format_creates_webp_copy(tmp_path):
+    from PIL import Image, features
+
+    if not features.check("webp"):
+        pytest.skip("Pillow WebP support is unavailable")
+
+    root = tmp_path / "scan"
+    output_dir = tmp_path / "converted"
+    image_dir = root / "photos"
+    image_dir.mkdir(parents=True)
+    image_path = image_dir / "large.jpg"
+    Image.new("RGB", (1800, 1200), color=(45, 90, 120)).save(image_path, quality=95)
+
+    result = convert_image_format(
+        root_path=str(root),
+        file_ids=["photos/large.jpg"],
+        target_format="webp",
+        output_dir=str(output_dir),
+        max_resolution=(1024, 768),
+        quality=72,
+    )
+
+    converted_path = output_dir / "photos" / "large.webp"
+    assert result["results"][0]["status"] == "reduced"
+    assert converted_path.exists()
+    assert result["results"][0]["target_format"] == "webp"
+    assert result["total_after_bytes"] < result["total_before_bytes"]
+
+
+def test_perceptual_duplicates_gracefully_degrade_without_optional_dependency(tmp_path):
+    files = [
+        {
+            "id": "a.jpg",
+            "name": "a.jpg",
+            "path": str(tmp_path / "a.jpg"),
+            "size_bytes": 200 * 1024,
+            "mimeType": "image/jpeg",
+            "category": "image",
+            "included": True,
+            "parents": ["root"],
+        }
+    ]
+
+    with patch("cloudsaver.core.PERCEPTUAL_HASH_AVAILABLE", False):
+        assert find_perceptual_duplicates(files) == []
 
 
 def test_quarantine_selected_files_can_restore(tmp_path):
