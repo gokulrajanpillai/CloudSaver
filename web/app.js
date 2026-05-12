@@ -457,8 +457,7 @@ function renderMapDetail(item) {
   const actions = item.file
     ? `
       <div class="map-detail-actions">
-        <button type="button" class="table-action" data-map-reveal="${escapeHtml(item.file.path)}">Reveal</button>
-        <button type="button" class="table-action" data-map-select="${escapeHtml(item.file.id)}">Select</button>
+        <button type="button" class="table-action" data-map-select="${escapeHtml(item.file.id)}">Select in files</button>
       </div>
     `
     : "";
@@ -1097,11 +1096,6 @@ elements.treemapBreadcrumbs.addEventListener("click", (event) => {
   setTreemapFolder(button.dataset.folder);
 });
 elements.mapDetail.addEventListener("click", (event) => {
-  const revealButton = event.target.closest("[data-map-reveal]");
-  if (revealButton) {
-    revealPath(revealButton.dataset.mapReveal);
-    return;
-  }
   const selectButton = event.target.closest("[data-map-select]");
   if (!selectButton) {
     return;
