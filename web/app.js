@@ -76,6 +76,7 @@ const elements = {
   workspaceViews: document.querySelectorAll(".workspace-view"),
   sidebar: document.querySelector("#sidebar"),
   sidebarToggle: document.querySelector("#sidebar-toggle"),
+  sidebarBackdrop: document.querySelector("#sidebar-backdrop"),
   modalTriggers: document.querySelectorAll("[data-modal-target]"),
   themeButtons: document.querySelectorAll("[data-theme-option]"),
   toastRegion: document.querySelector("#toast-region"),
@@ -187,6 +188,15 @@ function setWorkspaceView(view) {
 
 function setSidebarOpen(open) {
   elements.sidebar.classList.toggle("open", open);
+  elements.sidebarBackdrop.hidden = false;
+  elements.sidebarBackdrop.classList.toggle("open", open);
+  if (!open) {
+    window.setTimeout(() => {
+      if (!elements.sidebarBackdrop.classList.contains("open")) {
+        elements.sidebarBackdrop.hidden = true;
+      }
+    }, 300);
+  }
   elements.sidebarToggle.setAttribute("aria-expanded", String(open));
 }
 
@@ -989,6 +999,7 @@ elements.workspaceTabs.addEventListener("click", (event) => {
 elements.sidebarToggle.addEventListener("click", () => {
   setSidebarOpen(!elements.sidebar.classList.contains("open"));
 });
+elements.sidebarBackdrop.addEventListener("click", () => setSidebarOpen(false));
 elements.themeButtons.forEach((button) => {
   button.addEventListener("click", () => setThemePreference(button.dataset.themeOption));
 });
@@ -1014,6 +1025,11 @@ document.addEventListener("click", (event) => {
   const closeButton = event.target.closest("[data-modal-close]");
   if (closeButton) {
     closeButton.closest("dialog")?.close();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && elements.sidebar.classList.contains("open")) {
+    setSidebarOpen(false);
   }
 });
 elements.form.addEventListener("submit", () => setSidebarOpen(false));
