@@ -67,6 +67,7 @@ const elements = {
   perceptualScanButton: document.querySelector("#perceptual-scan-button"),
   restoreManifestInput: document.querySelector("#restore-manifest-input"),
   restoreButton: document.querySelector("#restore-button"),
+  reviewQueue: document.querySelector("#review-queue"),
   reviewBatches: document.querySelector("#review-batches"),
   fileCount: document.querySelector("#file-count"),
   fileTableBody: document.querySelector("#file-table-body"),
@@ -917,6 +918,7 @@ async function quarantineSelected() {
 }
 
 function renderReviewBatches() {
+  elements.reviewQueue.hidden = state.reviewBatches.length === 0;
   elements.reviewBatches.innerHTML = state.reviewBatches
     .map((batch) => {
       const date = new Date(batch.createdAt).toLocaleString();
