@@ -1212,6 +1212,17 @@ output {
   color: var(--accent-hover);
 }
 
+.duplicate-action.danger {
+  border-color: var(--danger-border);
+  background: var(--surface);
+  color: var(--destructive);
+}
+
+.duplicate-action.danger:hover {
+  border-color: var(--danger-border-hover);
+  background: var(--destructive-surface);
+}
+
 .file-panel {
   margin-top: 16px;
   padding-bottom: 0;
