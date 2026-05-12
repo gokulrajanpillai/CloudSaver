@@ -11,7 +11,7 @@
   --border-strong: #d1d5db;
   --accent: #0d9488;
   --accent-hover: #0f766e;
-  --accent-surface: #f0fdfa;
+  --accent-surface: #f0fdf4;
   --success: #16a34a;
   --warning: #d97706;
   --destructive: #dc2626;
@@ -355,12 +355,15 @@ output {
 }
 
 .secondary-action {
-  color: white;
-  background: var(--accent);
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid rgba(13, 148, 136, 0.34);
 }
 
 .secondary-action:hover {
-  background: var(--accent-hover);
+  color: var(--accent-hover);
+  background: var(--accent-surface);
+  border-color: var(--accent);
 }
 
 .danger-action {
