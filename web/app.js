@@ -200,7 +200,13 @@ function escapeHtml(value) {
 
 function emptyState(kind, title, detail = "") {
   const detailMarkup = detail ? `<p>${escapeHtml(detail)}</p>` : "";
-  return `<div class="empty-state ${kind}-empty"><span aria-hidden="true"></span><strong>${escapeHtml(title)}</strong>${detailMarkup}</div>`;
+  const icons = {
+    overview: '<svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 26 C8 22 11 20 14 20 L26 20 L30 24 L50 24 C53 24 56 27 56 30 L56 48 C56 51 53 54 50 54 L14 54 C11 54 8 51 8 48 Z"/><line x1="8" y1="32" x2="56" y2="32"/></svg>',
+    map: '<svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="22" height="22" rx="3"/><rect x="32" y="6" width="26" height="10" rx="3"/><rect x="32" y="20" width="26" height="22" rx="3"/><rect x="6" y="32" width="22" height="26" rx="3"/><rect x="32" y="46" width="26" height="12" rx="3"/></svg>',
+    duplicate: '<svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="8" width="30" height="36" rx="4"/><rect x="10" y="18" width="30" height="36" rx="4"/><line x1="16" y1="30" x2="34" y2="30"/><line x1="16" y1="37" x2="28" y2="37"/></svg>',
+    table: '<svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="10" width="52" height="44" rx="4"/><line x1="6" y1="22" x2="58" y2="22"/><line x1="24" y1="22" x2="24" y2="54"/><line x1="6" y1="34" x2="58" y2="34"/><line x1="6" y1="44" x2="58" y2="44"/></svg>',
+  };
+  return `<div class="empty-state ${kind}-empty">${icons[kind] || ""}<strong>${escapeHtml(title)}</strong>${detailMarkup}</div>`;
 }
 
 async function postJson(url, payload) {
@@ -479,7 +485,7 @@ function renderDuplicates(audit) {
           <ul>${files}</ul>
           <div class="duplicate-actions">
             <button class="duplicate-action" type="button" data-duplicate-index="${index}">Select extra copies</button>
-            <button class="duplicate-action primary" type="button" data-move-duplicate-index="${index}">Move extra copies to review</button>
+            <button class="duplicate-action danger" type="button" data-move-duplicate-index="${index}">Move extra copies to review</button>
           </div>
         </div>
       `;
