@@ -27,7 +27,7 @@ classifiers = [
   "Topic :: Utilities",
 ]
 dependencies = [
-  "pillow==11.3.0",
+  "pillow==12.2.0",
 ]
 
 [project.optional-dependencies]
