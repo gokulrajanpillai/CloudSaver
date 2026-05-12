@@ -1,0 +1,17 @@
+class Cloudsaver < Formula
+  desc "Local-first storage audit and safe optimization tool"
+  homepage "https://github.com/gokulrajanpillai/CloudSaver"
+  url "URL"
+  sha256 "SHA256"
+  license "MIT"
+
+  depends_on "python@3.12"
+
+  def install
+    virtualenv_install_with_resources
+  end
+
+  test do
+    system bin/"cloudsaver", "--help"
+  end
+end

@@ -1,3 +1,59 @@
+[build-system]
+requires = ["setuptools>=58", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cloudsaver"
+version = "1.0.0"
+description = "Open-source, local-first storage audit and safe optimization tool."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Gokul Rajan" }
+]
+keywords = ["storage", "disk-usage", "duplicates", "cleanup", "local-first"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Environment :: Web Environment",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: System :: Archiving",
+  "Topic :: Utilities",
+]
+dependencies = [
+  "pillow==12.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.0.3",
+]
+desktop = [
+  "pywebview==5.4",
+]
+release = [
+  "pyinstaller==6.17.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/gokulrajanpillai/CloudSaver"
+Issues = "https://github.com/gokulrajanpillai/CloudSaver/issues"
+Sponsors = "https://github.com/sponsors/gokulrajanpillai"
+
+[project.scripts]
+cloudsaver = "cloudsaver.core:main"
+cloudsaver-web = "cloudsaver.web_server:main"
+cloudsaver-desktop = "cloudsaver.desktop:main"
+
+[tool.setuptools.packages.find]
+include = ["cloudsaver*", "src*"]
+
 [tool.black]
 line-length = 100
 target-version = ['py312']
