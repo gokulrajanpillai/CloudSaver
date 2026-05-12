@@ -1532,6 +1532,7 @@ tbody tr:hover {
 }
 
 .toast {
+  position: relative;
   padding: 12px 14px;
   border: 1px solid var(--success-border);
   border-radius: 8px;
@@ -1541,6 +1542,17 @@ tbody tr:hover {
   font-size: 13px;
   font-weight: 650;
   animation: toast-in 160ms ease-out both;
+}
+
+.toast::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  vertical-align: 1px;
 }
 
 .toast.error {

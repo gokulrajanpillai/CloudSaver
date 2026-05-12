@@ -158,7 +158,8 @@ function setStatus(message, tone = "neutral", stage = "") {
 function showToast(message, tone = "success") {
   const toast = document.createElement("div");
   toast.className = `toast ${tone}`;
-  toast.textContent = message;
+  toast.setAttribute("role", tone === "error" ? "alert" : "status");
+  toast.textContent = `${tone === "error" ? "Error" : "Done"}: ${message}`;
   elements.toastRegion.append(toast);
   window.setTimeout(() => {
     toast.classList.add("leaving");
