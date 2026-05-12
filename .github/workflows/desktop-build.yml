@@ -1,0 +1,71 @@
+name: Desktop Builds
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  pyinstaller:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+            add-data: web:web
+          - os: macos-latest
+            platform: macos
+            add-data: web:web
+          - os: windows-latest
+            platform: windows-x64
+            add-data: web;web
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,desktop,release]"
+
+      - name: Build one-file app
+        shell: bash
+        run: |
+          pyinstaller \
+            --name CloudSaver \
+            --onefile \
+            --windowed \
+            --collect-all webview \
+            --add-data "${{ matrix.add-data }}" \
+            cloudsaver/desktop.py
+
+      - name: Package desktop artifact
+        run: |
+          python scripts/package-desktop-artifact.py --platform "${{ matrix.platform }}" --version "${{ github.ref_name || 'manual' }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CloudSaver-${{ matrix.platform }}
+          path: |
+            release/*
+
+      - name: Publish desktop artifact to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${{ github.ref_name }}" >/dev/null 2>&1 || gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --notes-file CHANGELOG.md
+          gh release upload "${{ github.ref_name }}" release/* --clobber

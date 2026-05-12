@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CloudSaver</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle scan controls">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <span>Scan controls</span>
+    </button>
+    <aside id="sidebar" class="sidebar" aria-label="Scan controls">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7.5A3.5 3.5 0 0 1 7.5 4h3l2 2H17a3 3 0 0 1 3 3v7.5A3.5 3.5 0 0 1 16.5 20h-9A3.5 3.5 0 0 1 4 16.5z"/></svg>
+        </div>
+        <div>
+          <h1>CloudSaver</h1>
+          <p>Local storage audit</p>
+        </div>
+      </div>
+
+      <section class="sidebar-section" aria-label="Scan">
+        <h2>Scan</h2>
+        <form id="scan-form" class="control-stack">
+          <label for="path-input">Choose folder</label>
+          <div class="path-row">
+            <input id="path-input" name="path" list="location-options" placeholder="Enter a folder path" autocomplete="off">
+            <datalist id="location-options"></datalist>
+          </div>
+          <div id="quick-locations" class="quick-locations" aria-label="Common scan locations"></div>
+
+          <details class="advanced-options">
+            <summary>Advanced options</summary>
+            <div class="field-grid">
+              <div>
+                <label for="quality-input">Reduced copy quality <span class="field-hint" title="Used only when creating smaller image copies. Originals are not changed.">?</span></label>
+                <input id="quality-input" type="range" min="60" max="92" value="82">
+                <output id="quality-output" for="quality-input">82</output>
+              </div>
+              <div>
+                <label for="resolution-input">Max dimension</label>
+                <select id="resolution-input">
+                  <option value="1920x1080">1080p</option>
+                  <option value="2560x1440">1440p</option>
+                  <option value="3840x2160">4K</option>
+                  <option value="1280x720">720p</option>
+                </select>
+              </div>
+            </div>
+          </details>
+
+          <button class="primary-action" type="submit">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 1 0 4.95 11.95l3.05 3.05 1.4-1.4-3.05-3.05A7 7 0 0 0 11 4Zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/></svg>
+            <span>Start scan</span>
+          </button>
+        </form>
+      </section>
+
+      <section class="sidebar-section" aria-label="Scan status">
+        <h2>Status</h2>
+        <div class="scan-state-card" aria-label="Scan state">
+          <span id="scan-state-label">Idle</span>
+          <strong id="scan-state-title">No scan yet</strong>
+          <div class="scan-progress" aria-hidden="true"><i></i></div>
+          <p id="scan-status" role="status">Choose a folder to begin.</p>
+        </div>
+      </section>
+
+      <section class="sidebar-section" aria-label="Recent scans">
+        <h2>Recent scans</h2>
+        <div id="sidebar-recent-scans" class="sidebar-recent-scans">
+          <span class="starter-empty">No recent scans.</span>
+        </div>
+      </section>
+
+      <footer class="sidebar-footer" aria-label="Utility links">
+        <button type="button" data-modal-target="safety-modal">Safety</button>
+        <a href="https://github.com/sponsors/gokulrajanpillai" target="_blank" rel="noreferrer">Sponsor</a>
+      </footer>
+    </aside>
+
+    <main class="workspace">
+      <header class="workspace-header">
+        <div>
+          <p id="workspace-subtitle">Private local storage review</p>
+          <h2>Storage Workspace</h2>
+        </div>
+        <nav class="workspace-tabs" aria-label="Workspace sections">
+          <button type="button" class="active" data-view-target="overview">Overview</button>
+          <button type="button" data-view-target="map">Map</button>
+          <button type="button" data-view-target="duplicates">Duplicates</button>
+          <button type="button" data-view-target="files">Files <span id="review-queue-badge" class="tab-badge" hidden>0</span></button>
+          <button type="button" data-view-target="history">History</button>
+        </nav>
+      </header>
+
+      <div id="view-overview" class="workspace-view active" data-view="overview">
+        <section id="dashboard" class="summary-band" aria-label="Storage summary">
+          <div class="metric">
+            <span>Total storage</span>
+            <strong id="metric-total">-</strong>
+            <small id="metric-total-detail">No scan yet</small>
+          </div>
+          <div class="metric">
+            <span>Files scanned</span>
+            <strong id="metric-files">-</strong>
+            <small id="metric-files-detail">Choose a folder</small>
+          </div>
+          <div class="metric">
+            <span>Image copy savings</span>
+            <strong id="metric-reducible">-</strong>
+            <small>Safe copies only</small>
+          </div>
+          <div class="metric">
+            <span>Duplicate candidates</span>
+            <strong id="metric-duplicates">-</strong>
+            <small>Review before moving</small>
+          </div>
+          <div class="metric">
+            <span>Storage cost estimate</span>
+            <strong id="metric-cost">-</strong>
+            <small>Monthly estimate</small>
+          </div>
+        </section>
+
+        <section id="overview-empty" class="panel overview-empty">
+          <div class="empty-state overview-empty-state">
+            <svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 26 C8 22 11 20 14 20 L26 20 L30 24 L50 24 C53 24 56 27 56 30 L56 48 C56 51 53 54 50 54 L14 54 C11 54 8 51 8 48 Z"/><line x1="8" y1="32" x2="56" y2="32"/></svg>
+            <strong>Choose a folder to begin your storage audit</strong>
+            <p>CloudSaver will map large folders, duplicate candidates, and safe image-copy savings locally.</p>
+            <button type="button" class="primary-action" data-focus-scan>Start scan</button>
+          </div>
+        </section>
+
+        <section class="action-bar" aria-label="File actions">
+          <div class="scan-context">
+            <h2 id="current-root">No folder scanned</h2>
+            <p id="scan-meta">Choose a folder to begin your storage audit.</p>
+          </div>
+          <div class="action-strip">
+            <input id="filter-input" placeholder="Filter files" aria-label="Filter files">
+            <button id="reduce-button" class="secondary-action" type="button" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v12H7a2 2 0 0 1-2-2zm2 2v10h12V6zm3 2 2 2.5L14 8l3 4H9zM3 8h2v10h10v2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Create reduced copies</span>
+            </button>
+            <button id="quarantine-button" class="danger-action" type="button" disabled>Move to review</button>
+            <p id="selection-summary">Select reducible files after scanning.</p>
+          </div>
+        </section>
+
+        <section id="recommended-plan" class="panel plan-panel">
+          <div class="panel-heading">
+            <h2>Recommended Cleanup Plan</h2>
+            <span id="plan-confidence">Run a scan</span>
+          </div>
+          <div class="plan-grid">
+            <div class="plan-card high">
+              <svg class="plan-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 6 V12 C20 17 16.4 20.4 12 22 C7.6 20.4 4 17 4 12 V6 Z"/><path d="M9 12 L11 14 L15 10"/></svg>
+              <span>Safest first</span>
+              <strong>Verified duplicates</strong>
+              <b id="plan-duplicates">Scan to estimate</b>
+              <p id="plan-duplicates-detail">Run a scan to find duplicate files that can be reviewed before moving.</p>
+              <button type="button" class="plan-action" data-view-target="duplicates">Review duplicates</button>
+            </div>
+            <div class="plan-card medium">
+              <svg class="plan-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="10" r="1.5"/><path d="M3 17 L8 12 L12 16 L16 11 L21 17"/></svg>
+              <span>Optional savings</span>
+              <strong>Image reductions</strong>
+              <b id="plan-images">Scan to estimate</b>
+              <p id="plan-images-detail">Create smaller copies without changing originals.</p>
+              <button type="button" class="plan-action" data-plan-action="select-images">Select reducible images</button>
+            </div>
+            <div class="plan-card review">
+              <svg class="plan-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><line x1="14.5" y1="14.5" x2="21" y2="21"/></svg>
+              <span>Manual review</span>
+              <strong>Large files</strong>
+              <b id="plan-large-files">Scan to estimate</b>
+              <p id="plan-large-files-detail">Inspect large local files before moving anything.</p>
+              <button type="button" class="plan-action" data-view-target="map">View storage map</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-grid" aria-label="Dashboard details">
+          <div class="panel category-panel">
+            <div class="panel-heading">
+              <h2>Storage Mix</h2>
+              <span id="category-count">0 categories</span>
+            </div>
+            <div id="category-bars" class="category-bars"></div>
+          </div>
+
+          <div class="panel folder-panel">
+            <div class="panel-heading">
+              <h2>Largest Folders</h2>
+              <span>Top scan paths</span>
+            </div>
+            <div id="folder-list" class="folder-list"></div>
+          </div>
+        </section>
+      </div>
+
+      <section id="storage-map" class="panel treemap-panel workspace-view" data-view="map">
+        <div class="panel-heading">
+          <h2>Storage Map</h2>
+          <span>Largest files by area</span>
+        </div>
+        <div class="map-workspace">
+          <div>
+            <div id="treemap-breadcrumbs" class="treemap-breadcrumbs"></div>
+            <div class="treemap-legend" aria-label="Storage map legend">
+              <span data-category="image"><i></i>Image</span>
+              <span data-category="video"><i></i>Video</span>
+              <span data-category="audio"><i></i>Audio</span>
+              <span data-category="document"><i></i>Document</span>
+              <span data-category="archive"><i></i>Archive</span>
+              <span data-category="other"><i></i>Other</span>
+            </div>
+            <div id="treemap" class="treemap">
+              <div class="empty-state map-empty"><svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="22" height="22" rx="3"/><rect x="32" y="6" width="26" height="10" rx="3"/><rect x="32" y="20" width="26" height="22" rx="3"/><rect x="6" y="32" width="22" height="26" rx="3"/><rect x="32" y="46" width="26" height="12" rx="3"/></svg><strong>Scan to see where your storage is going</strong></div>
+            </div>
+          </div>
+          <aside id="map-detail" class="map-detail" aria-label="Storage map selection">
+            <span>Selection</span>
+            <strong>No item selected</strong>
+            <p>Click a folder or file in the map to inspect it.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section id="history" class="panel history-panel workspace-view" data-view="history">
+        <div class="panel-heading">
+          <h2>Recent Scans</h2>
+          <span>Local history</span>
+        </div>
+        <div id="history-list" class="history-list">
+          <div class="empty-state">No scan history yet.</div>
+        </div>
+      </section>
+
+      <section id="duplicates" class="panel duplicate-panel workspace-view" data-view="duplicates">
+        <div class="panel-heading">
+          <h2>Duplicate Review</h2>
+          <span id="duplicate-count">0 groups</span>
+        </div>
+        <div id="duplicate-list" class="duplicate-list">
+          <div class="empty-state duplicate-empty"><svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="8" width="30" height="36" rx="4"/><rect x="10" y="18" width="30" height="36" rx="4"/><line x1="16" y1="30" x2="34" y2="30"/><line x1="16" y1="37" x2="28" y2="37"/></svg><strong>No duplicates found yet</strong></div>
+        </div>
+      </section>
+
+      <section id="files" class="panel file-panel workspace-view" data-view="files">
+        <div class="panel-heading">
+          <div>
+            <h2>Files</h2>
+            <span id="file-count">0 files</span>
+          </div>
+          <div class="panel-actions">
+            <button id="export-json-button" class="tertiary-action compact-action" type="button" disabled>Export JSON</button>
+            <button id="export-csv-button" class="tertiary-action compact-action" type="button" disabled>Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="select-cell"><input id="select-all" type="checkbox" aria-label="Select all reducible files"></th>
+                <th>File</th>
+                <th>Type</th>
+                <th>Size</th>
+                <th>Expected Reduction</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="file-table-body">
+              <tr><td colspan="7" class="empty-state table-empty"><svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="10" width="52" height="44" rx="4"/><line x1="6" y1="22" x2="58" y2="22"/><line x1="24" y1="22" x2="24" y2="54"/><line x1="6" y1="34" x2="58" y2="34"/><line x1="6" y1="44" x2="58" y2="44"/></svg><strong>Files will appear here after scanning</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <section class="review-queue" aria-label="Review queue">
+          <div class="panel-heading">
+            <div>
+              <h2>Review Queue</h2>
+              <span>Restore files moved by CloudSaver</span>
+            </div>
+          </div>
+          <div class="cleanup-grid">
+            <div>
+              <strong>Move to review</strong>
+              <span>Selected files are moved into `.cloudsaver-review` with a manifest.</span>
+            </div>
+            <div>
+              <strong>Restore by manifest</strong>
+              <span>Paste a manifest path to move reviewed files back to their original paths.</span>
+            </div>
+            <div>
+              <strong>No permanent delete</strong>
+              <span>CloudSaver keeps cleanup reversible by default.</span>
+            </div>
+          </div>
+          <div id="review-batches" class="review-batches">
+            <div class="empty-state">Moved files will appear here for quick restore.</div>
+          </div>
+          <details class="advanced-restore">
+            <summary>Restore from manifest path</summary>
+            <div class="restore-row">
+              <input id="restore-manifest-input" placeholder="/path/to/.cloudsaver-review/batch/manifest.json" aria-label="Restore manifest path">
+              <button id="restore-button" class="tertiary-action" type="button">Restore manifest</button>
+            </div>
+          </details>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="safety-modal" class="utility-modal">
+    <div class="modal-card">
+      <div class="panel-heading">
+        <h2>Safety</h2>
+        <button type="button" class="modal-close" data-modal-close aria-label="Close safety dialog">Close</button>
+      </div>
+      <div class="settings-grid">
+        <div>
+          <strong>Privacy</strong>
+          <span>No accounts, telemetry, or file uploads.</span>
+        </div>
+        <div>
+          <strong>Cleanup safety</strong>
+          <span>Files move to a local review folder before removal.</span>
+        </div>
+        <div>
+          <strong>Reports</strong>
+          <span>Exports stay in your browser or local output folder.</span>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
