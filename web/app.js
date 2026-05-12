@@ -38,7 +38,6 @@ const elements = {
   filterInput: document.querySelector("#filter-input"),
   categoryFilter: document.querySelector("#category-filter"),
   reduceButton: document.querySelector("#reduce-button"),
-  convertWebpButton: document.querySelector("#convert-webp-button"),
   quarantineButton: document.querySelector("#quarantine-button"),
   exportJsonButton: document.querySelector("#export-json-button"),
   exportCsvButton: document.querySelector("#export-csv-button"),
@@ -642,8 +641,7 @@ function updateSelectionSummary() {
   elements.selectionSummary.textContent = selectedFiles.length
     ? `${selectedFiles.length} selected, approximately ${formatBytes(estimatedBytes)} image-copy savings`
     : "Select image files to create smaller copies after scanning.";
-  elements.reduceButton.disabled = selectedReducible.length === 0;
-  elements.convertWebpButton.disabled = selectedConvertible.length === 0;
+  elements.reduceButton.disabled = selectedReducible.length === 0 && selectedConvertible.length === 0;
   elements.quarantineButton.disabled = selectedFiles.length === 0;
   elements.exportJsonButton.disabled = !state.audit;
   elements.exportCsvButton.disabled = !state.audit;
@@ -833,7 +831,7 @@ async function convertSelectedToWebp() {
   if (!fileIds.length) {
     return;
   }
-  elements.convertWebpButton.disabled = true;
+  elements.reduceButton.disabled = true;
   setStatus("Converting selected images to WebP copies...", "scanning");
   try {
     const result = await postJson("/api/convert", {
@@ -852,6 +850,16 @@ async function convertSelectedToWebp() {
   } finally {
     updateSelectionSummary();
   }
+}
+
+async function optimizeSelectedImages() {
+  const selectedFiles = state.files.filter((file) => state.selected.has(file.id));
+  const convertible = selectedFiles.filter((file) => file.reduction.format_conversion_available);
+  if (convertible.length && convertible.length === selectedFiles.length) {
+    await convertSelectedToWebp();
+    return;
+  }
+  await reduceSelected();
 }
 
 async function runPerceptualScan() {
@@ -972,8 +980,7 @@ elements.qualityInput.addEventListener("input", () => {
 });
 elements.filterInput.addEventListener("input", filterFiles);
 elements.categoryFilter.addEventListener("change", filterFiles);
-elements.reduceButton.addEventListener("click", reduceSelected);
-elements.convertWebpButton.addEventListener("click", convertSelectedToWebp);
+elements.reduceButton.addEventListener("click", optimizeSelectedImages);
 elements.quarantineButton.addEventListener("click", quarantineSelected);
 elements.perceptualScanButton.addEventListener("click", runPerceptualScan);
 elements.restoreButton.addEventListener("click", restoreManifest);
