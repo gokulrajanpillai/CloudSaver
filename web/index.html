@@ -313,8 +313,13 @@
               <option value="archive">Archives</option>
               <option value="other">Other</option>
             </select>
-            <button id="export-json-button" class="tertiary-action compact-action" type="button" disabled>Export JSON</button>
-            <button id="export-csv-button" class="tertiary-action compact-action" type="button" disabled>Export CSV</button>
+            <details class="export-menu">
+              <summary class="tertiary-action compact-action">Export report</summary>
+              <div>
+                <button id="export-json-button" class="tertiary-action compact-action" type="button" disabled>JSON</button>
+                <button id="export-csv-button" class="tertiary-action compact-action" type="button" disabled>CSV</button>
+              </div>
+            </details>
           </div>
         </div>
         <div class="table-wrap">
