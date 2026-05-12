@@ -568,12 +568,11 @@ function selectReducibleImages() {
 
 function filterFiles() {
   const query = elements.filterInput.value.trim().toLowerCase();
-  const categoryQuery = query.startsWith("category:") ? query.replace("category:", "").trim() : elements.categoryFilter.value;
-  const textQuery = query.startsWith("category:") ? "" : query;
+  const categoryQuery = elements.categoryFilter.value;
   state.filteredFiles = state.files.filter((file) => {
     const categoryMatches = categoryQuery ? file.category === categoryQuery : true;
-    const textMatches = textQuery
-      ? `${file.name} ${file.path} ${file.category}`.toLowerCase().includes(textQuery)
+    const textMatches = query
+      ? `${file.name} ${file.path} ${file.category}`.toLowerCase().includes(query)
       : true;
     return categoryMatches && textMatches;
   });
@@ -582,7 +581,7 @@ function filterFiles() {
 
 function applyCategoryFilter(category) {
   elements.categoryFilter.value = category;
-  elements.filterInput.value = `category:${category}`;
+  elements.filterInput.value = "";
   filterFiles();
   setWorkspaceView("files");
 }
