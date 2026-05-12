@@ -23,6 +23,7 @@ const elements = {
   scanStateLabel: document.querySelector("#scan-state-label"),
   scanStateTitle: document.querySelector("#scan-state-title"),
   scanStateCard: document.querySelector(".scan-state-card"),
+  scanStage: document.querySelector("#scan-stage"),
   metricTotal: document.querySelector("#metric-total"),
   metricTotalDetail: document.querySelector("#metric-total-detail"),
   metricFiles: document.querySelector("#metric-files"),
@@ -138,13 +139,20 @@ function setThemePreference(preference) {
   applyTheme(preference);
 }
 
-function setStatus(message, tone = "neutral") {
+function setStatus(message, tone = "neutral", stage = "") {
   elements.status.textContent = message;
   elements.status.dataset.tone = tone;
   elements.scanStateCard.dataset.tone = tone;
   const [label, title] = scanStateForTone(tone);
   elements.scanStateLabel.textContent = label;
   elements.scanStateTitle.textContent = title;
+  elements.scanStage.textContent = stage || {
+    neutral: "Choose a folder",
+    ready: "Ready",
+    scanning: "Working",
+    complete: "Complete",
+    error: "Needs attention",
+  }[tone] || "Ready";
 }
 
 function showToast(message, tone = "success") {
@@ -721,7 +729,7 @@ async function scan(event) {
 }
 
 async function runScanForPath(path, startingMessage = "Refreshing scan...") {
-  setStatus(startingMessage, "scanning");
+  setStatus(startingMessage, "scanning", "Starting scan");
   elements.form.querySelector("button").disabled = true;
   try {
     const start = await postJson("/api/scan/start", {
@@ -777,8 +785,9 @@ async function waitForScan(jobId) {
     if (job.status === "complete") {
       return job.result;
     }
+    const stage = job.stage || "Scanning files";
     const current = job.current_folder || job.current_path || "Preparing scan...";
-    setStatus(`${current} - ${job.files_scanned || 0} files scanned`, "scanning");
+    setStatus(`${current} - ${job.files_scanned || 0} files scanned`, "scanning", stage);
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }

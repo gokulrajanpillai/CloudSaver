@@ -164,6 +164,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 "files_scanned": 0,
                 "current_path": "",
                 "current_folder": "",
+                "stage": "Waiting to start",
             }
 
         thread = threading.Thread(target=run_scan_job, args=(job_id, payload), daemon=True)
@@ -278,6 +279,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 "files_scanned": 0,
                 "current_path": "",
                 "current_folder": "",
+                "stage": "Waiting to start",
             }
         thread = threading.Thread(target=run_perceptual_scan_job, args=(job_id, payload), daemon=True)
         thread.start()
@@ -314,16 +316,21 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
 
+def update_scan_job(job_id: str | None, updates: dict) -> None:
+    if not job_id:
+        return
+    with SCAN_JOBS_LOCK:
+        job = SCAN_JOBS.get(job_id)
+        if job:
+            job.update(updates)
+            job["updated_at"] = time.time()
+
+
 def run_scan(payload: dict, job_id: str | None = None) -> dict:
     def update_progress(progress: dict) -> None:
-        if not job_id:
-            return
-        with SCAN_JOBS_LOCK:
-            job = SCAN_JOBS.get(job_id)
-            if job:
-                job.update(progress)
-                job["status"] = "scanning"
-                job["updated_at"] = time.time()
+        progress["status"] = "scanning"
+        progress["stage"] = "Reading files"
+        update_scan_job(job_id, progress)
 
     root_path = payload.get("path", "").strip()
     if not root_path:
@@ -332,8 +339,13 @@ def run_scan(payload: dict, job_id: str | None = None) -> dict:
     max_width = int(payload.get("max_width", HD_RESOLUTION[0]))
     max_height = int(payload.get("max_height", HD_RESOLUTION[1]))
 
-    files = attach_duplicate_verification(scan_local_folder(root_path, update_progress))
+    update_scan_job(job_id, {"status": "scanning", "stage": "Reading files"})
+    files = scan_local_folder(root_path, update_progress)
+    update_scan_job(job_id, {"status": "scanning", "stage": "Hashing duplicates"})
+    files = attach_duplicate_verification(files)
+    update_scan_job(job_id, {"status": "scanning", "stage": "Estimating reductions"})
     files_with_estimates = attach_reduction_estimates(files, (max_width, max_height), quality)
+    update_scan_job(job_id, {"status": "scanning", "stage": "Building summary"})
     audit = build_storage_audit(files_with_estimates)
     estimated_reducible_bytes = sum(
         file["reduction"]["estimated_saved_bytes"]
@@ -356,6 +368,7 @@ def run_scan(payload: dict, job_id: str | None = None) -> dict:
 def run_scan_job(job_id: str, payload: dict) -> None:
     with SCAN_JOBS_LOCK:
         SCAN_JOBS[job_id]["status"] = "scanning"
+        SCAN_JOBS[job_id]["stage"] = "Starting scan"
         SCAN_JOBS[job_id]["updated_at"] = time.time()
     try:
         result = run_scan(payload, job_id)
@@ -377,6 +390,7 @@ def run_scan_job(job_id: str, payload: dict) -> None:
                 "files_scanned": len(result["files"]),
                 "current_path": "",
                 "current_folder": "",
+                "stage": "Complete",
                 "updated_at": time.time(),
             }
         )
@@ -384,21 +398,21 @@ def run_scan_job(job_id: str, payload: dict) -> None:
 
 def run_perceptual_scan_job(job_id: str, payload: dict) -> None:
     def update_progress(progress: dict) -> None:
-        with SCAN_JOBS_LOCK:
-            job = SCAN_JOBS.get(job_id)
-            if job:
-                job.update(progress)
-                job["status"] = "scanning"
-                job["updated_at"] = time.time()
+        progress["status"] = "scanning"
+        progress["stage"] = "Reading images"
+        update_scan_job(job_id, progress)
 
     with SCAN_JOBS_LOCK:
         SCAN_JOBS[job_id]["status"] = "scanning"
+        SCAN_JOBS[job_id]["stage"] = "Starting image scan"
         SCAN_JOBS[job_id]["updated_at"] = time.time()
     try:
         root_path = payload.get("root_path", "").strip()
         threshold = int(payload.get("threshold", 10))
         files = scan_local_folder(root_path, update_progress)
+        update_scan_job(job_id, {"status": "scanning", "stage": "Estimating reductions"})
         files_with_estimates = attach_reduction_estimates(files)
+        update_scan_job(job_id, {"status": "scanning", "stage": "Comparing images"})
         audit = build_storage_audit(files_with_estimates)
         groups = find_perceptual_duplicates(audit["top_files"] + files_with_estimates, threshold)
         result = {"perceptual_duplicate_groups": groups}
@@ -420,6 +434,7 @@ def run_perceptual_scan_job(job_id: str, payload: dict) -> None:
                 "files_scanned": len(result["perceptual_duplicate_groups"]),
                 "current_path": "",
                 "current_folder": "",
+                "stage": "Complete",
                 "updated_at": time.time(),
             }
         )

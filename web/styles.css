@@ -414,6 +414,7 @@ output {
 
 .scan-state-card span,
 .scan-state-card strong,
+.scan-state-card small,
 .scan-state-card p {
   display: block;
   margin: 0;
@@ -434,6 +435,13 @@ output {
 
 .scan-state-card p {
   margin-top: 6px;
+}
+
+.scan-state-card small {
+  margin-top: 8px;
+  color: var(--sidebar-accent-text);
+  font-size: 12px;
+  font-weight: 750;
 }
 
 .scan-progress {
