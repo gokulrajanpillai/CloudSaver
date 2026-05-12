@@ -1275,6 +1275,11 @@ output {
   line-height: 1.45;
 }
 
+.settings-grid a {
+  color: var(--accent);
+  font-weight: 750;
+}
+
 .cleanup-panel {
   margin-top: 16px;
 }
