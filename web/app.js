@@ -283,11 +283,11 @@ function renderSidebarRecentScans(scans) {
       return `
         <button type="button" data-path="${escapeHtml(scan.root_path)}">
           <strong title="${escapeHtml(scan.root_path)}">${escapeHtml(scan.root_path)}</strong>
-          <span>${escapeHtml(date)} - ${formatBytes(scan.recoverable_bytes)} recoverable</span>
+          <span>Rescan folder - ${escapeHtml(date)}</span>
         </button>
       `;
     })
-    .join("") || "<span class='starter-empty'>No recent scans.</span>";
+    .join("") || "<span class='starter-empty'>No recent folders.</span>";
 }
 
 function renderSummary(data) {
