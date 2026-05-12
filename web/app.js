@@ -495,8 +495,7 @@ function renderDuplicates(audit) {
           </div>
           <ul>${files}</ul>
           <div class="duplicate-actions">
-            <button class="duplicate-action" type="button" data-duplicate-index="${index}">Select extra copies</button>
-            <button class="duplicate-action danger" type="button" data-move-duplicate-index="${index}">Move extra copies to review</button>
+            <button class="duplicate-action" type="button" data-duplicate-index="${index}">Review extra copies</button>
           </div>
         </div>
       `;
@@ -548,14 +547,6 @@ function selectDuplicateExtras(index) {
   renderFiles();
   setStatus(`${extraFiles.length} duplicate extra copies selected for review.`, "ready");
   return extraFiles;
-}
-
-async function moveDuplicateExtras(index) {
-  const extraFiles = selectDuplicateExtras(index);
-  if (!extraFiles.length) {
-    return;
-  }
-  await quarantineSelected();
 }
 
 function selectReducibleImages() {
@@ -1113,16 +1104,12 @@ elements.mapDetail.addEventListener("click", (event) => {
   setStatus("File selected from storage map.", "ready");
 });
 elements.duplicateList.addEventListener("click", (event) => {
-  const moveButton = event.target.closest("button[data-move-duplicate-index]");
-  if (moveButton) {
-    moveDuplicateExtras(Number(moveButton.dataset.moveDuplicateIndex));
-    return;
-  }
   const selectButton = event.target.closest("button[data-duplicate-index]");
   if (!selectButton) {
     return;
   }
   selectDuplicateExtras(Number(selectButton.dataset.duplicateIndex));
+  setWorkspaceView("files");
 });
 elements.fileTableBody.addEventListener("change", (event) => {
   const checkbox = event.target.closest("input[type='checkbox'][data-file-id]");
