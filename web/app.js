@@ -109,6 +109,7 @@ const elements = {
   upgradeNudge: document.querySelector("#upgrade-nudge"),
   upgradeNudgeMessage: document.querySelector("#upgrade-nudge-message"),
   upgradeNudgeDismiss: document.querySelector(".upgrade-nudge-dismiss"),
+  onboardingModal: document.querySelector("#onboarding-modal"),
 };
 
 const THEME_STORAGE_KEY = "cloudsaver-theme";
@@ -189,6 +190,17 @@ function applyTheme(preference = storedThemePreference()) {
 function setThemePreference(preference) {
   localStorage.setItem(THEME_STORAGE_KEY, preference);
   applyTheme(preference);
+}
+
+function completeOnboarding() {
+  localStorage.setItem("cs-onboarded", "true");
+  elements.onboardingModal?.close();
+}
+
+function showOnboardingIfNeeded() {
+  if (!localStorage.getItem("cs-onboarded")) {
+    elements.onboardingModal?.showModal();
+  }
 }
 
 function setStatus(message, tone = "neutral", stage = "") {
@@ -1354,6 +1366,23 @@ elements.modalTriggers.forEach((trigger) => {
   });
 });
 document.addEventListener("click", (event) => {
+  const onboardPathButton = event.target.closest("[data-onboard-path]");
+  if (onboardPathButton) {
+    const value = onboardPathButton.dataset.onboardPath;
+    if (value === "custom") {
+      elements.pathInput.focus();
+    } else if (value === "home") {
+      elements.pathInput.value = "~";
+    } else {
+      elements.pathInput.value = `~/${value}`;
+    }
+    completeOnboarding();
+    return;
+  }
+  if (event.target.closest("[data-onboarding-dismiss]")) {
+    completeOnboarding();
+    return;
+  }
   const focusScanButton = event.target.closest("[data-focus-scan]");
   if (focusScanButton) {
     elements.pathInput.focus();
@@ -1495,3 +1524,4 @@ loadHistory().catch(() => {});
 loadLicense().catch(() => {});
 loadUpdateStatus().catch(() => {});
 applyTheme();
+showOnboardingIfNeeded();

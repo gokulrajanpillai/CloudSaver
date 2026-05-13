@@ -564,6 +564,35 @@
     </div>
   </dialog>
 
+  <dialog id="onboarding-modal" class="utility-modal">
+    <div class="modal-card">
+      <div class="panel-heading">
+        <h2>Welcome to CloudSaver</h2>
+        <button type="button" class="modal-close" data-onboarding-dismiss aria-label="Close onboarding">Close</button>
+      </div>
+      <div class="settings-grid">
+        <div>
+          <strong>Private by default</strong>
+          <span>CloudSaver scans locally. File names and paths stay on your device.</span>
+        </div>
+        <div>
+          <strong>Choose what to scan</strong>
+          <span>Start with a common folder or enter any local path.</span>
+        </div>
+        <div>
+          <strong>Upgrade when useful</strong>
+          <span>Pro adds AI analysis, cloud scanning, and advanced optimization after you see value.</span>
+        </div>
+      </div>
+      <div class="onboarding-actions">
+        <button type="button" class="primary-action" data-onboard-path="home">My Mac</button>
+        <button type="button" class="tertiary-action" data-onboard-path="Downloads">Downloads</button>
+        <button type="button" class="tertiary-action" data-onboard-path="Pictures">Pictures</button>
+        <button type="button" class="tertiary-action" data-onboard-path="custom">Enter path</button>
+      </div>
+    </div>
+  </dialog>
+
   <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
 
   <script src="/app.js"></script>
