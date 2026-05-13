@@ -10,6 +10,7 @@ const state = {
   perceptualGroups: [],
   license: null,
   lastScanJobId: "",
+  lastHistoryId: null,
 };
 
 const elements = {
@@ -18,6 +19,15 @@ const elements = {
   locationOptions: document.querySelector("#location-options"),
   quickLocations: document.querySelector("#quick-locations"),
   sidebarRecentScans: document.querySelector("#sidebar-recent-scans"),
+  teamSection: document.querySelector("#team-section"),
+  teamName: document.querySelector("#team-name"),
+  teamMemberCount: document.querySelector("#team-member-count"),
+  teamShareButton: document.querySelector("#team-share-btn"),
+  teamMembersList: document.querySelector("#team-members-list"),
+  teamAuditsList: document.querySelector("#team-audits-list"),
+  teamSchedulesList: document.querySelector("#team-schedules-list"),
+  teamCreateForm: document.querySelector("#team-create-form"),
+  teamNameInput: document.querySelector("#team-name-input"),
   qualityInput: document.querySelector("#quality-input"),
   qualityOutput: document.querySelector("#quality-output"),
   resolutionInput: document.querySelector("#resolution-input"),
@@ -255,6 +265,7 @@ async function loadLicense() {
   const data = await response.json();
   state.license = data;
   renderLicenseBadge(data);
+  loadTeamStatus().catch(() => {});
   return data;
 }
 
@@ -283,6 +294,58 @@ function renderLicenseBadge(license) {
 function handleProGate(featureName) {
   showToast(`${featureName} requires CloudSaver Pro`, "error");
   document.querySelector("#upgrade-modal")?.showModal();
+}
+
+async function loadTeamStatus() {
+  if (!state.license?.is_biz) {
+    elements.teamSection.hidden = true;
+    return null;
+  }
+  const response = await fetch("/api/team/status");
+  const data = await response.json();
+  if (!response.ok) {
+    elements.teamSection.hidden = true;
+    return null;
+  }
+  state.teamStatus = data;
+  renderTeamStatus(data);
+  return data;
+}
+
+function renderTeamStatus(data) {
+  if (!state.license?.is_biz) {
+    elements.teamSection.hidden = true;
+    return;
+  }
+  elements.teamSection.hidden = false;
+  const workspace = data?.workspace;
+  const members = data?.members || [];
+  elements.teamName.textContent = workspace ? workspace.name : "No workspace";
+  elements.teamMemberCount.textContent = `${members.length} members`;
+  elements.teamShareButton.disabled = !workspace || !state.lastHistoryId;
+  elements.teamMembersList.textContent = members.length
+    ? members.map((member) => member.display_name || "Unnamed device").join(", ")
+    : "No members loaded.";
+}
+
+async function createTeamWorkspace(event) {
+  event.preventDefault();
+  const name = elements.teamNameInput.value.trim();
+  if (!name) {
+    return;
+  }
+  await postJson("/api/team/create", { name });
+  showToast("Team workspace created.");
+  await loadTeamStatus();
+}
+
+async function shareCurrentAudit() {
+  if (!state.lastHistoryId) {
+    return;
+  }
+  const result = await postJson("/api/team/share-audit", { scan_id: state.lastHistoryId });
+  showToast("Scan summary shared with team.");
+  elements.teamAuditsList.textContent = `Shared audit ${result.shared_audit_id}`;
 }
 
 async function activateLicense(event) {
@@ -928,6 +991,7 @@ async function runScanForPath(path, startingMessage = "Refreshing scan...") {
     state.filteredFiles = [...data.files];
     state.selected.clear();
     state.audit = data.audit;
+    state.lastHistoryId = data.history_id;
     state.perceptualGroups = [];
     state.treemapFolder = "";
     renderMapDetail(null);
@@ -940,6 +1004,7 @@ async function runScanForPath(path, startingMessage = "Refreshing scan...") {
     loadHistory();
     setStatus(`Scan complete. ${data.files.length} files analyzed.`, "complete");
     showToast(`Scan complete: ${data.files.length} files analyzed.`);
+    renderTeamStatus(state.teamStatus || null);
     return data;
   } catch (error) {
     setStatus(error.message, "error");
@@ -1175,6 +1240,10 @@ elements.paymentOptions.addEventListener("click", (event) => {
     return;
   }
   startCheckout(button.dataset.plan);
+});
+elements.teamCreateForm.addEventListener("submit", createTeamWorkspace);
+elements.teamShareButton.addEventListener("click", () => {
+  shareCurrentAudit().catch((error) => showToast(error.message, "error"));
 });
 elements.workspaceTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-view-target]");

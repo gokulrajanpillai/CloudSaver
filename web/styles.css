@@ -629,6 +629,40 @@ output {
   font-size: 12px;
 }
 
+.team-status {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--sidebar-control-border);
+  border-radius: 7px;
+  background: var(--sidebar-control-bg);
+}
+
+.team-status span,
+.team-status small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-status span {
+  color: var(--sidebar-strong-text);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.team-status small {
+  color: var(--sidebar-muted);
+  font-size: 12px;
+}
+
+.team-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .workspace {
   min-width: 0;
   padding: 24px;

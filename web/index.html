@@ -87,6 +87,18 @@
         </div>
       </section>
 
+      <section id="team-section" class="sidebar-section" aria-label="Team workspace" hidden>
+        <h2>Team</h2>
+        <div id="team-status" class="team-status">
+          <span id="team-name">No workspace</span>
+          <small id="team-member-count">0 members</small>
+        </div>
+        <div class="team-actions">
+          <button type="button" class="tertiary-action compact-action" id="team-share-btn" disabled>Share scan</button>
+          <button type="button" class="tertiary-action compact-action" data-modal-target="team-modal">Manage</button>
+        </div>
+      </section>
+
       <footer class="sidebar-footer" aria-label="Utility links">
         <div id="update-notice" class="update-notice" hidden>
           <span>Update available</span>
@@ -497,6 +509,34 @@
           </button>
         </div>
       </div>
+    </div>
+  </dialog>
+
+  <dialog id="team-modal" class="utility-modal">
+    <div class="modal-card">
+      <div class="panel-heading">
+        <h2>Team Workspace</h2>
+        <button type="button" class="modal-close" data-modal-close aria-label="Close team dialog">Close</button>
+      </div>
+      <div class="settings-grid">
+        <div>
+          <strong>Members</strong>
+          <span id="team-members-list">No members loaded.</span>
+        </div>
+        <div>
+          <strong>Shared Audits</strong>
+          <span id="team-audits-list">No shared audits yet.</span>
+        </div>
+        <div>
+          <strong>Schedules</strong>
+          <span id="team-schedules-list">No scheduled scans.</span>
+        </div>
+      </div>
+      <form id="team-create-form" class="license-form">
+        <label for="team-name-input">Workspace name</label>
+        <input id="team-name-input" placeholder="Design team">
+        <button class="primary-action" type="submit">Create workspace</button>
+      </form>
     </div>
   </dialog>
 
