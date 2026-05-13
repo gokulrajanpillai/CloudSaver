@@ -1778,6 +1778,11 @@ tbody tr:hover {
   background: var(--surface-overlay);
 }
 
+#file-table-sentinel td {
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
 .select-cell {
   width: 44px;
 }
