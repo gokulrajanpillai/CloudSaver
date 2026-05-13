@@ -11,6 +11,8 @@ const state = {
   license: null,
   lastScanJobId: "",
   lastHistoryId: null,
+  fileTablePage: 0,
+  fileTablePageSize: 50,
 };
 
 const elements = {
@@ -115,6 +117,7 @@ const elements = {
 const THEME_STORAGE_KEY = "cloudsaver-theme";
 const UPGRADE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+let fileTableObserver = null;
 
 const UPGRADE_TRIGGERS = {
   large_scan_opportunity: {
@@ -889,6 +892,7 @@ function filterFiles() {
       : true;
     return categoryMatches && textMatches;
   });
+  state.fileTablePage = 0;
   renderFiles();
 }
 
@@ -900,14 +904,16 @@ function applyCategoryFilter(category) {
 }
 
 function renderFiles() {
-  elements.fileCount.textContent = `${state.filteredFiles.length} files`;
+  const visibleLimit = (state.fileTablePage + 1) * state.fileTablePageSize;
+  const visibleFiles = state.filteredFiles.slice(0, visibleLimit);
+  elements.fileCount.textContent = `Showing ${visibleFiles.length} of ${state.filteredFiles.length} files`;
   if (!state.filteredFiles.length) {
     elements.fileTableBody.innerHTML = `<tr><td colspan='8'>${emptyState("table", state.audit ? "No files match the current filter" : "Files will appear here after scanning")}</td></tr>`;
     updateSelectionSummary();
     return;
   }
 
-  elements.fileTableBody.innerHTML = state.filteredFiles
+  const rows = visibleFiles
     .map((file) => {
       const supported = file.reduction.supported;
       const checked = state.selected.has(file.id) ? "checked" : "";
@@ -936,7 +942,29 @@ function renderFiles() {
       `;
     })
     .join("");
+  const sentinel = visibleFiles.length < state.filteredFiles.length
+    ? "<tr id='file-table-sentinel'><td colspan='8'>Loading more files...</td></tr>"
+    : "";
+  elements.fileTableBody.innerHTML = rows + sentinel;
+  observeFileTableSentinel();
   updateSelectionSummary();
+}
+
+function observeFileTableSentinel() {
+  if (fileTableObserver) {
+    fileTableObserver.disconnect();
+  }
+  const sentinel = document.querySelector("#file-table-sentinel");
+  if (!sentinel || !("IntersectionObserver" in window)) {
+    return;
+  }
+  fileTableObserver = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      state.fileTablePage += 1;
+      renderFiles();
+    }
+  });
+  fileTableObserver.observe(sentinel);
 }
 
 function codecLabel(file) {
