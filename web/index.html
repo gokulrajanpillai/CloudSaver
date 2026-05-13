@@ -114,7 +114,7 @@
           <button type="button" id="upgrade-button" data-modal-target="upgrade-modal">Upgrade to Pro</button>
         </div>
         <div class="sidebar-links">
-          <button type="button" data-modal-target="safety-modal">Safety</button>
+          <button type="button" data-modal-target="settings-modal">Settings</button>
           <button type="button" data-modal-target="support-modal">Support</button>
         </div>
       </footer>
@@ -429,24 +429,36 @@
     </main>
   </div>
 
-  <dialog id="safety-modal" class="utility-modal">
+  <dialog id="settings-modal" class="utility-modal">
     <div class="modal-card">
       <div class="panel-heading">
-        <h2>Safety</h2>
-        <button type="button" class="modal-close" data-modal-close aria-label="Close safety dialog">Close</button>
+        <h2>Settings</h2>
+        <button type="button" class="modal-close" data-modal-close aria-label="Close settings dialog">Close</button>
       </div>
       <div class="settings-grid">
         <div>
+          <strong>General</strong>
+          <span>Theme, update checks, and scan defaults are managed locally on this device.</span>
+        </div>
+        <div>
+          <strong>License</strong>
+          <span id="settings-license-summary">Free tier active. Upgrade or activate a license from the Pro dialog.</span>
+        </div>
+        <div>
+          <strong>AI Advisor</strong>
+          <span>Uses anonymous storage summaries only. File names and paths are never sent.</span>
+        </div>
+        <div>
+          <strong>Team</strong>
+          <span>Business workspaces share anonymized audit summaries between devices.</span>
+        </div>
+        <div>
           <strong>Privacy</strong>
-          <span>No accounts, telemetry, or file uploads.</span>
+          <span>No accounts, telemetry with paths, or file uploads. Analytics can be disabled with CLOUDSAVER_NO_ANALYTICS=1.</span>
         </div>
         <div>
-          <strong>Cleanup safety</strong>
-          <span>Files move to a local review folder before removal.</span>
-        </div>
-        <div>
-          <strong>Reports</strong>
-          <span>Exports stay in your browser or local output folder.</span>
+          <strong>About</strong>
+          <span>Version 1.0.0 · <a href="https://github.com/gokulrajanpillai/CloudSaver" target="_blank" rel="noreferrer">GitHub</a> · <a href="https://cloudsaver.app/changelog" target="_blank" rel="noreferrer">Changelog</a></span>
         </div>
       </div>
     </div>

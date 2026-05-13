@@ -53,6 +53,7 @@ def test_web_server_serves_app_and_health():
         assert 'data-theme-option="dark"' in html
         assert 'id="advisor-panel"' in html
         assert 'id="team-section"' in html
+        assert 'id="settings-modal"' in html
         with urlopen(f"{base_url}/styles.css", timeout=5) as response:
             css = response.read().decode("utf-8")
         assert '[data-theme="dark"]' in css
