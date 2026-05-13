@@ -94,6 +94,8 @@ const elements = {
   licenseEmailInput: document.querySelector("#license-email-input"),
   licenseActivationStatus: document.querySelector("#license-activation-status"),
   paymentOptions: document.querySelector(".payment-options"),
+  updateNotice: document.querySelector("#update-notice"),
+  updateLink: document.querySelector("#update-link"),
 };
 
 const THEME_STORAGE_KEY = "cloudsaver-theme";
@@ -254,6 +256,17 @@ async function loadLicense() {
   state.license = data;
   renderLicenseBadge(data);
   return data;
+}
+
+async function loadUpdateStatus() {
+  const response = await fetch("/api/update/status");
+  const data = await response.json();
+  if (data.update_available && data.release_url) {
+    elements.updateNotice.hidden = false;
+    elements.updateLink.href = data.release_url;
+  } else {
+    elements.updateNotice.hidden = true;
+  }
 }
 
 function renderLicenseBadge(license) {
@@ -1330,4 +1343,5 @@ elements.selectAll.addEventListener("change", () => {
 loadLocations().catch(() => setStatus("Location suggestions are unavailable.", "error"));
 loadHistory().catch(() => {});
 loadLicense().catch(() => {});
+loadUpdateStatus().catch(() => {});
 applyTheme();
