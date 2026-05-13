@@ -32,6 +32,7 @@ from cloudsaver.core import (
 )
 from cloudsaver import advisor
 from cloudsaver import payments
+from cloudsaver import updater
 from cloudsaver.history import (
     get_license_delivery,
     list_scan_history,
@@ -169,6 +170,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 return
             if parsed.path == "/api/advisor/stream":
                 self.handle_advisor_stream(parsed)
+                return
+            if parsed.path == "/api/update/status":
+                self.write_json(updater.update_info_dict(updater.get_update_state()))
                 return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
@@ -731,6 +735,7 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", default=8765, type=int)
     args = parser.parse_args()
+    updater.start_background_update_check()
     run(args.host, args.port)
 
 
