@@ -808,6 +808,103 @@ output {
   margin-top: 16px;
 }
 
+.advisor-panel {
+  border-color: var(--accent);
+}
+
+.advisor-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.advisor-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+}
+
+.advisor-headline {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.advisor-rec {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.advisor-rec-meta strong {
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.advisor-cost-save {
+  display: block;
+  color: var(--success);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.advisor-rec-title {
+  font-size: 14px;
+}
+
+.advisor-rec p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.advisor-action {
+  color: var(--accent) !important;
+  font-weight: 650;
+}
+
+.advisor-encouragement {
+  margin: 14px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.advisor-skeleton {
+  height: 14px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  background: var(--surface-overlay);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.advisor-skeleton--short {
+  width: 60%;
+}
+
+.advisor-gate {
+  padding: 32px;
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+  background: var(--accent-surface);
+  text-align: center;
+}
+
+.advisor-gate strong,
+.advisor-gate p {
+  display: block;
+}
+
+.advisor-gate p {
+  color: var(--text-secondary);
+}
+
 .plan-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(160px, 1fr));
@@ -1752,6 +1849,17 @@ tbody tr:hover {
   to {
     opacity: 0;
     transform: translateY(8px);
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
   }
 }
 

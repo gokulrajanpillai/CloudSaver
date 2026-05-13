@@ -173,6 +173,26 @@
           </div>
         </section>
 
+        <section id="advisor-panel" class="panel advisor-panel" hidden>
+          <div class="panel-heading">
+            <div class="advisor-heading">
+              <svg class="advisor-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+              <div>
+                <h2>AI Storage Advisor</h2>
+                <span id="advisor-status-text">Personalized cleanup recommendations</span>
+              </div>
+            </div>
+            <button id="advisor-refresh" class="tertiary-action compact-action" type="button">Refresh</button>
+          </div>
+          <div id="advisor-content" class="advisor-content">
+            <div class="advisor-loading">
+              <div class="advisor-skeleton"></div>
+              <div class="advisor-skeleton advisor-skeleton--short"></div>
+              <div class="advisor-skeleton"></div>
+            </div>
+          </div>
+        </section>
+
         <section id="recommended-plan" class="panel plan-panel">
           <div class="panel-heading">
             <h2>Recommended Cleanup Plan</h2>
