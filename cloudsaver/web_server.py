@@ -30,6 +30,7 @@ from cloudsaver.core import (
     restore_quarantine,
     scan_local_folder,
 )
+from cloudsaver.analytics import analytics_summary, record_event
 from cloudsaver import advisor
 from cloudsaver import payments
 from cloudsaver import team
@@ -184,6 +185,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/team/schedule":
                 self.handle_team_schedule_list()
                 return
+            if parsed.path == "/api/analytics/summary":
+                self.write_json(analytics_summary())
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
@@ -318,6 +322,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
         if not key:
             raise ValueError("A CloudSaver license key is required.")
         state = activate_license(key, payload.get("email"))
+        record_event("license_activated", {"tier": state.tier})
         self.write_json({"success": True, **license_state_response(state)})
 
     def handle_license_deactivate(self, payload: dict) -> None:
@@ -540,6 +545,13 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             max_resolution=(max_width, max_height),
             quality=quality,
         )
+        record_event(
+            "reduce_completed",
+            {
+                "file_count": len(file_ids),
+                "saved_gb": round(result.get("total_saved_bytes", 0) / 1e9),
+            },
+        )
         self.write_json(result)
 
     @require_pro
@@ -568,6 +580,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 quality=quality,
             )
         )
+        record_event("pro_feature_used", {"feature": "convert_webp"})
 
     def handle_optimize_png(self, payload: dict) -> None:
         root_path = payload.get("root_path", "").strip()
@@ -621,6 +634,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             }
         thread = threading.Thread(target=run_perceptual_scan_job, args=(job_id, payload), daemon=True)
         thread.start()
+        record_event("pro_feature_used", {"feature": "perceptual_scan"})
         self.write_json({"job_id": job_id, "status": "queued"})
 
     def handle_quarantine(self, payload: dict) -> None:
@@ -630,7 +644,15 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             raise ValueError("A scan root path is required.")
         if not isinstance(file_ids, list) or not file_ids:
             raise ValueError("Select at least one file to move to review.")
-        self.write_json(quarantine_selected_files(root_path, file_ids))
+        result = quarantine_selected_files(root_path, file_ids)
+        record_event(
+            "quarantine_completed",
+            {
+                "file_count": result.get("quarantined_count", 0),
+                "saved_gb": 0,
+            },
+        )
+        self.write_json(result)
 
     def handle_restore(self, payload: dict) -> None:
         manifest_path = payload.get("manifest_path", "").strip()
@@ -700,6 +722,13 @@ def run_scan(payload: dict, job_id: str | None = None) -> dict:
         "estimated_reducible_human": human_readable_size(estimated_reducible_bytes),
     }
     result["history_id"] = save_scan_history(result["root_path"], audit)
+    record_event(
+        "scan_completed",
+        {
+            "file_count": len(files_with_estimates),
+            "total_gb": round(audit["summary"]["total_bytes"] / 1e9),
+        },
+    )
     return result
 
 
