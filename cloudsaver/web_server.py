@@ -31,6 +31,13 @@ from cloudsaver.core import (
     scan_local_folder,
 )
 from cloudsaver.history import list_scan_history, save_scan_history
+from cloudsaver.license import (
+    activate_license,
+    deactivate_license,
+    is_biz,
+    is_pro,
+    load_license,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -66,6 +73,20 @@ def common_scan_locations() -> list[dict]:
     return locations
 
 
+def license_state_response(state) -> dict:
+    return {
+        "tier": state.tier,
+        "valid": state.valid,
+        "expired": state.expired,
+        "expires_at": state.expires_at,
+        "key": state.key,
+        "key_masked": state.key,
+        "email": state.email,
+        "is_pro": is_pro(state),
+        "is_biz": is_biz(state),
+    }
+
+
 class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WEB_ROOT), **kwargs)
@@ -87,6 +108,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 return
             if parsed.path == "/api/history":
                 self.write_json({"scans": list_scan_history()})
+                return
+            if parsed.path == "/api/license":
+                self.handle_license_status()
                 return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
@@ -129,6 +153,12 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/reveal":
                 self.handle_reveal(payload)
                 return
+            if parsed.path == "/api/license/activate":
+                self.handle_license_activate(payload)
+                return
+            if parsed.path == "/api/license/deactivate":
+                self.handle_license_deactivate(payload)
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
@@ -152,6 +182,20 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
 
     def handle_scan(self, payload: dict) -> None:
         self.write_json(run_scan(payload))
+
+    def handle_license_status(self) -> None:
+        self.write_json(license_state_response(load_license()))
+
+    def handle_license_activate(self, payload: dict) -> None:
+        key = payload.get("key", "").strip()
+        if not key:
+            raise ValueError("A CloudSaver license key is required.")
+        state = activate_license(key, payload.get("email"))
+        self.write_json({"success": True, **license_state_response(state)})
+
+    def handle_license_deactivate(self, payload: dict) -> None:
+        deactivate_license()
+        self.write_json({"success": True})
 
     def handle_scan_start(self, payload: dict) -> None:
         job_id = str(uuid.uuid4())
