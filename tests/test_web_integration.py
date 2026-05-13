@@ -160,9 +160,10 @@ def test_scan_start_completes_for_temp_directory(tmp_path):
         server.server_close()
 
 
-def test_convert_endpoint_creates_webp_copy(tmp_path):
+def test_convert_endpoint_creates_webp_copy(monkeypatch, tmp_path):
     if not features.check("webp"):
         return
+    reset_license_state(monkeypatch, tmp_path)
     root = tmp_path / "scan"
     root.mkdir()
     image_path = root / "photo.jpg"
@@ -171,6 +172,7 @@ def test_convert_endpoint_creates_webp_copy(tmp_path):
 
     server, base_url = run_test_server()
     try:
+        post_json(base_url, "/api/license/activate", {"key": license_module.generate_license_key("PRO", "202612")})
         result = post_json(
             base_url,
             "/api/convert",
@@ -226,13 +228,15 @@ def test_pro_gated_convert_proceeds_after_activation(monkeypatch, tmp_path):
         server.server_close()
 
 
-def test_perceptual_scan_endpoint_degrades_when_dependency_missing(tmp_path):
+def test_perceptual_scan_endpoint_degrades_when_dependency_missing(monkeypatch, tmp_path):
+    reset_license_state(monkeypatch, tmp_path)
     root = tmp_path / "scan"
     root.mkdir()
     Image.new("RGB", (420, 420), color=(100, 120, 140)).save(root / "photo.jpg", quality=90)
 
     server, base_url = run_test_server()
     try:
+        post_json(base_url, "/api/license/activate", {"key": license_module.generate_license_key("PRO", "202612")})
         started = post_json(base_url, "/api/scan/perceptual", {"root_path": str(root)})
         deadline = time.time() + 5
         result = None
