@@ -1405,6 +1405,62 @@ output {
   font-weight: 750;
 }
 
+.payment-options {
+  margin-top: 16px;
+}
+
+.payment-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.payment-divider::before,
+.payment-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+
+.plan-purchase-card {
+  display: grid;
+  gap: 6px;
+  min-height: 112px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-primary);
+  padding: 14px;
+  text-align: left;
+}
+
+.plan-purchase-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-surface);
+}
+
+.plan-purchase-card strong,
+.plan-purchase-card b,
+.plan-purchase-card span {
+  display: block;
+}
+
+.plan-purchase-card b {
+  color: var(--accent);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.plan-purchase-card span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
 .cleanup-panel {
   margin-top: 16px;
 }
