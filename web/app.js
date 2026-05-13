@@ -1394,8 +1394,39 @@ document.addEventListener("click", (event) => {
   }
 });
 document.addEventListener("keydown", (event) => {
+  const activeTag = document.activeElement?.tagName?.toLowerCase();
+  const isTyping = ["input", "select", "textarea"].includes(activeTag);
+  if (event.key === "?" && !isTyping) {
+    document.querySelector("#shortcuts-modal")?.showModal();
+    return;
+  }
+  if (event.key === "/" && !isTyping) {
+    event.preventDefault();
+    elements.filterInput.focus();
+    return;
+  }
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+    event.preventDefault();
+    elements.form.requestSubmit();
+    return;
+  }
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "r") {
+    event.preventDefault();
+    refreshCurrentScan().catch(() => {});
+    return;
+  }
+  if (!isTyping && /^[1-5]$/.test(event.key)) {
+    const views = ["overview", "map", "duplicates", "files", "history"];
+    setWorkspaceView(views[Number(event.key) - 1]);
+    return;
+  }
   if (event.key === "Escape" && elements.sidebar.classList.contains("open")) {
     setSidebarOpen(false);
+    return;
+  }
+  if (event.key === "Escape" && elements.filterInput.value) {
+    elements.filterInput.value = "";
+    filterFiles();
   }
 });
 elements.form.addEventListener("submit", () => setSidebarOpen(false));
