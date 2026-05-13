@@ -292,6 +292,39 @@ def test_payment_checkout_maps_plan_to_price(monkeypatch, tmp_path):
         server.server_close()
 
 
+def test_advisor_status_reports_missing_api_key(monkeypatch):
+    monkeypatch.setattr(web_server_module.advisor, "ADVISOR_AVAILABLE", True)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    server, base_url = run_test_server()
+    try:
+        assert get_json(base_url, "/api/advisor/status") == {
+            "available": False,
+            "reason": "api_key_missing",
+        }
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_advisor_analyze_requires_pro(monkeypatch, tmp_path):
+    reset_license_state(monkeypatch, tmp_path)
+
+    server, base_url = run_test_server()
+    try:
+        try:
+            post_json(base_url, "/api/advisor/analyze", {"job_id": "missing"})
+        except HTTPError as error:
+            assert error.code == 402
+            payload = json.loads(error.read().decode("utf-8"))
+            assert payload["error"] == "pro_required"
+        else:
+            raise AssertionError("Expected advisor analyze endpoint to require Pro")
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
 def test_perceptual_scan_endpoint_degrades_when_dependency_missing(monkeypatch, tmp_path):
     reset_license_state(monkeypatch, tmp_path)
     root = tmp_path / "scan"
