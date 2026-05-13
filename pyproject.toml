@@ -50,6 +50,9 @@ release = [
 payments = [
   "stripe>=13.0.0",
 ]
+advisor = [
+  "anthropic>=0.49.0",
+]
 all = [
   "cloudsaver[image_extras,avif]",
 ]
