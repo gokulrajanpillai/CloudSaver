@@ -57,6 +57,58 @@ def connect_history(db_path: str | Path = DEFAULT_HISTORY_DB) -> sqlite3.Connect
         )
         """
     )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS team_workspaces (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            created_at REAL NOT NULL,
+            invite_code TEXT NOT NULL
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS team_members (
+            workspace_id TEXT NOT NULL,
+            device_id TEXT NOT NULL,
+            display_name TEXT,
+            joined_at REAL NOT NULL,
+            last_seen REAL NOT NULL,
+            PRIMARY KEY (workspace_id, device_id)
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS shared_audits (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            device_id TEXT NOT NULL,
+            root_path TEXT NOT NULL,
+            scanned_at REAL NOT NULL,
+            file_count INTEGER NOT NULL,
+            total_bytes INTEGER NOT NULL,
+            recoverable_bytes INTEGER NOT NULL,
+            cost_avoided_usd REAL NOT NULL,
+            summary_json TEXT NOT NULL
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS scheduled_scans (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            device_id TEXT NOT NULL,
+            path TEXT NOT NULL,
+            cron_expression TEXT NOT NULL,
+            last_run REAL,
+            next_run REAL NOT NULL,
+            enabled INTEGER NOT NULL DEFAULT 1
+        )
+        """
+    )
     columns = {
         row[1]
         for row in connection.execute("PRAGMA table_info(scans)").fetchall()
