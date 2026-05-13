@@ -9,6 +9,7 @@ const state = {
   duplicateGroups: [],
   perceptualGroups: [],
   license: null,
+  lastScanJobId: "",
 };
 
 const elements = {
@@ -54,6 +55,10 @@ const elements = {
   planAudio: document.querySelector("#plan-audio"),
   planAudioDetail: document.querySelector("#plan-audio-detail"),
   recommendedPlan: document.querySelector("#recommended-plan"),
+  advisorPanel: document.querySelector("#advisor-panel"),
+  advisorStatusText: document.querySelector("#advisor-status-text"),
+  advisorRefresh: document.querySelector("#advisor-refresh"),
+  advisorContent: document.querySelector("#advisor-content"),
   categoryCount: document.querySelector("#category-count"),
   categoryBars: document.querySelector("#category-bars"),
   folderList: document.querySelector("#folder-list"),
@@ -387,6 +392,11 @@ function renderSummary(data) {
     elements.workspaceSubtitle.textContent = data.root_path;
   }
   renderCleanupPlan(audit, data.estimated_reducible_human);
+  if (state.license?.is_pro) {
+    refreshAdvisor();
+  } else {
+    renderAdvisorGate();
+  }
 }
 
 function renderCleanupPlan(audit, estimatedReducibleHuman) {
@@ -414,6 +424,81 @@ function renderCleanupPlan(audit, estimatedReducibleHuman) {
   elements.planAudioDetail.textContent = opportunities.audio_optimization_count
     ? `${opportunities.audio_optimization_count} audio files could benefit from OPUS conversion.`
     : "Install FFprobe to estimate audio savings, or scan a folder with audio files.";
+}
+
+function renderAdvisorGate() {
+  elements.advisorPanel.hidden = false;
+  elements.advisorRefresh.hidden = true;
+  elements.advisorStatusText.textContent = "Available with CloudSaver Pro";
+  elements.advisorContent.innerHTML = `
+    <div class="advisor-gate">
+      <svg class="advisor-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9z"/></svg>
+      <strong>AI Storage Advisor</strong>
+      <p>Get personalized recommendations after every scan.</p>
+      <button class="primary-action" type="button" data-modal-target="upgrade-modal">Unlock with Pro</button>
+    </div>
+  `;
+}
+
+function renderAdvisorLoading() {
+  elements.advisorPanel.hidden = false;
+  elements.advisorRefresh.hidden = false;
+  elements.advisorStatusText.textContent = "Analyzing your storage...";
+  elements.advisorContent.innerHTML = `
+    <div class="advisor-loading">
+      <div class="advisor-skeleton"></div>
+      <div class="advisor-skeleton advisor-skeleton--short"></div>
+      <div class="advisor-skeleton"></div>
+    </div>
+  `;
+}
+
+function renderAdvisorRecommendations(data) {
+  const recommendations = data.recommendations || [];
+  elements.advisorPanel.hidden = false;
+  elements.advisorRefresh.hidden = false;
+  elements.advisorStatusText.textContent = data.total_opportunity_human || "Recommendations ready";
+  elements.advisorContent.innerHTML = `
+    <div class="advisor-headline">${escapeHtml(data.headline || "CloudSaver found storage opportunities.")}</div>
+    <div class="advisor-recs">
+      ${recommendations.map((rec) => `
+        <div class="advisor-rec">
+          <div class="advisor-rec-meta">
+            <strong>${escapeHtml(rec.impact_human || "")}</strong>
+            ${rec.cost_saving_human ? `<span class="advisor-cost-save">saves ${escapeHtml(rec.cost_saving_human)}</span>` : ""}
+          </div>
+          <div class="advisor-rec-body">
+            <strong class="advisor-rec-title">${escapeHtml(rec.title || "")}</strong>
+            <p>${escapeHtml(rec.explanation || "")}</p>
+            <p class="advisor-action">${escapeHtml(rec.action || "")}</p>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+    <p class="advisor-encouragement">${escapeHtml(data.encouragement || "")}</p>
+  `;
+}
+
+async function refreshAdvisor() {
+  if (!state.audit) {
+    return;
+  }
+  if (!state.license?.is_pro) {
+    renderAdvisorGate();
+    return;
+  }
+  if (!state.lastScanJobId) {
+    return;
+  }
+  renderAdvisorLoading();
+  try {
+    const start = await postJson("/api/advisor/analyze", { job_id: state.lastScanJobId });
+    const data = await waitForScan(start.job_id);
+    renderAdvisorRecommendations(data);
+  } catch (error) {
+    elements.advisorStatusText.textContent = "Advisor unavailable";
+    elements.advisorContent.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+  }
 }
 
 function renderCategories(audit) {
@@ -823,6 +908,7 @@ async function runScanForPath(path, startingMessage = "Refreshing scan...") {
       quality: Number(elements.qualityInput.value),
       ...resolution(),
     });
+    state.lastScanJobId = start.job_id;
     const data = await waitForScan(start.job_id);
     state.rootPath = data.root_path;
     state.files = data.files;
@@ -1069,6 +1155,7 @@ elements.restoreButton.addEventListener("click", restoreManifest);
 elements.exportJsonButton.addEventListener("click", exportJsonReport);
 elements.exportCsvButton.addEventListener("click", exportCsvReport);
 elements.licenseForm.addEventListener("submit", activateLicense);
+elements.advisorRefresh.addEventListener("click", refreshAdvisor);
 elements.paymentOptions.addEventListener("click", (event) => {
   const button = event.target.closest("[data-plan]");
   if (!button) {
