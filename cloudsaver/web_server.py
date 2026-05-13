@@ -94,6 +94,15 @@ def license_state_response(state) -> dict:
     }
 
 
+def stripe_price_id_for_plan(plan: str) -> str:
+    plan_map = {
+        "pro_monthly": os.environ.get("CLOUDSAVER_STRIPE_PRO_PRICE_ID", ""),
+        "pro_annual": os.environ.get("CLOUDSAVER_STRIPE_PRO_ANNUAL_ID", ""),
+        "business": os.environ.get("CLOUDSAVER_STRIPE_BIZ_PRICE_ID", ""),
+    }
+    return plan_map.get(plan, "")
+
+
 def require_pro(handler_method):
     """Decorator for request handler methods that require Pro tier."""
 
@@ -250,7 +259,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
         self.write_json({"success": True})
 
     def handle_payment_checkout(self, payload: dict) -> None:
-        price_id = payload.get("price_id", "").strip()
+        price_id = payload.get("price_id", "").strip() or stripe_price_id_for_plan(
+            payload.get("plan", "").strip()
+        )
         if not price_id:
             raise ValueError("A Stripe price id is required.")
         base_url = os.environ.get("CLOUDSAVER_BASE_URL", "http://127.0.0.1:8765")

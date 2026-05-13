@@ -88,6 +88,7 @@ const elements = {
   licenseKeyInput: document.querySelector("#license-key-input"),
   licenseEmailInput: document.querySelector("#license-email-input"),
   licenseActivationStatus: document.querySelector("#license-activation-status"),
+  paymentOptions: document.querySelector(".payment-options"),
 };
 
 const THEME_STORAGE_KEY = "cloudsaver-theme";
@@ -291,6 +292,22 @@ async function activateLicense(event) {
     window.setTimeout(() => {
       document.querySelector("#upgrade-modal")?.close();
     }, 3000);
+  } catch (error) {
+    elements.licenseActivationStatus.dataset.tone = "error";
+    elements.licenseActivationStatus.textContent = error.message;
+  }
+}
+
+async function startCheckout(plan) {
+  elements.licenseActivationStatus.dataset.tone = "";
+  elements.licenseActivationStatus.textContent = "Opening secure checkout...";
+  try {
+    const data = await postJson("/api/payments/checkout", {
+      plan,
+      email: elements.licenseEmailInput.value.trim() || null,
+    });
+    window.open(data.checkout_url, "_blank", "noopener");
+    elements.licenseActivationStatus.textContent = "Complete checkout in the browser, then return to CloudSaver.";
   } catch (error) {
     elements.licenseActivationStatus.dataset.tone = "error";
     elements.licenseActivationStatus.textContent = error.message;
@@ -1052,6 +1069,13 @@ elements.restoreButton.addEventListener("click", restoreManifest);
 elements.exportJsonButton.addEventListener("click", exportJsonReport);
 elements.exportCsvButton.addEventListener("click", exportCsvReport);
 elements.licenseForm.addEventListener("submit", activateLicense);
+elements.paymentOptions.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-plan]");
+  if (!button) {
+    return;
+  }
+  startCheckout(button.dataset.plan);
+});
 elements.workspaceTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-view-target]");
   if (!button) {

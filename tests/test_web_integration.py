@@ -266,6 +266,32 @@ def test_payment_success_returns_and_activates_license(monkeypatch, tmp_path):
         server.server_close()
 
 
+def test_payment_checkout_maps_plan_to_price(monkeypatch, tmp_path):
+    reset_license_state(monkeypatch, tmp_path)
+    monkeypatch.setenv("CLOUDSAVER_STRIPE_PRO_ANNUAL_ID", "price_annual")
+    captured = {}
+
+    def fake_checkout(price_id, customer_email, success_url, cancel_url):
+        captured["price_id"] = price_id
+        captured["customer_email"] = customer_email
+        return "https://checkout.stripe.test/session"
+
+    monkeypatch.setattr(web_server_module.payments, "create_checkout_session", fake_checkout)
+
+    server, base_url = run_test_server()
+    try:
+        result = post_json(
+            base_url,
+            "/api/payments/checkout",
+            {"plan": "pro_annual", "email": "buyer@example.com"},
+        )
+        assert result["checkout_url"] == "https://checkout.stripe.test/session"
+        assert captured == {"price_id": "price_annual", "customer_email": "buyer@example.com"}
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
 def test_perceptual_scan_endpoint_degrades_when_dependency_missing(monkeypatch, tmp_path):
     reset_license_state(monkeypatch, tmp_path)
     root = tmp_path / "scan"
