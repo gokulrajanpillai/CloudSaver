@@ -1,4 +1,9 @@
 from cloudsaver import payments
+from cloudsaver.history import (
+    get_license_delivery,
+    mark_license_delivery_activated,
+    save_license_delivery,
+)
 
 
 def test_compute_expiry_yyyymm_format():
@@ -55,3 +60,23 @@ def test_handle_webhook_ignores_non_actionable_event(monkeypatch):
     monkeypatch.setattr(payments, "stripe", FakeStripe)
 
     assert payments.handle_webhook(b"{}", "sig") is None
+
+
+def test_license_delivery_storage_round_trip(tmp_path):
+    delivery = {
+        "session_id": "cs_test_123",
+        "license_key": "CS-PRO-202612-ABCDEFGH-ABCDE",
+        "tier": "PRO",
+        "expiry_yyyymm": "202612",
+        "customer_email": "buyer@example.com",
+    }
+
+    save_license_delivery(delivery, tmp_path / "history.sqlite3")
+    stored = get_license_delivery("cs_test_123", tmp_path / "history.sqlite3")
+
+    assert stored["license_key"] == delivery["license_key"]
+    assert stored["customer_email"] == "buyer@example.com"
+    assert stored["activated_at"] is None
+
+    mark_license_delivery_activated("cs_test_123", tmp_path / "history.sqlite3")
+    assert get_license_delivery("cs_test_123", tmp_path / "history.sqlite3")["activated_at"] is not None
