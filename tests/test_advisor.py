@@ -1,6 +1,7 @@
 import json
 
 from cloudsaver import advisor
+from cloudsaver.history import connect_history, save_advisor_result
 
 
 def sample_audit():
@@ -88,3 +89,25 @@ def test_get_recommendations_parses_mocked_anthropic_response(monkeypatch):
 
     assert result["headline"] == "Recover video space first."
     assert result["recommendations"][0]["confidence"] == "high"
+
+
+def test_save_advisor_result_adds_scan_column(tmp_path):
+    db_path = tmp_path / "history.sqlite3"
+    with connect_history(db_path) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO scans (
+                root_path, scanned_at, file_count, total_bytes, recoverable_bytes,
+                cost_avoided_usd, audit_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            ("/tmp", 1.0, 1, 100, 20, 0.1, "{}"),
+        )
+        scan_id = cursor.lastrowid
+
+    save_advisor_result(scan_id, {"headline": "Saved"}, db_path)
+
+    with connect_history(db_path) as connection:
+        row = connection.execute("SELECT advisor_json FROM scans WHERE id = ?", (scan_id,)).fetchone()
+    assert "Saved" in row[0]

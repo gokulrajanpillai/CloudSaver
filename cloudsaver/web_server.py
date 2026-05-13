@@ -30,11 +30,13 @@ from cloudsaver.core import (
     restore_quarantine,
     scan_local_folder,
 )
+from cloudsaver import advisor
 from cloudsaver import payments
 from cloudsaver.history import (
     get_license_delivery,
     list_scan_history,
     mark_license_delivery_activated,
+    save_advisor_result,
     save_license_delivery,
     save_scan_history,
 )
@@ -51,6 +53,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 WEB_ROOT = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT)) / "web"
 SCAN_JOBS: dict[str, dict] = {}
 SCAN_JOBS_LOCK = threading.Lock()
+ADVISOR_JOBS: dict[str, dict] = {}
 
 
 def common_scan_locations() -> list[dict]:
@@ -161,6 +164,12 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/payments/success":
                 self.handle_payment_success(parsed)
                 return
+            if parsed.path == "/api/advisor/status":
+                self.handle_advisor_status()
+                return
+            if parsed.path == "/api/advisor/stream":
+                self.handle_advisor_stream(parsed)
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
@@ -213,6 +222,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 return
             if parsed.path == "/api/payments/checkout":
                 self.handle_payment_checkout(payload)
+                return
+            if parsed.path == "/api/advisor/analyze":
+                self.handle_advisor_analyze(payload)
                 return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
@@ -299,6 +311,68 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 **license_state_response(state),
             }
         )
+
+    def handle_advisor_status(self) -> None:
+        if not advisor.ADVISOR_AVAILABLE:
+            self.write_json({"available": False, "reason": "package_missing"})
+            return
+        if not os.environ.get("ANTHROPIC_API_KEY", ""):
+            self.write_json({"available": False, "reason": "api_key_missing"})
+            return
+        self.write_json({"available": True, "reason": "ok"})
+
+    @require_pro
+    def handle_advisor_analyze(self, payload: dict) -> None:
+        source_job_id = payload.get("job_id", "").strip()
+        if not source_job_id:
+            raise ValueError("A scan job id is required.")
+        with SCAN_JOBS_LOCK:
+            source_job = SCAN_JOBS.get(source_job_id)
+            if not source_job or source_job.get("status") != "complete":
+                raise ValueError("Scan job is not complete.")
+        advisor_job_id = str(uuid.uuid4())
+        with SCAN_JOBS_LOCK:
+            ADVISOR_JOBS[advisor_job_id] = {
+                "id": advisor_job_id,
+                "status": "queued",
+                "created_at": time.time(),
+                "updated_at": time.time(),
+                "source_job_id": source_job_id,
+            }
+            SCAN_JOBS[advisor_job_id] = ADVISOR_JOBS[advisor_job_id]
+        thread = threading.Thread(
+            target=run_advisor_job,
+            args=(advisor_job_id, source_job_id),
+            daemon=True,
+        )
+        thread.start()
+        self.write_json({"job_id": advisor_job_id, "status": "queued"})
+
+    def handle_advisor_stream(self, parsed) -> None:
+        if not is_pro(load_license()):
+            self.write_json(
+                {"error": "pro_required", "message": "This feature requires CloudSaver Pro."},
+                HTTPStatus.PAYMENT_REQUIRED,
+            )
+            return
+        params = parse_qs(parsed.query or "")
+        source_job_id = (params.get("job_id") or [""])[0]
+        with SCAN_JOBS_LOCK:
+            source_job = SCAN_JOBS.get(source_job_id)
+            result = source_job.get("result") if source_job else None
+        if not result:
+            raise ValueError("A completed scan job id is required.")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        for chunk in advisor.stream_recommendations(
+            result["audit"],
+            result["files"],
+            list_scan_history(),
+        ):
+            self.wfile.write(chunk.encode("utf-8"))
+            self.wfile.flush()
 
     def handle_scan_start(self, payload: dict) -> None:
         job_id = str(uuid.uuid4())
@@ -583,6 +657,45 @@ def run_perceptual_scan_job(job_id: str, payload: dict) -> None:
                 "files_scanned": len(result["perceptual_duplicate_groups"]),
                 "current_path": "",
                 "current_folder": "",
+                "stage": "Complete",
+                "updated_at": time.time(),
+            }
+        )
+
+
+def run_advisor_job(job_id: str, source_job_id: str) -> None:
+    with SCAN_JOBS_LOCK:
+        job = SCAN_JOBS[job_id]
+        job["status"] = "scanning"
+        job["stage"] = "Analyzing storage summary"
+        job["updated_at"] = time.time()
+        source_result = (SCAN_JOBS.get(source_job_id) or {}).get("result")
+    try:
+        if not source_result:
+            raise ValueError("Source scan result is unavailable.")
+        result = advisor.get_recommendations(
+            source_result["audit"],
+            source_result["files"],
+            list_scan_history(),
+        )
+        scan_id = source_result.get("history_id")
+        if scan_id:
+            save_advisor_result(scan_id, result)
+    except Exception as error:
+        with SCAN_JOBS_LOCK:
+            SCAN_JOBS[job_id].update(
+                {
+                    "status": "failed",
+                    "error": str(error),
+                    "updated_at": time.time(),
+                }
+            )
+        return
+    with SCAN_JOBS_LOCK:
+        SCAN_JOBS[job_id].update(
+            {
+                "status": "complete",
+                "result": result,
                 "stage": "Complete",
                 "updated_at": time.time(),
             }

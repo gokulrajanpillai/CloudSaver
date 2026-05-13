@@ -59,9 +59,15 @@ def connect_history(db_path: str | Path = DEFAULT_HISTORY_DB) -> sqlite3.Connect
     )
     columns = {
         row[1]
+        for row in connection.execute("PRAGMA table_info(scans)").fetchall()
+    }
+    if "advisor_json" not in columns:
+        connection.execute("ALTER TABLE scans ADD COLUMN advisor_json TEXT")
+    cache_columns = {
+        row[1]
         for row in connection.execute("PRAGMA table_info(file_cache)").fetchall()
     }
-    if "ffprobe_json" not in columns:
+    if "ffprobe_json" not in cache_columns:
         connection.execute("ALTER TABLE file_cache ADD COLUMN ffprobe_json TEXT")
     return connection
 
@@ -133,6 +139,20 @@ def mark_license_delivery_activated(
         connection.execute(
             "UPDATE license_deliveries SET activated_at = ? WHERE session_id = ?",
             (time.time(), session_id),
+        )
+
+
+def save_advisor_result(
+    scan_id: int,
+    advisor_result: dict[str, Any],
+    db_path: str | Path = DEFAULT_HISTORY_DB,
+) -> None:
+    """Persist AI advisor output against a scan history row."""
+
+    with connect_history(db_path) as connection:
+        connection.execute(
+            "UPDATE scans SET advisor_json = ? WHERE id = ?",
+            (json.dumps(advisor_result), int(scan_id)),
         )
 
 
