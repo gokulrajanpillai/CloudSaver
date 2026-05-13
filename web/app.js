@@ -106,10 +106,37 @@ const elements = {
   paymentOptions: document.querySelector(".payment-options"),
   updateNotice: document.querySelector("#update-notice"),
   updateLink: document.querySelector("#update-link"),
+  upgradeNudge: document.querySelector("#upgrade-nudge"),
+  upgradeNudgeMessage: document.querySelector("#upgrade-nudge-message"),
+  upgradeNudgeDismiss: document.querySelector(".upgrade-nudge-dismiss"),
 };
 
 const THEME_STORAGE_KEY = "cloudsaver-theme";
+const UPGRADE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+const UPGRADE_TRIGGERS = {
+  large_scan_opportunity: {
+    condition: (audit) => audit.opportunities.estimated_recoverable_bytes > 5 * 1024 ** 3,
+    message: (audit) => `CloudSaver found ${audit.opportunities.estimated_recoverable_human} of recoverable space. Unlock AI analysis and cloud scanning with Pro.`,
+    shown: false,
+  },
+  cloud_mount_detected: {
+    condition: () => state.cloudMountsDetected?.length > 0,
+    message: () => "CloudSaver detected cloud folders. Pro lets you audit cloud storage usage and avoid plan upgrades.",
+    shown: false,
+  },
+  duplicate_high_count: {
+    condition: (audit) => audit.opportunities.duplicate_count > 50,
+    message: (audit) => `${audit.opportunities.duplicate_count} duplicate groups found. Pro adds perceptual matching to find visually similar images too.`,
+    shown: false,
+  },
+  video_detected: {
+    condition: (audit) => (audit.by_category.video?.bytes || 0) > 2 * 1024 ** 3,
+    message: (audit) => `${formatBytes(audit.by_category.video.bytes)} of video files detected. Pro can re-encode to H.265 - typically 45% smaller.`,
+    shown: false,
+  },
+};
 
 function formatBytes(bytes) {
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -190,6 +217,47 @@ function showToast(message, tone = "success") {
     toast.classList.add("leaving");
     window.setTimeout(() => toast.remove(), 180);
   }, 4000);
+}
+
+function showUpgradeToast(message) {
+  const toast = document.createElement("button");
+  toast.type = "button";
+  toast.className = "toast upgrade";
+  toast.setAttribute("role", "status");
+  toast.textContent = `${message} Learn more`;
+  toast.addEventListener("click", () => document.querySelector("#upgrade-modal")?.showModal());
+  elements.toastRegion.append(toast);
+  window.setTimeout(() => {
+    toast.classList.add("leaving");
+    window.setTimeout(() => toast.remove(), 180);
+  }, 5000);
+}
+
+function upgradeDismissedRecently(key) {
+  const dismissedAt = Number(localStorage.getItem(`cloudsaver-upgrade-dismissed-${key}`) || 0);
+  return dismissedAt && Date.now() - dismissedAt < UPGRADE_COOLDOWN_MS;
+}
+
+function showUpgradeNudge(message, key) {
+  if (upgradeDismissedRecently(key)) {
+    return;
+  }
+  elements.upgradeNudge.dataset.triggerKey = key;
+  elements.upgradeNudgeMessage.textContent = message;
+  elements.upgradeNudge.hidden = false;
+}
+
+function checkUpgradeTriggers(audit) {
+  if (state.license?.is_pro) {
+    return;
+  }
+  for (const [key, trigger] of Object.entries(UPGRADE_TRIGGERS)) {
+    if (!trigger.shown && trigger.condition(audit) && !upgradeDismissedRecently(key)) {
+      trigger.shown = true;
+      showUpgradeNudge(trigger.message(audit), key);
+      break;
+    }
+  }
 }
 
 function updateReviewQueueBadge() {
@@ -472,6 +540,7 @@ function renderSummary(data) {
     refreshAdvisor();
   } else {
     renderAdvisorGate();
+    checkUpgradeTriggers(audit);
   }
 }
 
@@ -1145,6 +1214,11 @@ async function quarantineSelected() {
     });
     setStatus(`${result.quarantined_count} files moved to review. Manifest: ${result.manifest_path}`, "complete");
     showToast(`${result.quarantined_count} files moved to review folder.`);
+    if (!state.license?.is_pro && result.quarantined_count > 0) {
+      window.setTimeout(() => {
+        showUpgradeToast("Pro tip: CloudSaver Pro adds AI-guided cleanup and video optimization.");
+      }, 2000);
+    }
     state.reviewBatches.unshift({
       manifestPath: result.manifest_path,
       count: result.quarantined_count,
@@ -1244,6 +1318,13 @@ elements.paymentOptions.addEventListener("click", (event) => {
 elements.teamCreateForm.addEventListener("submit", createTeamWorkspace);
 elements.teamShareButton.addEventListener("click", () => {
   shareCurrentAudit().catch((error) => showToast(error.message, "error"));
+});
+elements.upgradeNudgeDismiss.addEventListener("click", () => {
+  const key = elements.upgradeNudge.dataset.triggerKey;
+  if (key) {
+    localStorage.setItem(`cloudsaver-upgrade-dismissed-${key}`, String(Date.now()));
+  }
+  elements.upgradeNudge.hidden = true;
 });
 elements.workspaceTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-view-target]");
