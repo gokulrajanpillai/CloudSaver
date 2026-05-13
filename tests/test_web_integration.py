@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 
 from PIL import Image, features
 
+from cloudsaver import license as license_module
 from cloudsaver.web_server import CloudSaverRequestHandler
 
 
@@ -33,6 +34,11 @@ def post_json(base_url, path, payload):
     )
     with urlopen(request, timeout=5) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def reset_license_state(monkeypatch, tmp_path):
+    monkeypatch.setattr(license_module, "LICENSE_FILE", tmp_path / "license.json")
+    monkeypatch.setattr(license_module, "_license_state", None)
 
 
 def test_web_server_serves_app_and_health():
@@ -65,6 +71,54 @@ def test_scan_status_requires_job_id():
             assert "scan job id" in payload["error"]
         else:
             raise AssertionError("Expected missing job id to return HTTP 400")
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_license_activation_api(monkeypatch, tmp_path):
+    reset_license_state(monkeypatch, tmp_path)
+    key = license_module.generate_license_key("PRO", "202612")
+
+    server, base_url = run_test_server()
+    try:
+        initial = get_json(base_url, "/api/license")
+        assert initial["tier"] == "FREE"
+        assert initial["is_pro"] is False
+
+        activated = post_json(
+            base_url,
+            "/api/license/activate",
+            {"key": key, "email": "buyer@example.com"},
+        )
+        assert activated["success"] is True
+        assert activated["tier"] == "PRO"
+        assert activated["is_pro"] is True
+        assert activated["expires_at"] == "2026-12"
+        assert activated["email"] == "buyer@example.com"
+
+        current = get_json(base_url, "/api/license")
+        assert current["tier"] == "PRO"
+        assert current["is_pro"] is True
+
+        deactivated = post_json(base_url, "/api/license/deactivate", {})
+        assert deactivated == {"success": True}
+        assert get_json(base_url, "/api/license")["tier"] == "FREE"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_expired_license_activation_api(monkeypatch, tmp_path):
+    reset_license_state(monkeypatch, tmp_path)
+    key = license_module.generate_license_key("PRO", "200001")
+
+    server, base_url = run_test_server()
+    try:
+        activated = post_json(base_url, "/api/license/activate", {"key": key})
+        assert activated["success"] is True
+        assert activated["expired"] is True
+        assert activated["is_pro"] is False
     finally:
         server.shutdown()
         server.server_close()
