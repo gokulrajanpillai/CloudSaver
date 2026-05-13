@@ -44,6 +44,19 @@ def connect_history(db_path: str | Path = DEFAULT_HISTORY_DB) -> sqlite3.Connect
         )
         """
     )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS license_deliveries (
+            session_id TEXT PRIMARY KEY,
+            license_key TEXT NOT NULL,
+            tier TEXT NOT NULL,
+            expiry_yyyymm TEXT NOT NULL,
+            customer_email TEXT,
+            created_at REAL NOT NULL,
+            activated_at REAL
+        )
+        """
+    )
     columns = {
         row[1]
         for row in connection.execute("PRAGMA table_info(file_cache)").fetchall()
@@ -51,6 +64,76 @@ def connect_history(db_path: str | Path = DEFAULT_HISTORY_DB) -> sqlite3.Connect
     if "ffprobe_json" not in columns:
         connection.execute("ALTER TABLE file_cache ADD COLUMN ffprobe_json TEXT")
     return connection
+
+
+def save_license_delivery(delivery: dict[str, Any], db_path: str | Path = DEFAULT_HISTORY_DB) -> None:
+    """Persist a generated license key for post-checkout retrieval."""
+
+    with connect_history(db_path) as connection:
+        connection.execute(
+            """
+            INSERT OR REPLACE INTO license_deliveries (
+                session_id,
+                license_key,
+                tier,
+                expiry_yyyymm,
+                customer_email,
+                created_at,
+                activated_at
+            )
+            VALUES (?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM license_deliveries WHERE session_id = ?), ?), NULL)
+            """,
+            (
+                delivery["session_id"],
+                delivery["license_key"],
+                delivery["tier"],
+                delivery["expiry_yyyymm"],
+                delivery.get("customer_email"),
+                delivery["session_id"],
+                time.time(),
+            ),
+        )
+
+
+def get_license_delivery(
+    session_id: str,
+    db_path: str | Path = DEFAULT_HISTORY_DB,
+) -> dict[str, Any] | None:
+    """Return a stored license delivery by Stripe Checkout session id."""
+
+    with connect_history(db_path) as connection:
+        row = connection.execute(
+            """
+            SELECT session_id, license_key, tier, expiry_yyyymm, customer_email, created_at, activated_at
+            FROM license_deliveries
+            WHERE session_id = ?
+            """,
+            (session_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return {
+        "session_id": row[0],
+        "license_key": row[1],
+        "tier": row[2],
+        "expiry_yyyymm": row[3],
+        "customer_email": row[4],
+        "created_at": row[5],
+        "activated_at": row[6],
+    }
+
+
+def mark_license_delivery_activated(
+    session_id: str,
+    db_path: str | Path = DEFAULT_HISTORY_DB,
+) -> None:
+    """Mark a stored license delivery as activated locally."""
+
+    with connect_history(db_path) as connection:
+        connection.execute(
+            "UPDATE license_deliveries SET activated_at = ? WHERE session_id = ?",
+            (time.time(), session_id),
+        )
 
 
 def save_scan_history(

@@ -9,6 +9,8 @@ from urllib.request import Request, urlopen
 from PIL import Image, features
 
 from cloudsaver import license as license_module
+from cloudsaver import history as history_module
+from cloudsaver import web_server as web_server_module
 from cloudsaver.web_server import CloudSaverRequestHandler
 
 
@@ -223,6 +225,42 @@ def test_pro_gated_convert_proceeds_after_activation(monkeypatch, tmp_path):
         post_json(base_url, "/api/license/activate", {"key": key})
         result = post_json(base_url, "/api/convert", {"root_path": str(root), "file_ids": ["missing.jpg"]})
         assert result["results"][0]["status"] == "skipped"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_payment_success_returns_and_activates_license(monkeypatch, tmp_path):
+    reset_license_state(monkeypatch, tmp_path)
+    db_path = tmp_path / "history.sqlite3"
+    key = license_module.generate_license_key("PRO", "202612")
+    history_module.save_license_delivery(
+        {
+            "session_id": "cs_test_123",
+            "license_key": key,
+            "tier": "PRO",
+            "expiry_yyyymm": "202612",
+            "customer_email": "buyer@example.com",
+        },
+        db_path,
+    )
+    monkeypatch.setattr(
+        web_server_module,
+        "get_license_delivery",
+        lambda session_id: history_module.get_license_delivery(session_id, db_path),
+    )
+    monkeypatch.setattr(
+        web_server_module,
+        "mark_license_delivery_activated",
+        lambda session_id: history_module.mark_license_delivery_activated(session_id, db_path),
+    )
+
+    server, base_url = run_test_server()
+    try:
+        result = get_json(base_url, "/api/payments/success?session_id=cs_test_123")
+        assert result["license_key"] == key
+        assert result["is_pro"] is True
+        assert get_json(base_url, "/api/license")["is_pro"] is True
     finally:
         server.shutdown()
         server.server_close()

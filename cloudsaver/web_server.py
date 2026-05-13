@@ -11,7 +11,7 @@ import uuid
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from cloudsaver.core import (
     DEFAULT_IMAGE_QUALITY,
@@ -30,7 +30,14 @@ from cloudsaver.core import (
     restore_quarantine,
     scan_local_folder,
 )
-from cloudsaver.history import list_scan_history, save_scan_history
+from cloudsaver import payments
+from cloudsaver.history import (
+    get_license_delivery,
+    list_scan_history,
+    mark_license_delivery_activated,
+    save_license_delivery,
+    save_scan_history,
+)
 from cloudsaver.license import (
     activate_license,
     deactivate_license,
@@ -142,6 +149,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/license":
                 self.handle_license_status()
                 return
+            if parsed.path == "/api/payments/success":
+                self.handle_payment_success(parsed)
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
@@ -155,6 +165,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         try:
+            if parsed.path == "/api/payments/webhook":
+                self.handle_payment_webhook()
+                return
             payload = self.read_json()
             if parsed.path == "/api/scan":
                 self.handle_scan(payload)
@@ -189,6 +202,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/license/deactivate":
                 self.handle_license_deactivate(payload)
                 return
+            if parsed.path == "/api/payments/checkout":
+                self.handle_payment_checkout(payload)
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
@@ -210,6 +226,12 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
         except json.JSONDecodeError as error:
             raise ValueError("Request body must be valid JSON.") from error
 
+    def read_raw_body(self) -> bytes:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        if content_length <= 0:
+            return b""
+        return self.rfile.read(content_length)
+
     def handle_scan(self, payload: dict) -> None:
         self.write_json(run_scan(payload))
 
@@ -226,6 +248,46 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
     def handle_license_deactivate(self, payload: dict) -> None:
         deactivate_license()
         self.write_json({"success": True})
+
+    def handle_payment_checkout(self, payload: dict) -> None:
+        price_id = payload.get("price_id", "").strip()
+        if not price_id:
+            raise ValueError("A Stripe price id is required.")
+        base_url = os.environ.get("CLOUDSAVER_BASE_URL", "http://127.0.0.1:8765")
+        checkout_url = payments.create_checkout_session(
+            price_id=price_id,
+            customer_email=payload.get("email") or None,
+            success_url=f"{base_url}/api/payments/success",
+            cancel_url=base_url,
+        )
+        self.write_json({"checkout_url": checkout_url})
+
+    def handle_payment_webhook(self) -> None:
+        payload = self.read_raw_body()
+        signature = self.headers.get("Stripe-Signature", "")
+        delivery = payments.handle_webhook(payload, signature)
+        if delivery:
+            save_license_delivery(delivery)
+        self.write_json({"success": True})
+
+    def handle_payment_success(self, parsed) -> None:
+        params = parse_qs(parsed.query or "")
+        session_id = (params.get("session_id") or [""])[0]
+        if not session_id:
+            raise ValueError("A Stripe Checkout session id is required.")
+        delivery = get_license_delivery(session_id)
+        if not delivery:
+            raise ValueError("License delivery was not found.")
+        state = activate_license(delivery["license_key"], delivery.get("customer_email"))
+        mark_license_delivery_activated(session_id)
+        self.write_json(
+            {
+                "license_key": delivery["license_key"],
+                "tier": delivery["tier"],
+                "expires_at": state.expires_at,
+                **license_state_response(state),
+            }
+        )
 
     def handle_scan_start(self, payload: dict) -> None:
         job_id = str(uuid.uuid4())
