@@ -486,6 +486,43 @@ output {
   border-top: 1px solid var(--sidebar-control-border);
 }
 
+.license-badge {
+  padding: 10px 0;
+  border-top: 1px solid var(--sidebar-border);
+  color: var(--sidebar-muted);
+  font-size: 12px;
+}
+
+.license-badge span,
+.license-badge small {
+  display: block;
+}
+
+.license-badge--pro {
+  color: var(--sidebar-accent-text);
+}
+
+.license-badge--pro span {
+  font-weight: 750;
+}
+
+#upgrade-button {
+  display: block;
+  width: 100%;
+  min-height: 32px;
+  margin-top: 6px;
+  border: 1px solid var(--sidebar-control-border);
+  border-radius: 6px;
+  background: var(--sidebar-control-bg);
+  color: var(--sidebar-subtle-text);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+#upgrade-button:hover {
+  background: var(--sidebar-control-hover);
+}
+
 .sidebar-links {
   display: flex;
   gap: 10px;
@@ -1335,6 +1372,36 @@ output {
 
 .settings-grid a {
   color: var(--accent);
+  font-weight: 750;
+}
+
+.license-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.license-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.license-activation-status {
+  min-height: 18px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.license-activation-status[data-tone="success"] {
+  color: var(--success);
+  font-weight: 750;
+}
+
+.license-activation-status[data-tone="error"] {
+  color: var(--destructive);
   font-weight: 750;
 }
 

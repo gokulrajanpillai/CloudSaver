@@ -93,6 +93,10 @@
           <button type="button" data-theme-option="light" aria-pressed="false">Light</button>
           <button type="button" data-theme-option="dark" aria-pressed="false">Dark</button>
         </div>
+        <div class="license-badge" id="license-badge">
+          <span id="license-tier">Free</span>
+          <button type="button" id="upgrade-button" data-modal-target="upgrade-modal">Upgrade to Pro</button>
+        </div>
         <div class="sidebar-links">
           <button type="button" data-modal-target="safety-modal">Safety</button>
           <button type="button" data-modal-target="support-modal">Support</button>
@@ -420,6 +424,40 @@
           <span><a href="https://github.com/sponsors/gokulrajanpillai" target="_blank" rel="noreferrer">Support CloudSaver development</a></span>
         </div>
       </div>
+    </div>
+  </dialog>
+
+  <dialog id="upgrade-modal" class="utility-modal">
+    <div class="modal-card">
+      <div class="panel-heading">
+        <h2>Unlock CloudSaver Pro</h2>
+        <button type="button" class="modal-close" data-modal-close aria-label="Close upgrade dialog">Close</button>
+      </div>
+      <div class="settings-grid">
+        <div>
+          <strong>Free</strong>
+          <span>Local scans, duplicate candidates, reduced image copies, and reversible review moves.</span>
+        </div>
+        <div>
+          <strong>Pro</strong>
+          <span>WebP conversion, perceptual image matching, AI recommendations, and advanced optimization.</span>
+        </div>
+        <div>
+          <strong>Business</strong>
+          <span>Team workspace, scheduled audits, shared summaries, and fleet-ready controls.</span>
+        </div>
+      </div>
+      <form id="license-form" class="license-form">
+        <label for="license-key-input">License key</label>
+        <input id="license-key-input" placeholder="CS-PRO-202612-XXXXXXXX-XXXXX" autocomplete="off">
+        <label for="license-email-input">Email</label>
+        <input id="license-email-input" type="email" placeholder="your@email.com (optional)" autocomplete="email">
+        <div class="license-actions">
+          <button id="license-activate-button" class="primary-action" type="submit">Activate license</button>
+          <a class="tertiary-action compact-action" href="https://cloudsaver.app/pricing" target="_blank" rel="noreferrer">Buy Pro</a>
+        </div>
+        <p id="license-activation-status" class="license-activation-status" role="status"></p>
+      </form>
     </div>
   </dialog>
 

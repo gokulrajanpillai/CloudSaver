@@ -8,6 +8,7 @@ const state = {
   reviewBatches: [],
   duplicateGroups: [],
   perceptualGroups: [],
+  license: null,
 };
 
 const elements = {
@@ -82,6 +83,11 @@ const elements = {
   toastRegion: document.querySelector("#toast-region"),
   workspaceSubtitle: document.querySelector("#workspace-subtitle"),
   reviewQueueBadge: document.querySelector("#review-queue-badge"),
+  licenseBadge: document.querySelector("#license-badge"),
+  licenseForm: document.querySelector("#license-form"),
+  licenseKeyInput: document.querySelector("#license-key-input"),
+  licenseEmailInput: document.querySelector("#license-email-input"),
+  licenseActivationStatus: document.querySelector("#license-activation-status"),
 };
 
 const THEME_STORAGE_KEY = "cloudsaver-theme";
@@ -228,9 +234,67 @@ async function postJson(url, payload) {
   });
   const data = await response.json();
   if (!response.ok) {
+    if (response.status === 402 && data.error === "pro_required") {
+      handleProGate(data.message || "This feature");
+    }
     throw new Error(data.error || "Request failed.");
   }
   return data;
+}
+
+async function loadLicense() {
+  const response = await fetch("/api/license");
+  const data = await response.json();
+  state.license = data;
+  renderLicenseBadge(data);
+  return data;
+}
+
+function renderLicenseBadge(license) {
+  const badge = elements.licenseBadge;
+  if (license.is_pro) {
+    badge.classList.add("license-badge--pro");
+    badge.innerHTML = `<span>CloudSaver ${escapeHtml(license.tier)}</span><small>Active until ${escapeHtml(license.expires_at)}</small>`;
+  } else {
+    badge.classList.remove("license-badge--pro");
+    badge.innerHTML = '<span>Free</span><button type="button" id="upgrade-button" data-modal-target="upgrade-modal">Upgrade to Pro</button>';
+  }
+}
+
+function handleProGate(featureName) {
+  showToast(`${featureName} requires CloudSaver Pro`, "error");
+  document.querySelector("#upgrade-modal")?.showModal();
+}
+
+async function activateLicense(event) {
+  event.preventDefault();
+  const key = elements.licenseKeyInput.value.trim();
+  if (!key) {
+    elements.licenseActivationStatus.dataset.tone = "error";
+    elements.licenseActivationStatus.textContent = "Enter a CloudSaver license key.";
+    return;
+  }
+  elements.licenseActivationStatus.dataset.tone = "";
+  elements.licenseActivationStatus.textContent = "Activating license...";
+  try {
+    const data = await postJson("/api/license/activate", {
+      key,
+      email: elements.licenseEmailInput.value.trim() || null,
+    });
+    state.license = data;
+    renderLicenseBadge(data);
+    elements.licenseActivationStatus.dataset.tone = "success";
+    elements.licenseActivationStatus.textContent = data.is_pro
+      ? "CloudSaver Pro activated. Thank you!"
+      : "License activated, but it is expired.";
+    showToast("CloudSaver license activated.");
+    window.setTimeout(() => {
+      document.querySelector("#upgrade-modal")?.close();
+    }, 3000);
+  } catch (error) {
+    elements.licenseActivationStatus.dataset.tone = "error";
+    elements.licenseActivationStatus.textContent = error.message;
+  }
 }
 
 async function loadLocations() {
@@ -987,6 +1051,7 @@ elements.perceptualScanButton.addEventListener("click", runPerceptualScan);
 elements.restoreButton.addEventListener("click", restoreManifest);
 elements.exportJsonButton.addEventListener("click", exportJsonReport);
 elements.exportCsvButton.addEventListener("click", exportCsvReport);
+elements.licenseForm.addEventListener("submit", activateLicense);
 elements.workspaceTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-view-target]");
   if (!button) {
@@ -1153,4 +1218,5 @@ elements.selectAll.addEventListener("change", () => {
 
 loadLocations().catch(() => setStatus("Location suggestions are unavailable.", "error"));
 loadHistory().catch(() => {});
+loadLicense().catch(() => {});
 applyTheme();
