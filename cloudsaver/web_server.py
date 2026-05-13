@@ -32,6 +32,7 @@ from cloudsaver.core import (
 )
 from cloudsaver import advisor
 from cloudsaver import payments
+from cloudsaver import team
 from cloudsaver import updater
 from cloudsaver.history import (
     get_license_delivery,
@@ -174,6 +175,15 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/update/status":
                 self.write_json(updater.update_info_dict(updater.get_update_state()))
                 return
+            if parsed.path == "/api/team/status":
+                self.handle_team_status()
+                return
+            if parsed.path == "/api/team/audits":
+                self.handle_team_audits()
+                return
+            if parsed.path == "/api/team/schedule":
+                self.handle_team_schedule_list()
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
@@ -230,10 +240,50 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/advisor/analyze":
                 self.handle_advisor_analyze(payload)
                 return
+            if parsed.path == "/api/team/create":
+                self.handle_team_create(payload)
+                return
+            if parsed.path == "/api/team/join":
+                self.handle_team_join(payload)
+                return
+            if parsed.path == "/api/team/share-audit":
+                self.handle_team_share_audit(payload)
+                return
+            if parsed.path == "/api/team/schedule":
+                self.handle_team_schedule_create(payload)
+                return
+            if parsed.path == "/api/team/leave":
+                self.handle_team_leave(payload)
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
         except (FileNotFoundError, NotADirectoryError) as error:
+            self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
+            return
+        except Exception as error:
+            self.write_json({"error": str(error)}, HTTPStatus.INTERNAL_SERVER_ERROR)
+            return
+        self.write_json({"error": "Unknown endpoint."}, HTTPStatus.NOT_FOUND)
+
+    def do_DELETE(self):
+        parsed = urlparse(self.path)
+        try:
+            if parsed.path.startswith("/api/team/schedule/"):
+                if not is_biz(load_license()):
+                    self.write_json(
+                        {
+                            "error": "biz_required",
+                            "message": "This feature requires CloudSaver Business.",
+                        },
+                        HTTPStatus.PAYMENT_REQUIRED,
+                    )
+                    return
+                schedule_id = parsed.path.rsplit("/", 1)[-1]
+                team.delete_schedule(schedule_id)
+                self.write_json({"success": True})
+                return
+        except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
         except Exception as error:
@@ -377,6 +427,67 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
         ):
             self.wfile.write(chunk.encode("utf-8"))
             self.wfile.flush()
+
+    def handle_team_status(self) -> None:
+        if not is_biz(load_license()):
+            self.write_json(
+                {"error": "biz_required", "message": "This feature requires CloudSaver Business."},
+                HTTPStatus.PAYMENT_REQUIRED,
+            )
+            return
+        self.write_json(team.team_status())
+
+    def handle_team_audits(self) -> None:
+        if not is_biz(load_license()):
+            self.write_json(
+                {"error": "biz_required", "message": "This feature requires CloudSaver Business."},
+                HTTPStatus.PAYMENT_REQUIRED,
+            )
+            return
+        self.write_json({"audits": team.list_shared_audits()})
+
+    def handle_team_schedule_list(self) -> None:
+        if not is_biz(load_license()):
+            self.write_json(
+                {"error": "biz_required", "message": "This feature requires CloudSaver Business."},
+                HTTPStatus.PAYMENT_REQUIRED,
+            )
+            return
+        self.write_json({"schedules": team.list_schedules()})
+
+    @require_biz
+    def handle_team_create(self, payload: dict) -> None:
+        name = payload.get("name", "").strip()
+        if not name:
+            raise ValueError("A team workspace name is required.")
+        self.write_json(team.create_workspace(name))
+
+    @require_biz
+    def handle_team_join(self, payload: dict) -> None:
+        invite_code = payload.get("invite_code", "").strip()
+        if not invite_code:
+            raise ValueError("A team invite code is required.")
+        self.write_json(team.join_workspace(invite_code, payload.get("display_name")))
+
+    @require_biz
+    def handle_team_share_audit(self, payload: dict) -> None:
+        scan_id = payload.get("scan_id")
+        if not scan_id:
+            raise ValueError("A scan history id is required.")
+        self.write_json({"shared_audit_id": team.share_audit(int(scan_id))})
+
+    @require_biz
+    def handle_team_schedule_create(self, payload: dict) -> None:
+        path = payload.get("path", "").strip()
+        cron_expression = payload.get("cron_expression", "").strip()
+        if not path or not cron_expression:
+            raise ValueError("A path and cron expression are required.")
+        self.write_json({"schedule_id": team.create_schedule(path, cron_expression)})
+
+    @require_biz
+    def handle_team_leave(self, payload: dict) -> None:
+        team.leave_workspace()
+        self.write_json({"success": True})
 
     def handle_scan_start(self, payload: dict) -> None:
         job_id = str(uuid.uuid4())

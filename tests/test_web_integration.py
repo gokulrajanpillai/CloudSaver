@@ -326,6 +326,26 @@ def test_advisor_analyze_requires_pro(monkeypatch, tmp_path):
         server.server_close()
 
 
+def test_team_status_requires_business(monkeypatch, tmp_path):
+    reset_license_state(monkeypatch, tmp_path)
+    pro_key = license_module.generate_license_key("PRO", "202612")
+
+    server, base_url = run_test_server()
+    try:
+        post_json(base_url, "/api/license/activate", {"key": pro_key})
+        try:
+            get_json(base_url, "/api/team/status")
+        except HTTPError as error:
+            assert error.code == 402
+            payload = json.loads(error.read().decode("utf-8"))
+            assert payload["error"] == "biz_required"
+        else:
+            raise AssertionError("Expected team status endpoint to require Business")
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
 def test_perceptual_scan_endpoint_degrades_when_dependency_missing(monkeypatch, tmp_path):
     reset_license_state(monkeypatch, tmp_path)
     root = tmp_path / "scan"
