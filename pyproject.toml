@@ -47,6 +47,9 @@ desktop = [
 release = [
   "pyinstaller==6.17.0",
 ]
+payments = [
+  "stripe>=13.0.0",
+]
 all = [
   "cloudsaver[image_extras,avif]",
 ]
