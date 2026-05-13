@@ -190,6 +190,42 @@ def test_convert_endpoint_creates_webp_copy(tmp_path):
         server.server_close()
 
 
+def test_pro_gated_convert_requires_license(monkeypatch, tmp_path):
+    reset_license_state(monkeypatch, tmp_path)
+    root = tmp_path / "scan"
+    root.mkdir()
+
+    server, base_url = run_test_server()
+    try:
+        try:
+            post_json(base_url, "/api/convert", {"root_path": str(root), "file_ids": ["photo.jpg"]})
+        except HTTPError as error:
+            assert error.code == 402
+            payload = json.loads(error.read().decode("utf-8"))
+            assert payload["error"] == "pro_required"
+        else:
+            raise AssertionError("Expected convert endpoint to require Pro")
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_pro_gated_convert_proceeds_after_activation(monkeypatch, tmp_path):
+    reset_license_state(monkeypatch, tmp_path)
+    key = license_module.generate_license_key("PRO", "202612")
+    root = tmp_path / "scan"
+    root.mkdir()
+
+    server, base_url = run_test_server()
+    try:
+        post_json(base_url, "/api/license/activate", {"key": key})
+        result = post_json(base_url, "/api/convert", {"root_path": str(root), "file_ids": ["missing.jpg"]})
+        assert result["results"][0]["status"] == "skipped"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
 def test_perceptual_scan_endpoint_degrades_when_dependency_missing(tmp_path):
     root = tmp_path / "scan"
     root.mkdir()

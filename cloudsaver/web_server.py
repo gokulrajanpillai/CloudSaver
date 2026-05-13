@@ -87,6 +87,36 @@ def license_state_response(state) -> dict:
     }
 
 
+def require_pro(handler_method):
+    """Decorator for request handler methods that require Pro tier."""
+
+    def wrapper(self, payload):
+        if not is_pro(load_license()):
+            self.write_json(
+                {"error": "pro_required", "message": "This feature requires CloudSaver Pro."},
+                HTTPStatus.PAYMENT_REQUIRED,
+            )
+            return
+        return handler_method(self, payload)
+
+    return wrapper
+
+
+def require_biz(handler_method):
+    """Decorator for request handler methods that require Business tier."""
+
+    def wrapper(self, payload):
+        if not is_biz(load_license()):
+            self.write_json(
+                {"error": "biz_required", "message": "This feature requires CloudSaver Business."},
+                HTTPStatus.PAYMENT_REQUIRED,
+            )
+            return
+        return handler_method(self, payload)
+
+    return wrapper
+
+
 class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WEB_ROOT), **kwargs)
@@ -250,6 +280,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
         )
         self.write_json(result)
 
+    @require_pro
     def handle_convert(self, payload: dict) -> None:
         root_path = payload.get("root_path", "").strip()
         file_ids = payload.get("file_ids") or []
@@ -309,6 +340,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             )
         self.write_json({"results": results})
 
+    @require_pro
     def handle_perceptual_scan_start(self, payload: dict) -> None:
         root_path = payload.get("root_path", "").strip()
         if not root_path:
