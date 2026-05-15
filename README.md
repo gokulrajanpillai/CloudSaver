@@ -25,6 +25,7 @@ upgrade, consider sponsoring development:
 - Sponsorship guide: [docs/sponsorship.md](docs/sponsorship.md)
 - Sponsor tiers: [docs/sponsor-tiers.md](docs/sponsor-tiers.md)
 - Paid convenience build policy: [docs/paid-builds.md](docs/paid-builds.md)
+- Revenue and product rollout plan: [docs/revenue-rollout-plan.md](docs/revenue-rollout-plan.md)
 - Commercial support: [docs/commercial-support.md](docs/commercial-support.md)
 - Licensing strategy: [docs/licensing-strategy.md](docs/licensing-strategy.md)
 
