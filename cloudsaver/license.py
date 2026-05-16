@@ -19,10 +19,11 @@ import secrets
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from pathlib import Path
+
+from cloudsaver.config import app_data_path
 
 LICENSE_SECRET = os.environ.get("CLOUDSAVER_LICENSE_SECRET", "cs-dev-secret-do-not-use-in-prod")
-LICENSE_FILE = Path.home() / ".cloudsaver" / "license.json"
+LICENSE_FILE = app_data_path("license.json")
 TIER_FREE = "FREE"
 TIER_PRO = "PRO"
 TIER_BIZ = "BIZ"

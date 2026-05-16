@@ -40,6 +40,9 @@ CloudSaver can run a read-only storage audit and generate:
 - `~/.cloudsaver/output/storage_audit.html`: a browser-friendly dashboard
 - `~/.cloudsaver/output/storage_audit.json`: the same audit data for downstream processing
 
+Set `CLOUDSAVER_HOME` to use a different local app-data directory for history, reports,
+reduced copies, review manifests, diagnostics, license state, and team state.
+
 The audit summarizes total storage, storage by file category, largest files, largest folders,
 duplicate candidates, large files to review, and estimated recoverable space from duplicate
 candidates plus image optimization. The web UI also estimates rough monthly cloud storage
