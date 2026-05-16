@@ -709,6 +709,49 @@ def file_category(mime_type: str) -> str:
     return "other"
 
 
+def duplicate_keep_recommendation(files: list[dict]) -> dict:
+    """Choose the safest default file to keep in a duplicate group."""
+
+    risky_path_terms = {
+        "backup",
+        "backups",
+        "copy",
+        "copies",
+        "duplicate",
+        "duplicates",
+        "old",
+        "tmp",
+        "temp",
+        "trash",
+    }
+
+    def score(file: dict) -> tuple:
+        path = (file.get("path") or file.get("id") or "").lower()
+        parts = set(Path(path).parts)
+        risky_term_count = sum(1 for term in risky_path_terms if term in parts or f"/{term}/" in path)
+        mtime = float(file.get("mtime", 0) or 0)
+        path_length = len(file.get("path") or file.get("id") or "")
+        return (-risky_term_count, mtime, -path_length, file.get("path") or file.get("id") or "")
+
+    if not files:
+        return {"id": "", "path": "", "reason": "No files available."}
+
+    keep_file = max(files, key=score)
+    keep_path = keep_file.get("path") or keep_file.get("id") or ""
+    lower_path = keep_path.lower()
+    if any(f"/{term}/" in lower_path for term in risky_path_terms):
+        reason = "Best available copy; review because all options look like backup or temporary paths."
+    elif keep_file.get("mtime"):
+        reason = "Recommended because it avoids backup or temporary folders and appears to be the newest copy."
+    else:
+        reason = "Recommended because it avoids backup or temporary folders and has the shortest clear path."
+    return {
+        "id": keep_file.get("id") or keep_file.get("path") or "",
+        "path": keep_path,
+        "reason": reason,
+    }
+
+
 def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N) -> dict:
     """Build a read-only storage audit with cleanup opportunity estimates."""
 
@@ -787,7 +830,11 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
     def add_duplicate_candidate(name: str, size_bytes: int, candidate_set: dict) -> None:
         nonlocal duplicate_bytes, duplicate_count
         candidate_files = candidate_set["files"]
-        extra_files = candidate_files[1:]
+        keep = duplicate_keep_recommendation(candidate_files)
+        keep_id = keep["id"]
+        extra_files = [
+            file for file in candidate_files if (file.get("id") or file.get("path")) != keep_id
+        ]
         recoverable_bytes = sum(file["size_bytes"] for file in extra_files)
         duplicate_member_ids.update(file.get("id") or file.get("path") for file in candidate_files)
         duplicate_extra_ids.update(file.get("id") or file.get("path") for file in extra_files)
@@ -802,6 +849,9 @@ def build_storage_audit(files: Iterable[dict], top_n: int = DEFAULT_AUDIT_TOP_N)
                 "verification_status": candidate_set["verification_status"],
                 "verification_algorithm": candidate_set["verification_algorithm"],
                 "confidence": candidate_set["confidence"],
+                "recommended_keep_id": keep_id,
+                "recommended_keep_path": keep["path"],
+                "recommended_keep_reason": keep["reason"],
                 "files": candidate_files,
             }
         )
