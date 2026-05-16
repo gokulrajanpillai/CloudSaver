@@ -83,6 +83,35 @@ def test_scan_status_requires_job_id():
         server.server_close()
 
 
+def test_capabilities_report_unconfigured_payments(monkeypatch):
+    monkeypatch.delenv("CLOUDSAVER_STRIPE_PRO_PRICE_ID", raising=False)
+    monkeypatch.delenv("CLOUDSAVER_STRIPE_PRO_ANNUAL_ID", raising=False)
+    monkeypatch.delenv("CLOUDSAVER_STRIPE_BIZ_PRICE_ID", raising=False)
+    monkeypatch.setattr(web_server_module.payments, "STRIPE_AVAILABLE", True)
+
+    server, base_url = run_test_server()
+    try:
+        capabilities = get_json(base_url, "/api/capabilities")
+        assert capabilities["payments_configured"] is False
+        assert "advisor_package_available" in capabilities
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_capabilities_report_configured_payments(monkeypatch):
+    monkeypatch.setenv("CLOUDSAVER_STRIPE_PRO_ANNUAL_ID", "price_annual")
+    monkeypatch.setattr(web_server_module.payments, "STRIPE_AVAILABLE", True)
+
+    server, base_url = run_test_server()
+    try:
+        capabilities = get_json(base_url, "/api/capabilities")
+        assert capabilities["payments_configured"] is True
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
 def test_license_activation_api(monkeypatch, tmp_path):
     reset_license_state(monkeypatch, tmp_path)
     key = license_module.generate_license_key("PRO", "202612")

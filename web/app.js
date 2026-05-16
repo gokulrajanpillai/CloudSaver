@@ -9,6 +9,7 @@ const state = {
   duplicateGroups: [],
   perceptualGroups: [],
   license: null,
+  capabilities: {},
   lastScanJobId: "",
   lastHistoryId: null,
   fileTablePage: 0,
@@ -352,6 +353,14 @@ async function loadLicense() {
   return data;
 }
 
+async function loadCapabilities() {
+  const response = await fetch("/api/capabilities");
+  const data = await response.json();
+  state.capabilities = data;
+  elements.paymentOptions.hidden = !data.payments_configured;
+  return data;
+}
+
 async function loadUpdateStatus() {
   const response = await fetch("/api/update/status");
   const data = await response.json();
@@ -463,6 +472,11 @@ async function activateLicense(event) {
 }
 
 async function startCheckout(plan) {
+  if (!state.capabilities?.payments_configured) {
+    elements.licenseActivationStatus.dataset.tone = "error";
+    elements.licenseActivationStatus.textContent = "Direct checkout is not configured in this preview build.";
+    return;
+  }
   elements.licenseActivationStatus.dataset.tone = "";
   elements.licenseActivationStatus.textContent = "Opening secure checkout...";
   try {
@@ -1590,6 +1604,9 @@ elements.selectAll.addEventListener("change", () => {
 
 loadLocations().catch(() => setStatus("Location suggestions are unavailable.", "error"));
 loadHistory().catch(() => {});
+loadCapabilities().catch(() => {
+  elements.paymentOptions.hidden = true;
+});
 loadLicense().catch(() => {});
 loadUpdateStatus().catch(() => {});
 applyTheme();
