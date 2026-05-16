@@ -1,17 +1,18 @@
 # CloudSaver
 
-Open-source storage insight for local drives, synced cloud folders, external drives, and NAS.
+Open-source storage cleanup for local drives, synced cloud folders, external drives, and NAS.
 
 ![CI](https://github.com/gokulrajanpillai/CloudSaver/workflows/CI/badge.svg)
 ![License](https://img.shields.io/github/license/gokulrajanpillai/CloudSaver)
 ![Sponsors](https://img.shields.io/github/sponsors/gokulrajanpillai)
 
-CloudSaver is an open-source, local-first storage audit and optimization tool. It scans
-folders your operating system can see, including synced cloud folders, external drives,
-NAS mounts, and local directories.
+CloudSaver is an open-source, local-first storage audit and cleanup tool for people and
+small teams with large local or cloud-synced folders. It scans folders your operating
+system can see, including synced cloud folders, external drives, NAS mounts, and local
+directories.
 
 Files stay on your machine. CloudSaver does not upload file contents, file names, or file
-paths to a hosted service.
+paths during the local scan and cleanup workflow.
 
 CloudSaver is tested on Linux, macOS, and Windows across supported Python versions.
 
@@ -73,8 +74,11 @@ removing files manually.
 
 ## Open Source Scope
 
-CloudSaver focuses on local and mounted storage. Direct cloud-provider APIs, user accounts,
-hosted dashboards, telemetry, and automatic deletion are intentionally out of scope for now.
+CloudSaver focuses on local and mounted storage. Direct cloud-provider APIs, hosted
+dashboards, required accounts, required remote telemetry, and automatic deletion are
+intentionally out of scope for now. Optional paid, license, update, AI advisor, and team
+workflows are documented in [PRIVACY.md](PRIVACY.md) and should remain explicit and
+disabled unless configured or invoked by the user.
 
 See [PRIVACY.md](PRIVACY.md), [CONTRIBUTING.md](CONTRIBUTING.md),
 [SECURITY.md](SECURITY.md), [DCO.md](DCO.md), [ROADMAP.md](ROADMAP.md), and
