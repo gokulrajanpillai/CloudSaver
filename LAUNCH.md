@@ -50,7 +50,7 @@ issues.
 
 Short description:
 
-> Open-source, local-first storage insight for local drives, synced cloud folders, external
+> Open-source, local-first storage cleanup for local drives, synced cloud folders, external
 > drives, and NAS.
 
 Longer description:
@@ -58,6 +58,9 @@ Longer description:
 > CloudSaver helps users scan local or mounted folders, understand where storage is going,
 > review duplicate candidates, reduce large images, and move files to a reversible review
 > folder without uploading file names, paths, or contents.
+
+Preview readiness criteria and known limitation templates live in
+[docs/preview-release-readiness.md](docs/preview-release-readiness.md).
 
 ## Announcement Channels
 
