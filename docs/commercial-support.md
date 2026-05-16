@@ -3,6 +3,9 @@
 CloudSaver can remain open source while offering paid help for professionals and small
 teams that need reliable storage audits.
 
+Before selling support broadly, validate demand with the pilot questions and decision gates
+in [monetization-validation.md](monetization-validation.md).
+
 ## Support Packages
 
 | Package | Suggested Price | Scope |

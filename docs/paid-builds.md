@@ -35,6 +35,9 @@ closing the scanner, dashboard, duplicate review, quarantine, or local report fe
 | Microsoft Store | $4.99-$9.99 | Convenience, trust, and updates |
 | Commercial Support | $299+/year | Support for professional users and small teams |
 
+Validation criteria and pilot questions are documented in
+[monetization-validation.md](monetization-validation.md).
+
 ## Rules
 
 - Do not hide basic safety features behind a paywall.

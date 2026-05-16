@@ -6,6 +6,7 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 
 ## Unreleased
 
+- Added monetization validation guidance for paid convenience builds and commercial support.
 - Added in-app scan-control links to the privacy policy and safety model so users can
   inspect local-first guarantees before scanning.
 - Added pilot feedback and weekly metrics templates for source-preview validation.

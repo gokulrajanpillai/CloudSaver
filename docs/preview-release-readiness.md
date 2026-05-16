@@ -108,6 +108,7 @@ Templates:
 
 - Pilot interview: [pilot-feedback.md](pilot-feedback.md)
 - Weekly metrics: [metrics-snapshot.md](metrics-snapshot.md)
+- Monetization validation: [monetization-validation.md](monetization-validation.md)
 
 ## Pilot Interview Questions
 
