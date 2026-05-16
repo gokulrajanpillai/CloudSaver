@@ -8,10 +8,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from cloudsaver.config import app_data_path
 from cloudsaver.history import DEFAULT_HISTORY_DB, connect_history
 
-DEVICE_ID_FILE = Path.home() / ".cloudsaver" / "device_id"
-TEAM_STATE_FILE = Path.home() / ".cloudsaver" / "team.json"
+DEVICE_ID_FILE = app_data_path("device_id")
+TEAM_STATE_FILE = app_data_path("team.json")
 
 
 def get_device_id() -> str:

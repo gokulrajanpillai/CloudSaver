@@ -16,7 +16,7 @@ from typing import Callable, Iterable, List
 
 from PIL import Image
 
-from cloudsaver.config import IMAGE_EXPANSION, MEDIA_ANALYSIS, SMART_SCAN_FOUNDATION
+from cloudsaver.config import IMAGE_EXPANSION, MEDIA_ANALYSIS, SMART_SCAN_FOUNDATION, app_data_dir
 from cloudsaver.history import load_file_cache, prune_file_cache, save_file_cache
 
 # Optional: install with `python -m pip install "cloudsaver[avif]"`.
@@ -48,7 +48,7 @@ except ImportError:
     PERCEPTUAL_HASH_AVAILABLE = False
 
 
-APP_DATA_DIR = Path(os.environ.get("CLOUDSAVER_HOME", Path.home() / ".cloudsaver")).expanduser()
+APP_DATA_DIR = app_data_dir()
 OUTPUT_DIR = str(APP_DATA_DIR / "output")
 REDUCED_DIR = os.path.join(OUTPUT_DIR, "reduced")
 QUARANTINE_DIR_NAME = ".cloudsaver-review"

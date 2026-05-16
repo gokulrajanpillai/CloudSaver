@@ -12,11 +12,12 @@ import os
 import sqlite3
 import time
 import uuid
-from pathlib import Path
+
+from cloudsaver.config import app_data_path
 
 ANALYTICS_ENABLED = os.environ.get("CLOUDSAVER_NO_ANALYTICS", "") != "1"
-ANALYTICS_DB = Path.home() / ".cloudsaver" / "analytics.sqlite3"
-INSTALL_ID_FILE = Path.home() / ".cloudsaver" / "install_id"
+ANALYTICS_DB = app_data_path("analytics.sqlite3")
+INSTALL_ID_FILE = app_data_path("install_id")
 
 
 def get_install_id() -> str:

@@ -6,8 +6,10 @@ import time
 from pathlib import Path
 from typing import Any
 
+from cloudsaver.config import app_data_path
 
-DEFAULT_HISTORY_DB = Path.home() / ".cloudsaver" / "history.sqlite3"
+
+DEFAULT_HISTORY_DB = app_data_path("history.sqlite3")
 
 
 def connect_history(db_path: str | Path = DEFAULT_HISTORY_DB) -> sqlite3.Connection:

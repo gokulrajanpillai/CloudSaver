@@ -1,6 +1,19 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
+
+
+def app_data_dir() -> Path:
+    """Return the local CloudSaver app-data directory."""
+
+    return Path(os.environ.get("CLOUDSAVER_HOME", Path.home() / ".cloudsaver")).expanduser()
+
+
+def app_data_path(*parts: str) -> Path:
+    """Return a path inside the local CloudSaver app-data directory."""
+
+    return app_data_dir().joinpath(*parts)
 
 
 def feature_enabled(feature_name: str, default: bool = True) -> bool:
