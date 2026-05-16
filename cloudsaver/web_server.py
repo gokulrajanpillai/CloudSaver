@@ -109,6 +109,21 @@ def stripe_price_id_for_plan(plan: str) -> str:
     return plan_map.get(plan, "")
 
 
+def app_capabilities() -> dict:
+    """Return optional product surfaces configured for this local app instance."""
+
+    payments_configured = any(
+        stripe_price_id_for_plan(plan)
+        for plan in ("pro_monthly", "pro_annual", "business")
+    )
+    return {
+        "payments_configured": payments_configured and payments.STRIPE_AVAILABLE,
+        "advisor_package_available": advisor.ADVISOR_AVAILABLE,
+        "advisor_api_key_configured": bool(os.environ.get("ANTHROPIC_API_KEY", "")),
+        "team_preview_available": True,
+    }
+
+
 def require_pro(handler_method):
     """Decorator for request handler methods that require Pro tier."""
 
@@ -163,6 +178,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 return
             if parsed.path == "/api/license":
                 self.handle_license_status()
+                return
+            if parsed.path == "/api/capabilities":
+                self.write_json(app_capabilities())
                 return
             if parsed.path == "/api/payments/success":
                 self.handle_payment_success(parsed)
