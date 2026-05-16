@@ -2,6 +2,10 @@
 
 Use this structure for small-business or professional storage reviews.
 
+CloudSaver can generate this style of redacted Markdown report with
+`cloudsaver.core.generate_business_report`. Paths are redacted by default so reports can be
+shared with managers or clients without exposing full local folder names.
+
 ## Executive Summary
 
 - Scan root:

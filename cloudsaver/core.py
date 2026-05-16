@@ -1181,6 +1181,109 @@ def export_storage_audit_dashboard(files: Iterable[dict]) -> dict:
     return audit
 
 
+def redacted_path_label(path: str, fallback: str = "redacted") -> str:
+    """Return a shareable label that avoids exposing full local paths."""
+
+    if not path:
+        return fallback
+    name = Path(path).name
+    return name or fallback
+
+
+def generate_business_report(
+    audit: dict,
+    output_path: str | Path,
+    root_path: str = "",
+    redact_paths: bool = True,
+) -> str:
+    """Write a Markdown business storage report and return its path."""
+
+    summary = audit.get("summary", {})
+    opportunities = audit.get("opportunities", {})
+    root_label = redacted_path_label(root_path, "redacted root") if redact_paths else root_path
+
+    def folder_label(folder_id: str) -> str:
+        return redacted_path_label(folder_id, "redacted folder") if redact_paths else folder_id
+
+    def file_label(file: dict) -> str:
+        label = file.get("path") or file.get("id") or file.get("name") or "redacted file"
+        return redacted_path_label(label, "redacted file") if redact_paths else label
+
+    category_lines = [
+        f"- {category}: {values.get('count', 0)} files, {human_readable_size(values.get('bytes', 0))}"
+        for category, values in (audit.get("by_category") or {}).items()
+    ]
+    folder_lines = [
+        f"- {folder_label(folder.get('folder_id', ''))}: {folder.get('count', 0)} files, {human_readable_size(folder.get('bytes', 0))}"
+        for folder in audit.get("top_folders", [])[:5]
+    ]
+    file_lines = [
+        f"- {file_label(file)}: {human_readable_size(file.get('size_bytes', 0))}"
+        for file in audit.get("top_files", [])[:5]
+    ]
+    duplicate_lines = [
+        f"- {candidate.get('verification_status', 'candidate')} duplicate group, {human_readable_size(candidate.get('recoverable_bytes', 0))} recoverable, keep {redacted_path_label(candidate.get('recommended_keep_path', ''), 'recommended copy') if redact_paths else candidate.get('recommended_keep_path', '')}"
+        for candidate in audit.get("duplicate_candidates", [])[:5]
+    ]
+
+    report = "\n".join(
+        [
+            "# Business Storage Audit Report",
+            "",
+            "## Executive Summary",
+            "",
+            f"- Scan root: {root_label}",
+            f"- Files scanned: {summary.get('file_count', 0)}",
+            f"- Included storage: {summary.get('included_human') or summary.get('total_human', '0.00 B')}",
+            f"- Estimated recoverable storage: {opportunities.get('estimated_recoverable_human', '0.00 B')}",
+            f"- Estimated monthly storage cost avoided: {opportunities.get('estimated_monthly_cost_avoided_human', '$0.00/mo')}",
+            f"- Duplicate review opportunity: {opportunities.get('duplicate_human', '0.00 B')}",
+            f"- Image copy opportunity: {opportunities.get('image_optimization_human', '0.00 B')}",
+            "",
+            "## Storage Distribution",
+            "",
+            "### Categories",
+            *(category_lines or ["- No category data."]),
+            "",
+            "### Largest Folders",
+            *(folder_lines or ["- No folder data."]),
+            "",
+            "### Largest Files",
+            *(file_lines or ["- No file data."]),
+            "",
+            "## Duplicate Review",
+            "",
+            *(duplicate_lines or ["- No duplicate candidates found."]),
+            "",
+            "## Recommended Cleanup Plan",
+            "",
+            "| Priority | Opportunity | Confidence | Action |",
+            "| --- | --- | --- | --- |",
+            "| Low risk | Verified duplicates | High when SHA-256 verified | Move extra copies to review, then restore-test one item |",
+            "| Medium risk | Large files | Manual review | Confirm owner and business purpose before moving |",
+            "| Optional | Image reductions | Estimate | Create reduced copies without changing originals |",
+            "",
+            "## Risks And Notes",
+            "",
+            "- Paths are redacted by default for sharing.",
+            "- Review manifests should be retained until cleanup is approved.",
+            "- CloudSaver does not permanently delete files by default.",
+            "",
+            "## Recommended Follow-Up",
+            "",
+            "- Review the local quarantine manifest.",
+            "- Restore any false positives.",
+            "- Re-run the scan after cleanup.",
+            "- Archive or delete reviewed files only after approval.",
+            "",
+        ]
+    )
+    destination = Path(output_path).expanduser()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(report)
+    return str(destination)
+
+
 def reduce_image_to_1080p(input_path: str, output_path: str) -> tuple[int, int]:
     """Reduce ``input_path`` to ``HD_RESOLUTION`` and write the result."""
 

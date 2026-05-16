@@ -14,6 +14,7 @@ from cloudsaver.core import (
     estimate_video_savings,
     export_storage_audit_dashboard,
     export_to_json_file,
+    generate_business_report,
     hash_file_partial,
     find_perceptual_duplicates,
     is_protected_path,
@@ -406,6 +407,32 @@ def test_export_storage_audit_dashboard_creates_json_and_html(tmp_path):
     assert json_path.exists()
     assert html_path.exists()
     assert "CloudSaver Storage Audit" in html_path.read_text()
+
+
+def test_generate_business_report_redacts_paths(tmp_path):
+    primary = tmp_path / "client" / "photos"
+    backup = tmp_path / "client" / "backup"
+    primary.mkdir(parents=True)
+    backup.mkdir()
+    (primary / "photo.jpg").write_text("same content")
+    (backup / "photo.jpg").write_text("same content")
+
+    files = attach_duplicate_verification(scan_local_folder(str(tmp_path), use_cache=False))
+    audit = build_storage_audit(files)
+    report_path = tmp_path / "report.md"
+
+    result_path = generate_business_report(
+        audit,
+        report_path,
+        root_path=str(tmp_path / "client"),
+    )
+
+    report = report_path.read_text()
+    assert result_path == str(report_path)
+    assert "# Business Storage Audit Report" in report
+    assert "Recommended Cleanup Plan" in report
+    assert str(tmp_path) not in report
+    assert "photo.jpg" in report
 
 
 def test_estimate_reduction_for_file_marks_supported_images():
