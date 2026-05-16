@@ -42,5 +42,10 @@ documented in `PRIVACY.md`.
 - `npm run test:e2e`
 - `./scripts/release-smoke.sh`
 
+## Pilot Tracking
+
+Use `docs/pilot-feedback.md` for observed user sessions and `docs/metrics-snapshot.md` for
+weekly preview metrics.
+
 Do not tag `v0.1.0-preview` until the required screenshots are captured and the release
 checks pass.

@@ -104,6 +104,11 @@ Track these manually for preview pilots before considering paid launch:
 - Repeat scans within 30 days.
 - Sponsors, paid-build interest, or support inquiries.
 
+Templates:
+
+- Pilot interview: [pilot-feedback.md](pilot-feedback.md)
+- Weekly metrics: [metrics-snapshot.md](metrics-snapshot.md)
+
 ## Pilot Interview Questions
 
 - What folder did you scan first, and why?
