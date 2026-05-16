@@ -2,6 +2,9 @@
 
 CloudSaver is designed as a local-first storage audit tool.
 
+Detailed design notes live in [docs/privacy-architecture.md](docs/privacy-architecture.md)
+and cleanup safety rules live in [docs/safety-model.md](docs/safety-model.md).
+
 ## What CloudSaver Scans
 
 When you choose a folder, CloudSaver reads local filesystem metadata such as file name,

@@ -6,6 +6,8 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 
 ## Unreleased
 
+- Added privacy architecture and safety model documentation for local-first data handling,
+  protected paths, review manifests, and restore expectations.
 - Added preview release notes, screenshot asset placeholders, and README preview-status
   guidance for the source-first `v0.1.0-preview` release.
 - Added an embedded desktop shell entry point that reuses the local CloudSaver web UI with a browser fallback.
