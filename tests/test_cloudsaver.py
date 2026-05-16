@@ -16,6 +16,7 @@ from cloudsaver.core import (
     export_to_json_file,
     hash_file_partial,
     find_perceptual_duplicates,
+    is_protected_path,
     quarantine_selected_files,
     reduce_selected_images,
     restore_quarantine,
@@ -92,6 +93,47 @@ def test_scan_local_folder_skips_review_folder(tmp_path):
     files = scan_local_folder(str(tmp_path))
 
     assert [file["id"] for file in files] == ["keep.txt"]
+
+
+def test_scan_local_folder_honors_exclusion_globs(tmp_path):
+    keep = tmp_path / "keep.jpg"
+    excluded = tmp_path / "skip.tmp"
+    nested = tmp_path / "cache"
+    nested.mkdir()
+    nested_file = nested / "data.txt"
+    keep.write_bytes(b"keep")
+    excluded.write_bytes(b"skip")
+    nested_file.write_text("cache")
+
+    files = scan_local_folder(str(tmp_path), exclude_globs=["*.tmp", "cache/*"])
+
+    assert [file["id"] for file in files] == ["keep.jpg"]
+
+
+def test_scan_local_folder_skips_protected_paths(tmp_path):
+    protected_dir = tmp_path / "protected"
+    protected_dir.mkdir()
+    (protected_dir / "secret.txt").write_text("secret")
+    (tmp_path / "public.txt").write_text("public")
+
+    files = scan_local_folder(str(tmp_path), protected_paths=[protected_dir])
+
+    assert [file["id"] for file in files] == ["public.txt"]
+
+
+def test_scan_local_folder_refuses_protected_root(tmp_path):
+    with pytest.raises(ValueError, match="protected folder"):
+        scan_local_folder(str(tmp_path), protected_paths=[tmp_path])
+
+
+def test_is_protected_path_accepts_custom_paths(tmp_path):
+    protected_dir = tmp_path / "protected"
+    protected_dir.mkdir()
+    child = protected_dir / "child.txt"
+    child.write_text("secret")
+
+    assert is_protected_path(child, [protected_dir]) is True
+    assert is_protected_path(tmp_path / "other.txt", [protected_dir]) is False
 
 
 def test_scan_local_folder_marks_hardlinks_and_audit_excludes_duplicate_inode(tmp_path):
@@ -534,6 +576,25 @@ def test_quarantine_selected_files_can_restore(tmp_path):
 
     assert restored["results"][0]["status"] == "restored"
     assert file_path.read_text() == "review me"
+
+
+def test_quarantine_selected_files_skips_protected_paths(tmp_path):
+    root = tmp_path / "scan"
+    protected_dir = root / "protected"
+    protected_dir.mkdir(parents=True)
+    file_path = protected_dir / "old.txt"
+    file_path.write_text("do not move")
+
+    quarantine = quarantine_selected_files(
+        str(root),
+        ["protected/old.txt"],
+        protected_paths=[protected_dir],
+    )
+
+    assert quarantine["quarantined_count"] == 0
+    assert quarantine["results"][0]["status"] == "skipped"
+    assert "protected folder" in quarantine["results"][0]["error"]
+    assert file_path.read_text() == "do not move"
 
 
 def test_reveal_path_opens_containing_location(tmp_path):
