@@ -6,6 +6,7 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 
 ## Unreleased
 
+- Added pilot feedback and weekly metrics templates for source-preview validation.
 - Added a restore-test prompt after files are moved to review so users can verify the
   manifest restore flow before deleting anything manually.
 - Added a guided post-scan "safest next steps" panel with low-risk, manual-review, and

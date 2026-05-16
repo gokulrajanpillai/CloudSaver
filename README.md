@@ -118,6 +118,8 @@ Planned preview screenshots:
 - Review and restore flow: `docs/assets/review-restore.png`
 
 Release-note draft: [docs/release-notes-v0.1.0-preview.md](docs/release-notes-v0.1.0-preview.md).
+Pilot feedback and weekly metrics templates live in [docs/pilot-feedback.md](docs/pilot-feedback.md)
+and [docs/metrics-snapshot.md](docs/metrics-snapshot.md).
 
 ## Usage
 
