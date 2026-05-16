@@ -56,6 +56,7 @@ const elements = {
   quarantineButton: document.querySelector("#quarantine-button"),
   exportJsonButton: document.querySelector("#export-json-button"),
   exportCsvButton: document.querySelector("#export-csv-button"),
+  safeNextSteps: document.querySelector("#safe-next-steps"),
   planConfidence: document.querySelector("#plan-confidence"),
   planDuplicates: document.querySelector("#plan-duplicates"),
   planDuplicatesDetail: document.querySelector("#plan-duplicates-detail"),
@@ -576,6 +577,7 @@ function renderSummary(data) {
 function renderCleanupPlan(audit, estimatedReducibleHuman) {
   const opportunities = audit.opportunities;
   elements.planConfidence.textContent = `${opportunities.estimated_recoverable_human} review opportunity`;
+  renderSafeNextSteps(audit);
   elements.planDuplicates.textContent = opportunities.duplicate_count
     ? opportunities.duplicate_human
     : "No duplicates found";
@@ -598,6 +600,71 @@ function renderCleanupPlan(audit, estimatedReducibleHuman) {
   elements.planAudioDetail.textContent = opportunities.audio_optimization_count
     ? `${opportunities.audio_optimization_count} audio files could benefit from OPUS conversion.`
     : "Install FFprobe to estimate audio savings, or scan a folder with audio files.";
+}
+
+function renderSafeNextSteps(audit) {
+  const opportunities = audit.opportunities;
+  const duplicateStep = opportunities.duplicate_count
+    ? {
+        tone: "low",
+        risk: "Low risk",
+        title: "Review verified duplicates",
+        body: `${opportunities.duplicate_count} extra copies found. Start with high-confidence duplicate groups and keep the recommended copy.`,
+        action: "Review duplicates",
+        target: "duplicates",
+      }
+    : {
+        tone: "manual",
+        risk: "Manual review",
+        title: "Inspect largest folders",
+        body: "No duplicate groups were found. Use the storage map to find folders worth reviewing manually.",
+        action: "View storage map",
+        target: "map",
+      };
+  const largeFileStep = opportunities.large_file_count
+    ? {
+        tone: "manual",
+        risk: "Manual review",
+        title: "Check large files",
+        body: `${opportunities.large_file_human} in large files needs owner/context review before moving.`,
+        action: "View files",
+        target: "files",
+      }
+    : {
+        tone: "optional",
+        risk: "Optional",
+        title: "Export a report",
+        body: "Save a local report before making cleanup decisions or sharing a summary.",
+        action: "Open files",
+        target: "files",
+      };
+  const imageStep = opportunities.image_optimization_count
+    ? {
+        tone: "optional",
+        risk: "Optional",
+        title: "Create image copies",
+        body: `${opportunities.image_optimization_count} images can be copied at a smaller size without changing originals.`,
+        action: "Select images",
+        planAction: "select-images",
+      }
+    : {
+        tone: "optional",
+        risk: "Optional",
+        title: "Keep the report",
+        body: "No large reducible images were found. Keep the scan history for comparison after cleanup.",
+        action: "View history",
+        target: "history",
+      };
+  elements.safeNextSteps.innerHTML = [duplicateStep, largeFileStep, imageStep]
+    .map((step) => `
+      <div class="safe-step ${step.tone}">
+        <span>${escapeHtml(step.risk)}</span>
+        <strong>${escapeHtml(step.title)}</strong>
+        <p>${escapeHtml(step.body)}</p>
+        <button type="button" class="plan-action" ${step.target ? `data-view-target="${escapeHtml(step.target)}"` : ""} ${step.planAction ? `data-plan-action="${escapeHtml(step.planAction)}"` : ""}>${escapeHtml(step.action)}</button>
+      </div>
+    `)
+    .join("");
 }
 
 function renderAdvisorGate() {

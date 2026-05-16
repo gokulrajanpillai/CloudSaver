@@ -6,6 +6,8 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 
 ## Unreleased
 
+- Added a guided post-scan "safest next steps" panel with low-risk, manual-review, and
+  optional cleanup actions driven by scan results.
 - Added privacy architecture and safety model documentation for local-first data handling,
   protected paths, review manifests, and restore expectations.
 - Added preview release notes, screenshot asset placeholders, and README preview-status

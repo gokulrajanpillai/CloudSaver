@@ -1030,6 +1030,57 @@ output {
   gap: 12px;
 }
 
+.safe-next-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.safe-step {
+  border: 1px solid var(--tile-border);
+  border-radius: 7px;
+  background: var(--surface);
+  padding: 13px;
+}
+
+.safe-step span,
+.safe-step strong,
+.safe-step p {
+  display: block;
+}
+
+.safe-step span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.safe-step strong {
+  margin-top: 6px;
+  font-size: 15px;
+}
+
+.safe-step p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.safe-step.low {
+  border-color: var(--success-border);
+}
+
+.safe-step.manual {
+  border-color: var(--review-border);
+}
+
+.safe-step.optional {
+  border-color: var(--image-border);
+}
+
 .plan-card {
   border: 1px solid var(--tile-border);
   border-radius: 7px;
