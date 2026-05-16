@@ -33,11 +33,14 @@ Use semantic versioning:
    python3 -m build
    ```
 
-6. Create and push a version tag:
+6. For the first public preview, confirm
+   `docs/release-notes-v0.1.0-preview.md` and `docs/screenshots.md` are complete.
+
+7. Create and push a version tag:
 
    ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
+   git tag v0.1.0-preview
+   git push origin v0.1.0-preview
    ```
 
 The `Release` GitHub Actions workflow builds source and wheel distributions, creates
