@@ -75,6 +75,9 @@ Before moving files to review, the UI should communicate:
 - The user should inspect reviewed files before deleting anything manually.
 - Protected paths are skipped.
 
+The scan controls also link to the privacy policy and safety model so users can inspect the
+local-first guarantees before starting a scan.
+
 After moving files to review, the UI should encourage a restore test before manual deletion.
 
 Current UI behavior:

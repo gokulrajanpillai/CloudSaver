@@ -234,6 +234,23 @@ svg {
   gap: 14px;
 }
 
+.scan-trust-note {
+  margin: -2px 0 0;
+  color: var(--sidebar-subtle-text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.scan-trust-note a {
+  color: var(--sidebar-accent-text);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.scan-trust-note a:hover {
+  text-decoration: underline;
+}
+
 .sidebar-section {
   padding: 18px 0;
   border-top: 1px solid var(--sidebar-border);
