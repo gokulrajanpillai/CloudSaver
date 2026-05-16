@@ -16,6 +16,22 @@ paths during the local scan and cleanup workflow.
 
 CloudSaver is tested on Linux, macOS, and Windows across supported Python versions.
 
+## Preview Status
+
+CloudSaver is preparing a source-first `v0.1.0-preview` release. The local scan, dashboard,
+duplicate review, reversible review folder, restore manifests, and JSON/CSV exports are the
+core preview workflow. Desktop artifacts are experimental and unsigned unless a release
+artifact explicitly says otherwise.
+
+Known preview boundaries:
+
+- Direct cloud-provider APIs are not supported; scan local synced or mounted folders.
+- CloudSaver does not permanently delete files by default.
+- Pro, Business, payment, AI advisor, and team surfaces are optional preview workflows and
+  are hidden or gated unless configured.
+- Review generated reports before sharing them because local report files can include local
+  paths.
+
 ## Support CloudSaver
 
 CloudSaver is free and open source. If it helps you recover space or avoid a storage
@@ -90,8 +106,18 @@ comparison notes live in [docs/comparison.md](docs/comparison.md).
 
 ## Screenshots
 
-Screenshots and demo GIFs are planned before the first broad public launch. The capture
-checklist lives in [docs/screenshots.md](docs/screenshots.md).
+Screenshots and demo GIFs are required before the first public preview tag. The capture
+checklist lives in [docs/screenshots.md](docs/screenshots.md), and placeholders live under
+`docs/assets/`.
+
+Planned preview screenshots:
+
+- First-run scan controls: `docs/assets/first-run-scan.png`
+- Dashboard summary: `docs/assets/dashboard-summary.png`
+- Duplicate review: `docs/assets/duplicate-review.png`
+- Review and restore flow: `docs/assets/review-restore.png`
+
+Release-note draft: [docs/release-notes-v0.1.0-preview.md](docs/release-notes-v0.1.0-preview.md).
 
 ## Usage
 
