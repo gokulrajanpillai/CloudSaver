@@ -1471,10 +1471,32 @@ output {
   font-size: 12px;
 }
 
+.duplicate-keep {
+  margin: 10px 0 0;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.duplicate-keep strong,
+.duplicate-keep span {
+  display: block;
+}
+
+.duplicate-keep span {
+  color: var(--muted);
+  margin-top: 2px;
+}
+
 .duplicate-group li {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.duplicate-group li.recommended-keep {
+  color: var(--success-text);
+  font-weight: 750;
 }
 
 .duplicate-actions {

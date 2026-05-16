@@ -291,6 +291,27 @@ def test_duplicate_verification_confirms_matching_file_content(tmp_path):
     assert audit["duplicate_candidates"][0]["verification_algorithm"] == "sha256"
 
 
+def test_duplicate_candidates_recommend_primary_keep_copy(tmp_path):
+    primary = tmp_path / "photos"
+    backup = tmp_path / "backup"
+    primary.mkdir()
+    backup.mkdir()
+    primary_file = primary / "photo.jpg"
+    backup_file = backup / "photo.jpg"
+    primary_file.write_text("same content")
+    backup_file.write_text("same content")
+
+    files = scan_local_folder(str(tmp_path), use_cache=False)
+    verified_files = attach_duplicate_verification(files)
+    audit = build_storage_audit(verified_files)
+    candidate = audit["duplicate_candidates"][0]
+
+    assert candidate["recommended_keep_id"] == "photos/photo.jpg"
+    assert candidate["recommended_keep_path"].endswith("photos/photo.jpg")
+    assert "backup" not in candidate["recommended_keep_path"]
+    assert candidate["recoverable_bytes"] == backup_file.stat().st_size
+
+
 def test_build_storage_audit_detects_cross_name_duplicates(tmp_path):
     first = tmp_path / "first.txt"
     second = tmp_path / "second.txt"

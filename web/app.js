@@ -798,9 +798,14 @@ function renderDuplicates(audit) {
     .map((group, index) => {
       const status = group.verification_status || "candidate";
       const confidence = group.confidence || "medium";
+      const keepPath = group.recommended_keep_path || "";
+      const keepReason = group.recommended_keep_reason || "Review the group before moving extra copies.";
       const files = (group.files || [])
         .slice(0, 4)
-        .map((file) => `<li title="${escapeHtml(file.path)}">${escapeHtml(file.path)}</li>`)
+        .map((file) => {
+          const keep = (file.id || file.path) === group.recommended_keep_id;
+          return `<li class="${keep ? "recommended-keep" : ""}" title="${escapeHtml(file.path)}">${keep ? "Keep: " : ""}${escapeHtml(file.path)}</li>`;
+        })
         .join("");
       return `
         <div class="duplicate-group">
@@ -811,6 +816,7 @@ function renderDuplicates(audit) {
             </div>
             <span class="status-pill ${status === "verified" ? "" : "unsupported"}">${escapeHtml(status)} / ${escapeHtml(confidence)}</span>
           </div>
+          ${keepPath ? `<p class="duplicate-keep" title="${escapeHtml(keepPath)}"><strong>Recommended keep:</strong> ${escapeHtml(keepPath)}<span>${escapeHtml(keepReason)}</span></p>` : ""}
           <ul>${files}</ul>
           <div class="duplicate-actions">
             <button class="duplicate-action" type="button" data-duplicate-index="${index}">Review extra copies</button>
@@ -823,9 +829,13 @@ function renderDuplicates(audit) {
 }
 
 function duplicateGroupMarkup(group, badge = "") {
+  const keepPath = group.recommended_keep_path || "";
   const files = (group.files || [])
     .slice(0, 4)
-    .map((file) => `<li title="${escapeHtml(file.path)}">${escapeHtml(file.path)}</li>`)
+    .map((file) => {
+      const keep = (file.id || file.path) === group.recommended_keep_id;
+      return `<li class="${keep ? "recommended-keep" : ""}" title="${escapeHtml(file.path)}">${keep ? "Keep: " : ""}${escapeHtml(file.path)}</li>`;
+    })
     .join("");
   const status = group.verification_status || "candidate";
   const confidence = group.confidence || "medium";
@@ -841,6 +851,7 @@ function duplicateGroupMarkup(group, badge = "") {
         </div>
         ${badgeMarkup}
       </div>
+      ${keepPath ? `<p class="duplicate-keep" title="${escapeHtml(keepPath)}"><strong>Recommended keep:</strong> ${escapeHtml(keepPath)}</p>` : ""}
       <ul>${files}</ul>
     </div>
   `;
@@ -860,7 +871,13 @@ function selectDuplicateExtras(index) {
   if (!group || !Array.isArray(group.files)) {
     return [];
   }
-  const extraFiles = group.files.slice(1);
+  const keepId = group.recommended_keep_id;
+  const extraFiles = group.files.filter((file, index) => {
+    if (!keepId && index === 0) {
+      return false;
+    }
+    return (file.id || file.path) !== keepId;
+  });
   extraFiles.forEach((file) => state.selected.add(file.id));
   renderFiles();
   setStatus(`${extraFiles.length} duplicate extra copies selected for review.`, "ready");
