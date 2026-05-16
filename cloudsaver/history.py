@@ -302,30 +302,33 @@ def save_file_cache(
     ]
     if not rows:
         return
-    with connect_history(db_path) as connection:
-        connection.executemany(
-            """
-            INSERT INTO file_cache (
-                root_path,
-                relative_id,
-                mtime,
-                size_bytes,
-                sha256,
-                atime,
-                last_seen,
-                ffprobe_json
+    try:
+        with connect_history(db_path) as connection:
+            connection.executemany(
+                """
+                INSERT INTO file_cache (
+                    root_path,
+                    relative_id,
+                    mtime,
+                    size_bytes,
+                    sha256,
+                    atime,
+                    last_seen,
+                    ffprobe_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(root_path, relative_id) DO UPDATE SET
+                    mtime = excluded.mtime,
+                    size_bytes = excluded.size_bytes,
+                    sha256 = excluded.sha256,
+                    atime = excluded.atime,
+                    last_seen = excluded.last_seen,
+                    ffprobe_json = excluded.ffprobe_json
+                """,
+                rows,
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(root_path, relative_id) DO UPDATE SET
-                mtime = excluded.mtime,
-                size_bytes = excluded.size_bytes,
-                sha256 = excluded.sha256,
-                atime = excluded.atime,
-                last_seen = excluded.last_seen,
-                ffprobe_json = excluded.ffprobe_json
-            """,
-            rows,
-        )
+    except sqlite3.Error:
+        return
 
 
 def load_file_cache(
@@ -334,15 +337,18 @@ def load_file_cache(
 ) -> dict[str, dict[str, Any]]:
     """Return cached file metadata keyed by scan-relative id."""
 
-    with connect_history(db_path) as connection:
-        rows = connection.execute(
-            """
-            SELECT relative_id, mtime, size_bytes, sha256, atime, last_seen, ffprobe_json
-            FROM file_cache
-            WHERE root_path = ?
-            """,
-            (root_path,),
-        ).fetchall()
+    try:
+        with connect_history(db_path) as connection:
+            rows = connection.execute(
+                """
+                SELECT relative_id, mtime, size_bytes, sha256, atime, last_seen, ffprobe_json
+                FROM file_cache
+                WHERE root_path = ?
+                """,
+                (root_path,),
+            ).fetchall()
+    except sqlite3.Error:
+        return {}
 
     return {
         row[0]: {
@@ -365,16 +371,19 @@ def prune_file_cache(
     """Remove cached rows not present in the current scan."""
 
     current_ids = set(current_ids)
-    with connect_history(db_path) as connection:
-        if not current_ids:
-            connection.execute("DELETE FROM file_cache WHERE root_path = ?", (root_path,))
-            return
-        placeholders = ",".join("?" for _ in current_ids)
-        connection.execute(
-            f"""
-            DELETE FROM file_cache
-            WHERE root_path = ?
-            AND relative_id NOT IN ({placeholders})
-            """,
-            (root_path, *current_ids),
-        )
+    try:
+        with connect_history(db_path) as connection:
+            if not current_ids:
+                connection.execute("DELETE FROM file_cache WHERE root_path = ?", (root_path,))
+                return
+            placeholders = ",".join("?" for _ in current_ids)
+            connection.execute(
+                f"""
+                DELETE FROM file_cache
+                WHERE root_path = ?
+                AND relative_id NOT IN ({placeholders})
+                """,
+                (root_path, *current_ids),
+            )
+    except sqlite3.Error:
+        return

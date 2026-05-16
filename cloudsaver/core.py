@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import hashlib
 import json
 import mimetypes
@@ -52,6 +53,27 @@ APP_DATA_DIR = app_data_dir()
 OUTPUT_DIR = str(APP_DATA_DIR / "output")
 REDUCED_DIR = os.path.join(OUTPUT_DIR, "reduced")
 QUARANTINE_DIR_NAME = ".cloudsaver-review"
+DEFAULT_EXCLUDED_DIR_NAMES = {
+    QUARANTINE_DIR_NAME,
+    ".git",
+    ".svn",
+    ".hg",
+    "node_modules",
+    "__pycache__",
+}
+DEFAULT_PROTECTED_PATHS = [
+    Path("/System"),
+    Path("/bin"),
+    Path("/sbin"),
+    Path("/usr"),
+    Path("/etc"),
+    Path("/private/etc"),
+    Path("/Applications"),
+    Path("/Library"),
+    Path("C:/Windows"),
+    Path("C:/Program Files"),
+    Path("C:/Program Files (x86)"),
+]
 
 HD_RESOLUTION = (1920, 1080)
 DEFAULT_AUDIT_TOP_N = 10
@@ -113,6 +135,39 @@ def is_path_within(child_path: Path, parent_path: Path) -> bool:
         return True
     except ValueError:
         return False
+
+
+def normalized_protected_paths(protected_paths: Iterable[str | Path] | None = None) -> list[Path]:
+    """Return existing protected paths plus caller-supplied protected paths."""
+
+    candidates = list(DEFAULT_PROTECTED_PATHS)
+    if protected_paths:
+        candidates.extend(Path(path).expanduser() for path in protected_paths)
+    normalized = []
+    for path in candidates:
+        try:
+            if path.exists():
+                normalized.append(path.resolve())
+        except OSError:
+            continue
+    return normalized
+
+
+def is_protected_path(path: str | Path, protected_paths: Iterable[str | Path] | None = None) -> bool:
+    """Return whether ``path`` is inside a protected folder."""
+
+    candidate = Path(path).expanduser()
+    for protected_path in normalized_protected_paths(protected_paths):
+        if candidate.resolve() == protected_path or is_path_within(candidate, protected_path):
+            return True
+    return False
+
+
+def matches_exclusion(relative_id: str, name: str, exclude_globs: Iterable[str] | None = None) -> bool:
+    """Return whether a relative path or file name matches an exclusion glob."""
+
+    patterns = list(exclude_globs or [])
+    return any(fnmatch.fnmatch(relative_id, pattern) or fnmatch.fnmatch(name, pattern) for pattern in patterns)
 
 
 def guess_mime_type(path: Path) -> str:
@@ -308,6 +363,8 @@ def scan_local_folder(
     progress_callback: Callable[[dict], None] | None = None,
     use_cache: bool = True,
     cache_db_path: str | Path | None = None,
+    exclude_globs: Iterable[str] | None = None,
+    protected_paths: Iterable[str | Path] | None = None,
 ) -> List[dict]:
     """Scan a local or mounted folder and return file metadata for audits."""
 
@@ -316,6 +373,8 @@ def scan_local_folder(
         raise FileNotFoundError(f"Folder does not exist: {root}")
     if not root.is_dir():
         raise NotADirectoryError(f"Path is not a folder: {root}")
+    if is_protected_path(root, protected_paths):
+        raise ValueError(f"Refusing to scan protected folder: {root}")
 
     files: List[dict] = []
     count = 0
@@ -327,10 +386,27 @@ def scan_local_folder(
 
     print(f"📦 Scanning local folder: {root}")
     for current_root, dirnames, filenames in os.walk(root):
-        dirnames[:] = [dirname for dirname in dirnames if dirname != QUARANTINE_DIR_NAME]
         current_dir = Path(current_root)
+        kept_dirnames = []
+        for dirname in dirnames:
+            child = current_dir / dirname
+            relative_dir = child.relative_to(root).as_posix()
+            if dirname in DEFAULT_EXCLUDED_DIR_NAMES:
+                continue
+            if matches_exclusion(relative_dir, dirname, exclude_globs):
+                continue
+            if is_protected_path(child, protected_paths):
+                continue
+            kept_dirnames.append(dirname)
+        dirnames[:] = kept_dirnames
         for filename in filenames:
             path = current_dir / filename
+            relative_path = path.relative_to(root)
+            relative_id = relative_path.as_posix()
+            if matches_exclusion(relative_id, filename, exclude_globs):
+                continue
+            if is_protected_path(path, protected_paths):
+                continue
             try:
                 stat = path.stat()
             except OSError as error:
@@ -339,8 +415,6 @@ def scan_local_folder(
             if not path.is_file():
                 continue
 
-            relative_path = path.relative_to(root)
-            relative_id = relative_path.as_posix()
             parent = relative_path.parent.as_posix() if str(relative_path.parent) != "." else "root"
             blocks_bytes = int(getattr(stat, "st_blocks", 0) or 0) * 512
             if blocks_bytes <= 0:
@@ -1371,6 +1445,7 @@ def quarantine_selected_files(
     root_path: str,
     file_ids: Iterable[str],
     quarantine_dir: str | None = None,
+    protected_paths: Iterable[str | Path] | None = None,
 ) -> dict:
     """Move selected files to a review folder with a restore manifest."""
 
@@ -1390,6 +1465,9 @@ def quarantine_selected_files(
             continue
         if not source_path.exists() or not source_path.is_file():
             results.append({"id": file_id, "status": "skipped", "error": "File no longer exists."})
+            continue
+        if is_protected_path(source_path, protected_paths):
+            results.append({"id": file_id, "status": "skipped", "error": "File is in a protected folder."})
             continue
         if is_path_within(source_path, review_root):
             results.append({"id": file_id, "status": "skipped", "error": "File is already in review."})
