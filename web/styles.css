@@ -1596,6 +1596,33 @@ output {
   border-top: 1px solid var(--line);
 }
 
+.restore-test-prompt {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin: 14px 0;
+  border: 1px solid var(--success-border);
+  border-radius: 7px;
+  background: var(--success-surface);
+  padding: 12px;
+}
+
+.restore-test-prompt[hidden] {
+  display: none;
+}
+
+.restore-test-prompt strong,
+.restore-test-prompt span {
+  display: block;
+}
+
+.restore-test-prompt span {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
 .utility-modal {
   width: min(720px, calc(100vw - 32px));
   border: 0;

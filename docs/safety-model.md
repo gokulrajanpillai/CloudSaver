@@ -77,6 +77,12 @@ Before moving files to review, the UI should communicate:
 
 After moving files to review, the UI should encourage a restore test before manual deletion.
 
+Current UI behavior:
+
+- The review queue displays a restore-test prompt after files are moved to review.
+- The prompt restores the latest moved batch through the same manifest restore flow used by
+  the manual restore controls.
+
 ## Release Safety Checklist
 
 - Full Python tests pass.

@@ -89,6 +89,7 @@ const elements = {
   restoreButton: document.querySelector("#restore-button"),
   reviewQueue: document.querySelector("#review-queue"),
   reviewBatches: document.querySelector("#review-batches"),
+  restoreTestPrompt: document.querySelector("#restore-test-prompt"),
   fileCount: document.querySelector("#file-count"),
   fileTableBody: document.querySelector("#file-table-body"),
   selectAll: document.querySelector("#select-all"),
@@ -1369,6 +1370,7 @@ async function quarantineSelected() {
 
 function renderReviewBatches() {
   elements.reviewQueue.hidden = state.reviewBatches.length === 0;
+  elements.restoreTestPrompt.hidden = state.reviewBatches.length === 0;
   elements.reviewBatches.innerHTML = state.reviewBatches
     .map((batch) => {
       const date = new Date(batch.createdAt).toLocaleString();
@@ -1657,6 +1659,17 @@ elements.reviewBatches.addEventListener("click", (event) => {
     return;
   }
   elements.restoreManifestInput.value = button.dataset.restoreManifest;
+  restoreManifest();
+});
+elements.restoreTestPrompt.addEventListener("click", (event) => {
+  if (!event.target.closest("[data-restore-latest]")) {
+    return;
+  }
+  const latest = state.reviewBatches[0];
+  if (!latest) {
+    return;
+  }
+  elements.restoreManifestInput.value = latest.manifestPath;
   restoreManifest();
 });
 elements.selectAll.addEventListener("change", () => {
