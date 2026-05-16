@@ -122,17 +122,17 @@ let fileTableObserver = null;
 const UPGRADE_TRIGGERS = {
   large_scan_opportunity: {
     condition: (audit) => audit.opportunities.estimated_recoverable_bytes > 5 * 1024 ** 3,
-    message: (audit) => `CloudSaver found ${audit.opportunities.estimated_recoverable_human} of recoverable space. Unlock AI analysis and cloud scanning with Pro.`,
+    message: (audit) => `CloudSaver found ${audit.opportunities.estimated_recoverable_human} of review opportunity. Pro preview adds advanced cleanup analysis and professional reports.`,
     shown: false,
   },
   cloud_mount_detected: {
     condition: () => state.cloudMountsDetected?.length > 0,
-    message: () => "CloudSaver detected cloud folders. Pro lets you audit cloud storage usage and avoid plan upgrades.",
+    message: () => "CloudSaver detected cloud-synced folders. Use the local report to review storage before upgrading a cloud plan.",
     shown: false,
   },
   duplicate_high_count: {
     condition: (audit) => audit.opportunities.duplicate_count > 50,
-    message: (audit) => `${audit.opportunities.duplicate_count} duplicate groups found. Pro adds perceptual matching to find visually similar images too.`,
+    message: (audit) => `${audit.opportunities.duplicate_count} duplicate groups found. Pro preview adds perceptual matching for visually similar images.`,
     shown: false,
   },
   video_detected: {
@@ -370,7 +370,7 @@ function renderLicenseBadge(license) {
     badge.innerHTML = `<span>CloudSaver ${escapeHtml(license.tier)}</span><small>Active until ${escapeHtml(license.expires_at)}</small>`;
   } else {
     badge.classList.remove("license-badge--pro");
-    badge.innerHTML = '<span>Free</span><button type="button" id="upgrade-button" data-modal-target="upgrade-modal">Upgrade to Pro</button>';
+    badge.innerHTML = '<span>Free</span><button type="button" id="upgrade-button" data-modal-target="upgrade-modal">Pro preview</button>';
   }
 }
 
@@ -554,7 +554,7 @@ function renderSummary(data) {
   if (state.license?.is_pro) {
     refreshAdvisor();
   } else {
-    renderAdvisorGate();
+    elements.advisorPanel.hidden = true;
     checkUpgradeTriggers(audit);
   }
 }
@@ -587,17 +587,10 @@ function renderCleanupPlan(audit, estimatedReducibleHuman) {
 }
 
 function renderAdvisorGate() {
-  elements.advisorPanel.hidden = false;
+  elements.advisorPanel.hidden = true;
   elements.advisorRefresh.hidden = true;
   elements.advisorStatusText.textContent = "Available with CloudSaver Pro";
-  elements.advisorContent.innerHTML = `
-    <div class="advisor-gate">
-      <svg class="advisor-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9z"/></svg>
-      <strong>AI Storage Advisor</strong>
-      <p>Get personalized recommendations after every scan.</p>
-      <button class="primary-action" type="button" data-modal-target="upgrade-modal">Unlock with Pro</button>
-    </div>
-  `;
+  elements.advisorContent.innerHTML = "";
 }
 
 function renderAdvisorLoading() {
@@ -1256,7 +1249,7 @@ async function quarantineSelected() {
     showToast(`${result.quarantined_count} files moved to review folder.`);
     if (!state.license?.is_pro && result.quarantined_count > 0) {
       window.setTimeout(() => {
-        showUpgradeToast("Pro tip: CloudSaver Pro adds AI-guided cleanup and video optimization.");
+        showUpgradeToast("Pro preview adds advanced media analysis and professional cleanup reports.");
       }, 2000);
     }
     state.reviewBatches.unshift({
