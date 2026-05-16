@@ -15,9 +15,8 @@ function updateCalculator() {
   const storage = document.querySelector("#storage-plan").value;
   const services = [...document.querySelectorAll("input[name='service']:checked")].map((item) => item.value);
   const monthlyOverspend = calculateOverspend(storage, services);
-  const daysToPayback = Math.max(Math.ceil(79 / (monthlyOverspend * 12) * 365), 1);
   document.querySelector("#savings-output").textContent =
-    `Estimated monthly overspend: $${monthlyOverspend.toFixed(2)} — CloudSaver Pro pays for itself in ${daysToPayback} days.`;
+    `Estimated storage pressure to review: $${monthlyOverspend.toFixed(2)}/month. Scan locally before changing storage plans.`;
 }
 
 async function loadStars() {

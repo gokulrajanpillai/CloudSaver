@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CloudSaver — Free storage optimizer for Mac, Windows, and Linux</title>
-  <meta name="description" content="Find duplicate files, optimize videos, and audit cloud storage. Privacy-first, open source, cross-platform. Stop paying for storage you don't need.">
-  <meta property="og:title" content="CloudSaver — Stop paying for storage you shouldn't need">
-  <meta property="og:description" content="Scan your Mac, PC, or cloud accounts for wasted space. Find duplicates, compress cold data, re-encode videos. Free forever, Pro from $79/year.">
+  <title>CloudSaver — Local-first storage cleanup for Mac, Windows, and Linux</title>
+  <meta name="description" content="Audit local and cloud-synced folders, review duplicate candidates, and move files to a reversible review folder. Privacy-first, open source, cross-platform.">
+  <meta property="og:title" content="CloudSaver — Local-first storage cleanup">
+  <meta property="og:description" content="Scan local or mounted folders, understand storage usage, review duplicates, and export reports without uploading file names, paths, or contents.">
   <meta property="og:image" content="https://cloudsaver.app/og-image.png">
   <link rel="canonical" href="https://cloudsaver.app">
   <link rel="stylesheet" href="styles.css">
@@ -19,9 +19,9 @@
     "operatingSystem": "macOS, Windows, Linux",
     "offers": [
       {"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Free"},
-      {"@type": "Offer", "price": "79", "priceCurrency": "USD", "priceValidUntil": "2027-12-31", "name": "Pro Annual"}
+      {"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Source Preview"}
     ],
-    "description": "Privacy-first storage audit and optimization tool."
+    "description": "Privacy-first local storage audit and cleanup tool."
   }
   </script>
 </head>
@@ -38,10 +38,10 @@
   <main id="top">
     <section class="hero">
       <div class="hero-copy">
-        <h1>Stop paying for storage you shouldn't need.</h1>
-        <p>CloudSaver finds duplicate files, oversized videos, and cold data across your Mac, PC, and cloud accounts — and shows you exactly how to recover the space.</p>
+        <h1>Clean up storage without uploading private files.</h1>
+        <p>CloudSaver scans local and cloud-synced folders, maps what is using space, highlights duplicate candidates, and moves selected files to a reversible review folder.</p>
         <div class="hero-actions">
-          <a class="primary" href="https://github.com/gokulrajanpillai/CloudSaver/releases">Download Free</a>
+          <a class="primary" href="https://github.com/gokulrajanpillai/CloudSaver/releases">Try the Preview</a>
           <a class="secondary" href="#how">See how it works</a>
         </div>
       </div>
@@ -58,26 +58,26 @@
     <section id="how" class="section">
       <h2>How it works</h2>
       <div class="steps">
-        <article><strong>1. Scan</strong><p>Point CloudSaver at any folder or cloud account.</p></article>
-        <article><strong>2. Analyze</strong><p>See exactly what's taking space and why.</p></article>
-        <article><strong>3. Recover</strong><p>Remove, compress, or convert with one click.</p></article>
+        <article><strong>1. Scan locally</strong><p>Choose a local, mounted, or cloud-synced folder your operating system can see.</p></article>
+        <article><strong>2. Review safely</strong><p>Understand large folders, duplicate candidates, and estimated image-copy savings.</p></article>
+        <article><strong>3. Move reversibly</strong><p>Move selected files to a review folder with a restore manifest instead of deleting blindly.</p></article>
       </div>
     </section>
 
     <section id="features" class="section">
       <h2>Feature highlights</h2>
       <div class="feature-grid">
-        <article>Duplicate detection <span>Exact and perceptual matching.</span></article>
-        <article>Video re-encoding <span>H.265, typically half the size.</span></article>
-        <article>Cloud storage scanning <span>Google Drive, iCloud, Dropbox.</span></article>
-        <article>AI Storage Advisor <span>Claude-powered insights.</span></article>
-        <article>Cold storage archiving <span>zstd compression for stale data.</span></article>
-        <article>100% private <span>No uploads, open source core.</span></article>
+        <article>Local scan engine <span>Works with local drives, synced folders, external drives, and NAS mounts.</span></article>
+        <article>Duplicate review <span>Exact candidates, verification status, confidence, and recommended keep copy.</span></article>
+        <article>Storage map <span>See large folders and files before deciding what to review.</span></article>
+        <article>Safe review folder <span>Selected files move with a manifest so restore stays available.</span></article>
+        <article>Reports <span>Export JSON and CSV summaries for manual review or support.</span></article>
+        <article>Open-source trust <span>No file uploads in the local cleanup workflow.</span></article>
       </div>
     </section>
 
     <section class="section calculator">
-      <h2>Savings calculator</h2>
+      <h2>Storage pressure estimator</h2>
       <label>How much storage do you pay for?
         <select id="storage-plan">
           <option value="50">50GB</option>
@@ -91,22 +91,22 @@
         <label><input type="checkbox" name="service" value="google" checked> Google One</label>
         <label><input type="checkbox" name="service" value="dropbox"> Dropbox</label>
       </fieldset>
-      <output id="savings-output">Estimated monthly overspend: $0.00</output>
+      <output id="savings-output">Estimated storage pressure: $0.00/month</output>
     </section>
 
     <section id="pricing" class="section">
       <h2>Pricing</h2>
       <div class="pricing-grid">
-        <article><strong>Free</strong><b>$0</b><p>Local scan, duplicates, safe reduced copies.</p><a href="https://github.com/gokulrajanpillai/CloudSaver/releases">Download Free</a></article>
-        <article><strong>Pro</strong><b>$79/yr</b><p>AI Advisor, video optimization, cloud scanning.</p><a href="https://cloudsaver.app/pricing">Start Pro Trial</a></article>
-        <article><strong>Business</strong><b>$19/seat/mo</b><p>Team workspace, scheduled audits, shared summaries.</p><a href="mailto:sales@cloudsaver.app">Contact for Business</a></article>
+        <article><strong>Source Preview</strong><b>$0</b><p>Local scans, duplicate candidates, reduced image copies, review moves, restore, and reports.</p><a href="https://github.com/gokulrajanpillai/CloudSaver/releases">Try Preview</a></article>
+        <article><strong>Paid Convenience</strong><b>Planned</b><p>Signed builds, update convenience, checksums, and packaging support without closing the core.</p><a href="https://github.com/sponsors/gokulrajanpillai">Fund Builds</a></article>
+        <article><strong>Commercial Support</strong><b>$299+/yr</b><p>Setup help, report interpretation, deployment guidance, and small-team cleanup planning.</p><a href="mailto:sales@cloudsaver.app">Contact for Support</a></article>
       </div>
     </section>
 
     <section class="section social-proof">
-      <h2>Trusted by storage-conscious teams</h2>
+      <h2>Open-source preview</h2>
       <p><span id="star-count">GitHub stars loading...</span></p>
-      <p>128 TB recovered by CloudSaver users.</p>
+      <p>Preview releases are source-first until signed convenience builds are ready.</p>
     </section>
   </main>
 
