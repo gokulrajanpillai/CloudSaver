@@ -122,3 +122,4 @@ Do not lead with paid Pro conversion until preview pilots show:
 - At least 5 users who explicitly ask for signed builds, reports, or support.
 - No unresolved safety issue in review/restore.
 - Privacy docs and app behavior remain aligned.
+- `docs/privacy-architecture.md` and `docs/safety-model.md` are current.
