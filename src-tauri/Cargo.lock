@@ -1,0 +1,7 @@
+# This lockfile is intentionally minimal until Cargo is available to resolve
+# Tauri dependencies in the development environment.
+version = 4
+
+[[package]]
+name = "cloudsaver"
+version = "1.1.0"

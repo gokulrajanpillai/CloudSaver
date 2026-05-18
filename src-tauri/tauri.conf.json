@@ -1,0 +1,59 @@
+{
+  "productName": "CloudSaver",
+  "version": "1.1.0",
+  "identifier": "app.cloudsaver.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "CloudSaver",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 640,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "12.0"
+    },
+    "externalBin": [
+      "binaries/cloudsaver-sidecar"
+    ]
+  },
+  "plugins": {
+    "shell": {
+      "open": true,
+      "sidecar": true
+    },
+    "dialog": {},
+    "notification": {
+      "all": true
+    },
+    "fs": {
+      "scope": [
+        "$HOME/**",
+        "$APPDATA/**"
+      ]
+    },
+    "keyring": {}
+  }
+}
