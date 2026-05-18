@@ -1,60 +1,16 @@
 import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import type {
+  CrossSourceGroup,
+  DuplicateGroup,
+  ReviewBatch,
+  ScanJob,
+  ScanResult,
+  Source,
+} from '@/types'
 
 export type ActiveView = 'overview' | 'sources' | 'duplicates' | 'map' | 'cleanup' | 'settings'
-
-export interface Source {
-  id: string
-  type: 'local' | 'google_drive' | 'icloud' | 'gdrive_local'
-  label: string
-  path?: string
-  driveAccountEmail?: string
-  quota?: { used: number; total: number }
-  lastScanned?: string
-  fileCount?: number
-  totalBytes?: number
-  status: 'idle' | 'scanning' | 'error' | 'ready'
-  errorMessage?: string
-}
-
-export interface ScanResult {
-  rootPath?: string
-  sourceId?: string
-  audit?: Record<string, unknown>
-  files: Array<Record<string, unknown>>
-}
-
-export interface ScanJob {
-  id: string
-  sourceId: string
-  sourceName?: string
-  status: 'queued' | 'scanning' | 'complete' | 'failed'
-  stage: string
-  filesScanned: number
-  currentPath: string
-  progress?: number
-  result?: ScanResult
-  error?: string
-}
-
-export interface DuplicateGroup {
-  id?: string
-  name?: string
-  files?: Array<Record<string, unknown>>
-  recoverableBytes?: number
-}
-
-export interface CrossSourceGroup extends DuplicateGroup {
-  confidence?: 'low' | 'medium' | 'high'
-}
-
-export interface ReviewBatch {
-  id: string
-  sourceId: string
-  sourceLabel: string
-  fileCount: number
-  manifestPath: string
-  createdAt: string
-}
+export type { CrossSourceGroup, DuplicateGroup, ReviewBatch, ScanJob, ScanResult, Source }
 
 interface AppStore {
   activeView: ActiveView
@@ -82,7 +38,9 @@ interface AppStore {
   setTheme: (theme: AppStore['theme']) => void
 }
 
-export const useStore = create<AppStore>((set) => ({
+export const useStore = create<AppStore>()(
+  persist(
+    (set) => ({
   activeView: 'overview',
   sidecarPort: null,
   sidecarReady: false,
@@ -129,4 +87,14 @@ export const useStore = create<AppStore>((set) => ({
   addReviewBatch: (batch) =>
     set((state) => ({ reviewBatches: [batch, ...state.reviewBatches] })),
   setTheme: (theme) => set({ theme }),
-}))
+    }),
+    {
+      name: 'cloudsaver-app',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        sources: state.sources.map(({ accessToken, ...source }) => source),
+        theme: state.theme,
+      }),
+    },
+  ),
+)
