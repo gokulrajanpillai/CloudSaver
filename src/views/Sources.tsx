@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { SourceCard } from '@/components/SourceCard'
 import { Button } from '@/components/ui/button'
 import { useApi } from '@/hooks/useApi'
+import { useGoogleAuth } from '@/hooks/useGoogleAuth'
 import { useScanSocket } from '@/hooks/useScanSocket'
 import { useStore } from '@/store'
 import type { Source, SourceType } from '@/types'
@@ -23,6 +24,7 @@ interface ScanStartResponse {
 
 export function Sources() {
   const api = useApi()
+  const { connectGoogleDrive } = useGoogleAuth()
   const sources = useStore((state) => state.sources)
   const scanJobs = useStore((state) => state.scanJobs)
   const sidecarReady = useStore((state) => state.sidecarReady)
@@ -33,6 +35,7 @@ export function Sources() {
   const [detected, setDetected] = useState<DetectedSource[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [connectingDrive, setConnectingDrive] = useState(false)
 
   useEffect(() => {
     if (!sidecarReady) return
@@ -103,6 +106,24 @@ export function Sources() {
     })
   }
 
+  async function addGoogleDrive() {
+    setConnectingDrive(true)
+    try {
+      const account = await connectGoogleDrive()
+      addSource({
+        id: crypto.randomUUID(),
+        type: 'google_drive',
+        label: `Google Drive (${account.email})`,
+        driveAccountEmail: account.email,
+        accessToken: account.accessToken,
+        status: 'idle',
+      })
+      setMenuOpen(false)
+    } finally {
+      setConnectingDrive(false)
+    }
+  }
+
   useEffect(() => {
     Object.values(scanJobs).forEach((job) => {
       if (job.status === 'complete' && job.result) {
@@ -148,11 +169,12 @@ export function Sources() {
                 Local Folder...
               </button>
               <button
-                className="w-full rounded px-3 py-2 text-left text-sm text-text-muted"
-                disabled
+                className="w-full rounded px-3 py-2 text-left text-sm hover:bg-surface-overlay disabled:text-text-muted"
+                disabled={connectingDrive}
+                onClick={() => void addGoogleDrive()}
                 type="button"
               >
-                Google Drive...
+                {connectingDrive ? 'Opening Google sign-in...' : 'Google Drive...'}
               </button>
               <button
                 className="w-full rounded px-3 py-2 text-left text-sm hover:bg-surface-overlay disabled:text-text-muted"
