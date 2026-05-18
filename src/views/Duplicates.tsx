@@ -1,3 +1,7 @@
 export function Duplicates() {
-  return <section>Duplicates</section>
+  return (
+    <section>
+      <h1 className="text-[18px] font-semibold">Duplicates</h1>
+    </section>
+  )
 }
