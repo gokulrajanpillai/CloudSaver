@@ -24,6 +24,7 @@ class ScanRequest(BaseModel):
     max_width: int = 1920
     max_height: int = 1080
     exclude_globs: list[str] = []
+    annotate_icloud: bool = False
 
 
 @router.get("/health")
@@ -109,6 +110,12 @@ def _run_local_scan(job_id: str, req: ScanRequest):
             progress_callback=on_progress,
             exclude_globs=req.exclude_globs,
         )
+        if req.annotate_icloud:
+            _update_job(job_id, {"stage": "Checking iCloud state"})
+            from api.icloud import get_icloud_file_state
+
+            for file in files:
+                file["icloud_state"] = get_icloud_file_state(file.get("path", ""))
         _update_job(job_id, {"stage": "Hashing duplicates"})
         files = attach_duplicate_verification(files)
         _update_job(job_id, {"stage": "Estimating savings"})
