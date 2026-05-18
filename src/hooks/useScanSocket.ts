@@ -17,6 +17,7 @@ interface ScanSocketMessage {
 export function useScanSocket(jobId: string | null) {
   const sidecarPort = useStore((state) => state.sidecarPort)
   const updateScanJob = useStore((state) => state.updateScanJob)
+  const updateSource = useStore((state) => state.updateSource)
   const setScanResult = useStore((state) => state.setScanResult)
 
   useEffect(() => {
@@ -25,7 +26,8 @@ export function useScanSocket(jobId: string | null) {
     const socket = new WebSocket(`ws://127.0.0.1:${sidecarPort}/scan/${jobId}/ws`)
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data) as ScanSocketMessage
-      const sourceId = message.sourceId ?? message.source_id ?? ''
+      const existingJob = useStore.getState().scanJobs[jobId]
+      const sourceId = message.sourceId ?? message.source_id ?? existingJob?.sourceId ?? ''
       updateScanJob(jobId, {
         id: jobId,
         sourceId,
@@ -39,9 +41,20 @@ export function useScanSocket(jobId: string | null) {
       })
       if (message.status === 'complete' && message.result && sourceId) {
         setScanResult(sourceId, message.result)
+        updateSource(sourceId, {
+          status: 'ready',
+          lastScanned: new Date().toISOString(),
+          fileCount: message.result.files.length,
+          totalBytes: Number(
+            (message.result.audit?.summary as { total_bytes?: number } | undefined)?.total_bytes ?? 0,
+          ),
+        })
+      }
+      if (message.status === 'failed' && sourceId) {
+        updateSource(sourceId, { status: 'error', errorMessage: message.error })
       }
     }
 
     return () => socket.close()
-  }, [jobId, setScanResult, sidecarPort, updateScanJob])
+  }, [jobId, setScanResult, sidecarPort, updateScanJob, updateSource])
 }
