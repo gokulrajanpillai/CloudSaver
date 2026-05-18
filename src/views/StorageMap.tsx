@@ -1,3 +1,7 @@
 export function StorageMap() {
-  return <section>Storage Map</section>
+  return (
+    <section>
+      <h1 className="text-[18px] font-semibold">Storage Map</h1>
+    </section>
+  )
 }

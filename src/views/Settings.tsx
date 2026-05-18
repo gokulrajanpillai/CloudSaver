@@ -1,3 +1,7 @@
 export function Settings() {
-  return <section>Settings</section>
+  return (
+    <section>
+      <h1 className="text-[18px] font-semibold">Settings</h1>
+    </section>
+  )
 }
