@@ -1,3 +1,4 @@
+import { listen } from '@tauri-apps/api/event'
 import { open } from '@tauri-apps/plugin-dialog'
 import { sendNotification } from '@tauri-apps/plugin-notification'
 import { ChevronDown, FolderPlus } from 'lucide-react'
@@ -31,6 +32,7 @@ export function Sources() {
   const updateScanJob = useStore((state) => state.updateScanJob)
   const [detected, setDetected] = useState<DetectedSource[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
 
   useEffect(() => {
     if (!sidecarReady) return
@@ -52,30 +54,38 @@ export function Sources() {
     (candidate) => !sources.some((source) => source.path === candidate.path),
   )
 
-  function addDetectedSource(candidate: DetectedSource) {
+  function addLocalSource(path: string, type: SourceType = 'local', label?: string) {
+    if (sources.some((source) => source.path === path)) return
+    const parts = path.split(/[\\/]/).filter(Boolean)
     addSource({
       id: crypto.randomUUID(),
-      type: candidate.type,
-      label: candidate.label,
-      path: candidate.path,
+      type,
+      label: label || parts[parts.length - 1] || path,
+      path,
       status: 'idle',
     })
+  }
+
+  function addDetectedSource(candidate: DetectedSource) {
+    addLocalSource(candidate.path, candidate.type, candidate.label)
   }
 
   async function addLocalFolder() {
     const selected = await open({ directory: true, multiple: false })
     if (typeof selected !== 'string') return
-    const parts = selected.split(/[\\/]/).filter(Boolean)
-    const label = parts[parts.length - 1] || selected
-    addSource({
-      id: crypto.randomUUID(),
-      type: 'local',
-      label,
-      path: selected,
-      status: 'idle',
-    })
+    addLocalSource(selected)
     setMenuOpen(false)
   }
+
+  useEffect(() => {
+    const unlisten = listen<{ paths: string[] }>('tauri://drag-drop', (event) => {
+      event.payload.paths.forEach((path) => addLocalSource(path))
+      setDragOver(false)
+    })
+    return () => {
+      void unlisten.then((dispose) => dispose())
+    }
+  }, [sources])
 
   async function scanSource(source: Source) {
     if (!source.path) return
@@ -105,7 +115,18 @@ export function Sources() {
   }, [scanJobs])
 
   return (
-    <section className="space-y-6">
+    <section
+      className="space-y-6"
+      onDragLeave={() => setDragOver(false)}
+      onDragOver={(event) => {
+        event.preventDefault()
+        setDragOver(true)
+      }}
+      onDrop={(event) => {
+        event.preventDefault()
+        setDragOver(false)
+      }}
+    >
       {activeJobIds.map((jobId) => (
         <ScanWatcher jobId={jobId} key={jobId} />
       ))}
@@ -152,6 +173,16 @@ export function Sources() {
 
       <div>
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">Suggested — not yet added</h2>
+        <div
+          className={[
+            'mb-3 min-h-20 rounded-lg border-2 border-dashed transition-colors',
+            dragOver ? 'border-accent bg-accent/5' : 'border-border bg-surface-raised',
+          ].join(' ')}
+        >
+          {dragOver && (
+            <p className="p-6 text-center text-sm text-text-muted">Drop folder to add as source</p>
+          )}
+        </div>
         <div className="grid gap-3 md:grid-cols-3">
           {suggested.slice(0, 6).map((source) => (
             <button
