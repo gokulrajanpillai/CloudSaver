@@ -6,35 +6,32 @@ CloudSaver uses semantic versioning while the project is packaged and released.
 
 ## Unreleased
 
-- Added monetization validation guidance for paid convenience builds and commercial support.
-- Added in-app scan-control links to the privacy policy and safety model so users can
-  inspect local-first guarantees before scanning.
-- Added pilot feedback and weekly metrics templates for source-preview validation.
-- Added a restore-test prompt after files are moved to review so users can verify the
-  manifest restore flow before deleting anything manually.
-- Added a guided post-scan "safest next steps" panel with low-risk, manual-review, and
+## 1.1.0 - 2026-05-17
+
+- Added guided post-scan "safest next steps" panel with low-risk, manual-review, and
   optional cleanup actions driven by scan results.
-- Added privacy architecture and safety model documentation for local-first data handling,
-  protected paths, review manifests, and restore expectations.
-- Added preview release notes, screenshot asset placeholders, and README preview-status
-  guidance for the source-first `v0.1.0-preview` release.
-- Added an embedded desktop shell entry point that reuses the local CloudSaver web UI with a browser fallback.
-- Added cross-platform desktop artifact packaging for Windows, macOS, and Linux release builds.
-- Marked the package maturity as Beta until signed desktop builds and consumer cleanup flows are proven.
-- Clarified savings labels so image-copy estimates and storage-cost estimates are not presented as guaranteed cleanup savings.
-- Refreshed scan results after quarantine and restore actions, and excluded `.cloudsaver-review` folders from future scans.
-- Added duplicate-group actions that select recoverable extra copies for review from the duplicate panel.
-- Moved default generated reports and reduced image copies to `~/.cloudsaver/output`, with `CLOUDSAVER_HOME` available for overrides.
-- Grouped the long dashboard into named workspace views as the foundation for a tabbed cleanup workflow.
-- Redesigned the sidebar around scan state and local-first safety instead of showing sponsorship before scan value.
+- Added in-app links to the privacy policy and safety model in scan controls so users can
+  verify local-first guarantees before scanning.
+- Added a restore-test prompt after files are moved to review so users can confirm the
+  manifest restore flow before manually removing anything.
+- Redesigned the sidebar around scan state and local-first safety.
 - Converted workspace navigation into real tabs with Recommended as the default view.
-- Made Recommended cards action-first with direct navigation into duplicate review, image-copy selection, and the storage map.
+- Made Recommended cards action-first with direct links into duplicate review,
+  image-copy selection, and the storage map.
 - Added a direct duplicate-group action to move extra copies to the review folder.
-- Promoted the storage map with a larger layout and an item detail panel with reveal and select actions.
-- Moved report exports into the Files tab so the main recommendation surface stays focused on cleanup actions.
-- Made review batches the primary restore UI and moved manual manifest restore behind an advanced disclosure.
+- Promoted the storage map with a larger layout and an item detail panel with reveal and
+  select actions.
+- Moved report exports into the Files tab so the main view stays focused on cleanup actions.
+- Made review batches the primary restore UI and moved manual manifest restore behind an
+  advanced disclosure.
 - Added a mobile sidebar menu toggle while keeping the scan sidebar persistent on desktop.
 - Polished workspace spacing, focus states, panel elevation, and responsive storage-map layout.
+- Added privacy architecture and safety model documentation.
+- Added cross-platform desktop artifact packaging for Windows, macOS, and Linux.
+- Added an embedded desktop shell entry point that reuses the local web UI.
+- Clarified savings labels so estimates are not presented as guaranteed cleanup savings.
+- Refreshed scan results after quarantine and restore actions, and excluded review folders
+  from future scans.
 
 ## 1.0.0 - 2026-05-09
 

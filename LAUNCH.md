@@ -5,7 +5,7 @@ launch.
 
 ## Preview Release Goal
 
-Publish `v0.1.0-preview` with enough polish for open-source users to try, inspect, and
+Publish `v1.1.0` with enough polish for open-source users to try, inspect, and
 sponsor the project.
 
 ## Required Before Tagging
@@ -76,8 +76,8 @@ Preview readiness criteria and known limitation templates live in
 Creating the public version tag and release should be done intentionally by a maintainer:
 
 ```bash
-git tag v0.1.0-preview
-git push origin v0.1.0-preview
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 Do not tag a release until screenshots and release notes are ready.

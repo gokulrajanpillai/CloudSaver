@@ -79,7 +79,7 @@ Revenue work:
 
 Exit criteria:
 
-- `v0.1.0-preview` can be installed and tested by external users.
+- `v1.1.0` can be installed and tested by external users.
 - Sponsor links are present but not intrusive.
 - Preview limitations are explicit.
 - The product can be recommended as a safe local audit tool.
