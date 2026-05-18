@@ -18,6 +18,7 @@ export interface Source {
 export interface ScanResult {
   rootPath?: string
   sourceId?: string
+  quota?: { used: number; total: number; drive_used?: number }
   audit?: Record<string, unknown>
   files: Array<Record<string, unknown>>
 }
