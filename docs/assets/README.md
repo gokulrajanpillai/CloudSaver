@@ -1,7 +1,7 @@
 # Screenshot Assets
 
 Store current CloudSaver preview screenshots in this directory before tagging
-`v0.1.0-preview`.
+`v1.1.0`.
 
 Required files:
 

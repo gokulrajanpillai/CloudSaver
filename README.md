@@ -1,231 +1,180 @@
 # CloudSaver
 
-Open-source storage cleanup for local drives, synced cloud folders, external drives, and NAS.
+Find storage you're not using. Free and open source, local-first.
 
-![CI](https://github.com/gokulrajanpillai/CloudSaver/workflows/CI/badge.svg)
-![License](https://img.shields.io/github/license/gokulrajanpillai/CloudSaver)
-![Sponsors](https://img.shields.io/github/sponsors/gokulrajanpillai)
+[![CI](https://github.com/gokulrajanpillai/CloudSaver/workflows/CI/badge.svg)](https://github.com/gokulrajanpillai/CloudSaver/actions)
+[![License](https://img.shields.io/github/license/gokulrajanpillai/CloudSaver)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](CHANGELOG.md)
 
-CloudSaver is an open-source, local-first storage audit and cleanup tool for people and
-small teams with large local or cloud-synced folders. It scans folders your operating
-system can see, including synced cloud folders, external drives, NAS mounts, and local
-directories.
+CloudSaver scans local drives, synced cloud folders (Google Drive, iCloud, Dropbox,
+OneDrive), external drives, and NAS mounts. It finds duplicate files, oversized media,
+cold archives, and storage growth trends — then gives you a safe, reversible cleanup
+workflow backed by restore manifests.
 
-Files stay on your machine. CloudSaver does not upload file contents, file names, or file
-paths during the local scan and cleanup workflow.
+**Files stay on your machine.** CloudSaver never uploads file contents, filenames, or paths.
 
-CloudSaver is tested on Linux, macOS, and Windows across supported Python versions.
+Runs on macOS, Linux, and Windows. Tested across Python 3.10–3.12.
 
-## Preview Status
+---
 
-CloudSaver is preparing a source-first `v0.1.0-preview` release. The local scan, dashboard,
-duplicate review, reversible review folder, restore manifests, and JSON/CSV exports are the
-core preview workflow. Desktop artifacts are experimental and unsigned unless a release
-artifact explicitly says otherwise.
+## What it finds
 
-Known preview boundaries:
+- **Duplicate files** — exact and perceptual matches, with a recommended copy to keep
+- **Oversized media** — large images and videos that can be reduced without losing originals
+- **Cold archives** — files untouched for months taking up active storage space
+- **Storage growth** — month-over-month trend so you can act before hitting a limit
+- **Cost estimate** — rough monthly cloud storage cost avoidable from recoverable space
 
-- Direct cloud-provider APIs are not supported; scan local synced or mounted folders.
-- CloudSaver does not permanently delete files by default.
-- Pro, Business, payment, AI advisor, and team surfaces are optional preview workflows and
-  are hidden or gated unless configured.
-- Review generated reports before sharing them because local report files can include local
-  paths.
-
-## Support CloudSaver
-
-CloudSaver is free and open source. If it helps you recover space or avoid a storage
-upgrade, consider sponsoring development:
-
-- GitHub Sponsors: https://github.com/sponsors/gokulrajanpillai
-- Project issues and roadmap: https://github.com/gokulrajanpillai/CloudSaver/issues
-- Sponsorship guide: [docs/sponsorship.md](docs/sponsorship.md)
-- Sponsor tiers: [docs/sponsor-tiers.md](docs/sponsor-tiers.md)
-- Paid convenience build policy: [docs/paid-builds.md](docs/paid-builds.md)
-- Revenue and product rollout plan: [docs/revenue-rollout-plan.md](docs/revenue-rollout-plan.md)
-- Commercial support: [docs/commercial-support.md](docs/commercial-support.md)
-- Licensing strategy: [docs/licensing-strategy.md](docs/licensing-strategy.md)
-
-Sponsorship funds release packaging, signed builds, platform support, documentation,
-accessibility, safer cleanup workflows, and dashboard polish.
-
-## Storage Audit Dashboard
-
-CloudSaver can run a read-only storage audit and generate:
-
-- `~/.cloudsaver/output/storage_audit.html`: a browser-friendly dashboard
-- `~/.cloudsaver/output/storage_audit.json`: the same audit data for downstream processing
-
-Set `CLOUDSAVER_HOME` to use a different local app-data directory for history, reports,
-reduced copies, review manifests, diagnostics, license state, and team state.
-
-The audit summarizes total storage, storage by file category, largest files, largest folders,
-duplicate candidates, large files to review, and estimated recoverable space from duplicate
-candidates plus image optimization. The web UI also estimates rough monthly cloud storage
-cost avoided and can download local JSON or CSV reports.
-
-## Features
-
-- Scan any local or mounted folder
-- Use the local web UI to choose common scan locations or enter a specific path
-- Switch between system, light, and dark UI themes with a local browser preference
-- View live scan progress while files are being analyzed
-- Navigate app sections for dashboard, storage map, duplicates, files, history, and settings
-- Keep recent scan summaries in a local SQLite history database
-- Visualize folders and files in a browser-native storage treemap with drill-down
-- Review duplicate groups with verification and confidence labels
-- Move selected files to a local review folder with a restore manifest
-- Restore reviewed files from a manifest through the cleanup UI
-- Show non-blocking sponsorship prompts after CloudSaver has delivered scan value
-- Build one-file desktop artifacts for Windows, macOS, and Linux through GitHub Actions
-- Maintain package-manager templates and signing documentation for release distribution
-- Export all file metadata to JSON
-- Export files larger than a selected size
-- Generate an HTML storage dashboard
-- Download JSON and CSV reports from the local web UI
-- Find duplicate candidates by file name and size, with SHA-256 verification for readable
-  local candidates in the web UI
-- Create reduced 1080p copies of large images in `~/.cloudsaver/output/reduced`
-- Estimate per-file and selected-file size reductions before processing
-
-CloudSaver does not delete files during duplicate scanning. Review the generated audit before
-removing files manually.
-
-## Open Source Scope
-
-CloudSaver focuses on local and mounted storage. Direct cloud-provider APIs, hosted
-dashboards, required accounts, required remote telemetry, and automatic deletion are
-intentionally out of scope for now. Optional paid, license, update, AI advisor, and team
-workflows are documented in [PRIVACY.md](PRIVACY.md) and should remain explicit and
-disabled unless configured or invoked by the user.
-
-See [PRIVACY.md](PRIVACY.md), [CONTRIBUTING.md](CONTRIBUTING.md),
-[SECURITY.md](SECURITY.md), [DCO.md](DCO.md), [ROADMAP.md](ROADMAP.md), and
-[LAUNCH.md](LAUNCH.md) before contributing or reporting sensitive issues. Product
-comparison notes live in [docs/comparison.md](docs/comparison.md).
+---
 
 ## Screenshots
 
-Screenshots and demo GIFs are required before the first public preview tag. The capture
-checklist lives in [docs/screenshots.md](docs/screenshots.md), and placeholders live under
-`docs/assets/`.
+<!-- Add screenshots after running: python3 scripts/create-demo-fixture.py -->
 
-Planned preview screenshots:
+| Scan & Dashboard | Duplicate Review | Storage Map |
+|---|---|---|
+| ![Dashboard](docs/assets/dashboard-summary.png) | ![Duplicates](docs/assets/duplicate-review.png) | ![Map](docs/assets/storage-map.png) |
 
-- First-run scan controls: `docs/assets/first-run-scan.png`
-- Dashboard summary: `docs/assets/dashboard-summary.png`
-- Duplicate review: `docs/assets/duplicate-review.png`
-- Review and restore flow: `docs/assets/review-restore.png`
+---
 
-Release-note draft: [docs/release-notes-v0.1.0-preview.md](docs/release-notes-v0.1.0-preview.md).
-Pilot feedback and weekly metrics templates live in [docs/pilot-feedback.md](docs/pilot-feedback.md)
-and [docs/metrics-snapshot.md](docs/metrics-snapshot.md).
+## Install
 
-## Usage
-
-See [docs/install.md](docs/install.md) for platform-specific install notes.
-
-Install dependencies:
+**From source (all platforms):**
 
 ```bash
-python3 -m pip install -r requirements.txt
-```
-
-Run the web UI:
-
-```bash
+git clone https://github.com/gokulrajanpillai/CloudSaver.git
+cd CloudSaver
+python3 -m pip install -e .
 python3 -m cloudsaver.web_server
 ```
 
-Or use the startup script from a source checkout:
+Then open [http://127.0.0.1:8765](http://127.0.0.1:8765).
+
+**With optional features:**
 
 ```bash
-./scripts/start-cloudsaver.sh
+# AI Advisor (requires ANTHROPIC_API_KEY)
+python3 -m pip install -e ".[advisor]"
+
+# Better image duplicate detection
+python3 -m pip install -e ".[image_extras]"
 ```
 
-On Windows PowerShell:
+See [docs/install.md](docs/install.md) for platform-specific notes and desktop builds.
 
-```powershell
-.\scripts\start-cloudsaver.ps1
-```
+---
 
-The startup scripts honor these environment variables:
+## Quick start
 
 ```bash
-CLOUDSAVER_HOST=127.0.0.1 CLOUDSAVER_PORT=8770 ./scripts/start-cloudsaver.sh
+# Start the web UI
+python3 -m cloudsaver.web_server
+
+# Or use the startup script
+./scripts/start-cloudsaver.sh       # macOS / Linux
+.\scripts\start-cloudsaver.ps1      # Windows PowerShell
 ```
 
-After installing CloudSaver as a package, you can also run:
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765), choose a folder, and click **Start scan**.
 
-```bash
-cloudsaver-web
+To scan your synced Google Drive or iCloud folder, point CloudSaver at the local sync path:
+
 ```
-
-Then open:
-
-```text
-http://127.0.0.1:8765
-```
-
-## Theme Modes
-
-The web UI supports System, Light, and Dark modes. System follows your operating system
-preference through `prefers-color-scheme`. Manual Light or Dark choices are stored only in
-your browser's `localStorage` under `cloudsaver-theme`; CloudSaver does not upload or sync
-that preference.
-
-Run the CLI:
-
-```bash
-python3 -m cloudsaver
-```
-
-Or, after package installation:
-
-```bash
-cloudsaver
-```
-
-Run the desktop-style launcher:
-
-```bash
-cloudsaver-desktop
-```
-
-When prompted, enter the folder path you want to scan. For example:
-
-```text
 /Users/you/Library/CloudStorage/GoogleDrive-you@example.com/My Drive
+/Users/you/Library/Mobile Documents/com~apple~CloudDocs
 /Volumes/SharedDrive
-/Users/you/Pictures
 ```
 
-## Testing
+---
 
-Run the Python unit and integration tests:
+## Features
+
+**Scan & analyze**
+- Scan any local or mounted folder
+- Live scan progress with file counts and size totals
+- Storage treemap with folder drill-down
+- File categorization (images, video, audio, documents, archives)
+- Month-over-month storage growth trend
+
+**Duplicate review**
+- Find exact duplicates via SHA-256 verification
+- Find perceptual image duplicates (requires `image_extras`)
+- Recommended keep copy with confidence labels
+- Move duplicate extras to a reversible review folder
+
+**Safe cleanup**
+- Files are never deleted — moved to `.cloudsaver-review` with a restore manifest
+- Restore individual files or entire batches through the UI
+- Protected paths prevent accidental system folder scans
+
+**Exports & reports**
+- Download JSON or CSV file reports from the web UI
+- Generate an HTML storage dashboard
+- Business report templates for team cleanup reviews
+
+**Optional Pro features** (requires license key)
+- AI Storage Advisor powered by Claude — analyzes anonymous storage stats and recommends
+  ranked cleanup actions with estimated cost savings
+- Business tier: team workspaces, shared audit summaries, scheduled scans
+
+---
+
+## Privacy
+
+The local scan and cleanup workflow does not upload file contents, filenames, file paths,
+scan results, or usage events to any remote service.
+
+Optional network paths (all opt-in):
+
+| Feature | Data sent |
+| --- | --- |
+| Update checks | App version only |
+| Stripe checkout | Plan ID and payment metadata |
+| AI Advisor | Redacted summaries: counts, sizes, categories — no paths or filenames |
+| Team workspace | Redacted audit summaries — root paths are stripped |
+
+Set `CLOUDSAVER_NO_ANALYTICS=1` to disable local diagnostics writes.
+
+See [PRIVACY.md](PRIVACY.md) and [docs/privacy-architecture.md](docs/privacy-architecture.md)
+for the full data boundary.
+
+---
+
+## Development
 
 ```bash
+# Install with dev dependencies
+python3 -m pip install -e ".[dev]"
+
+# Run Python tests
 python3 -m pytest
-```
 
-Run frontend syntax and browser integration tests:
-
-```bash
+# Run frontend checks and browser tests
 npm ci
 npx playwright install chromium
 npm run check:js
 npm run test:e2e
-```
 
-Run a local startup smoke check:
-
-```bash
+# Startup smoke check
 ./scripts/start-cloudsaver.sh
 curl -fsS http://127.0.0.1:8765/api/health
 ```
 
-GitHub Actions runs the Python test matrix, web server integration tests, frontend
-Playwright tests, package build, and startup smoke checks on pull requests and pushes to
-`main`.
+CI runs the Python test matrix (3 OS × 3 Python versions), Playwright browser tests,
+package build, and startup smoke check on every push and pull request.
 
-If port `8765` is already in use, set `CLOUDSAVER_PORT` before starting the UI.
+---
+
+## Support
+
+CloudSaver is free and open source. If it helps you avoid a storage upgrade or recover
+space, consider supporting development:
+
+- **GitHub Sponsors:** [github.com/sponsors/gokulrajanpillai](https://github.com/sponsors/gokulrajanpillai)
+- **Commercial support:** [docs/commercial-support.md](docs/commercial-support.md) — setup help, report interpretation, cleanup planning
+- **Issues and roadmap:** [github.com/gokulrajanpillai/CloudSaver/issues](https://github.com/gokulrajanpillai/CloudSaver/issues)
+
+---
+
+See [PRIVACY.md](PRIVACY.md), [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md),
+[ROADMAP.md](ROADMAP.md), and [CHANGELOG.md](CHANGELOG.md) for more.
