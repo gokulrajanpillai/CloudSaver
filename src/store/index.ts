@@ -29,6 +29,7 @@ interface AppStore {
   setSidecarPort: (port: number) => void
   setCommandPaletteOpen: (open: boolean) => void
   addSource: (source: Source) => void
+  updateSource: (id: string, updates: Partial<Source>) => void
   removeSource: (id: string) => void
   updateScanJob: (id: string, updates: Partial<ScanJob>) => void
   setScanResult: (sourceId: string, result: ScanResult) => void
@@ -61,6 +62,12 @@ export const useStore = create<AppStore>()(
       sources: state.sources.some((existing) => existing.id === source.id)
         ? state.sources
         : [...state.sources, source],
+    })),
+  updateSource: (id, updates) =>
+    set((state) => ({
+      sources: state.sources.map((source) =>
+        source.id === id ? { ...source, ...updates } : source,
+      ),
     })),
   removeSource: (id) =>
     set((state) => ({ sources: state.sources.filter((source) => source.id !== id) })),
