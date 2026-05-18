@@ -45,6 +45,7 @@ export function useScanSocket(jobId: string | null) {
           status: 'ready',
           lastScanned: new Date().toISOString(),
           fileCount: message.result.files.length,
+          quota: message.result.quota,
           totalBytes: Number(
             (message.result.audit?.summary as { total_bytes?: number } | undefined)?.total_bytes ?? 0,
           ),
