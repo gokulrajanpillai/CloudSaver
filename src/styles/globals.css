@@ -1,0 +1,11 @@
+@import '@fontsource/inter/variable.css';
+@import './tokens.css';
+@import 'tailwindcss';
+
+* {
+  font-feature-settings: 'cv11' 1, 'ss01' 1;
+}
+
+body {
+  @apply bg-surface text-text-primary font-sans antialiased;
+}
