@@ -44,6 +44,7 @@ async def start_local_scan(req: ScanRequest):
             "current_path": "",
             "stage": "Waiting",
             "created_at": time.time(),
+            "started_at": None,
             "updated_at": time.time(),
         }
     threading.Thread(target=_run_local_scan, args=(job_id, req), daemon=True).start()
@@ -103,7 +104,7 @@ def _run_local_scan(job_id: str, req: ScanRequest):
             },
         )
 
-    _update_job(job_id, {"status": "scanning", "stage": "Reading files"})
+    _update_job(job_id, {"status": "scanning", "stage": "Reading files", "started_at": time.time()})
     try:
         files = scan_local_folder(
             req.path,
@@ -124,14 +125,25 @@ def _run_local_scan(job_id: str, req: ScanRequest):
         audit = build_storage_audit(files)
         files.sort(key=lambda file: file["size_bytes"], reverse=True)
         result = {"root_path": req.path, "audit": audit, "files": files}
+        started_at = (job_snapshot(job_id) or {}).get("started_at") or time.time()
+        duration = time.time() - float(started_at)
+        notification_body = f"{len(files)} files scanned in {duration:.0f}s"
+        complete_updates = {
+            "status": "complete",
+            "stage": "Complete",
+            "files_scanned": len(files),
+            "result": result,
+        }
+        if duration > 30:
+            complete_updates.update(
+                {
+                    "notify": True,
+                    "notification_body": notification_body,
+                }
+            )
         _update_job(
             job_id,
-            {
-                "status": "complete",
-                "stage": "Complete",
-                "files_scanned": len(files),
-                "result": result,
-            },
+            complete_updates,
         )
     except Exception as error:
         _update_job(job_id, {"status": "failed", "error": str(error)})

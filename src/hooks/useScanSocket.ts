@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { emit } from '@tauri-apps/api/event'
 import { ScanJob, ScanResult, useStore } from '@/store'
 
 interface ScanSocketMessage {
@@ -12,6 +13,8 @@ interface ScanSocketMessage {
   progress?: number
   result?: ScanResult
   error?: string
+  notify?: boolean
+  notification_body?: string
 }
 
 export function useScanSocket(jobId: string | null) {
@@ -50,6 +53,9 @@ export function useScanSocket(jobId: string | null) {
             (message.result.audit?.summary as { total_bytes?: number } | undefined)?.total_bytes ?? 0,
           ),
         })
+        if (message.notify && message.notification_body) {
+          void emit('scan-complete-notify', message.notification_body)
+        }
       }
       if (message.status === 'failed' && sourceId) {
         updateSource(sourceId, { status: 'error', errorMessage: message.error })
