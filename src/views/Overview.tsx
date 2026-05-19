@@ -66,7 +66,7 @@ export function Overview() {
 
       <div className="space-y-3">
         <h2 className="text-sm font-semibold text-text-secondary">Recommended Next Steps</h2>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-4">
           <PlanCard
             action="Review duplicates"
             amount={metrics.duplicateBytes}
@@ -84,6 +84,12 @@ export function Overview() {
             amount={0}
             onClick={() => setView('sources')}
             title="Scan more storage locations"
+          />
+          <PlanCard
+            action="Install ffmpeg to enable"
+            amount={0}
+            onClick={() => undefined}
+            title="Re-encode video and audio"
           />
         </div>
       </div>
