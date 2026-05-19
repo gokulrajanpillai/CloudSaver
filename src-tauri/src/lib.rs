@@ -3,7 +3,8 @@ pub mod tray;
 
 use std::sync::Mutex;
 
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, Listener, Manager, State};
+use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_shell::ShellExt;
 
 pub struct SidecarState {
@@ -36,6 +37,16 @@ pub fn run() {
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 spawn_sidecar(app_handle).await;
+            });
+            app.handle().listen("scan-complete-notify", |event| {
+                let body = event.payload();
+                let _ = event
+                    .app_handle()
+                    .notification()
+                    .builder()
+                    .title("CloudSaver - Scan Complete")
+                    .body(body)
+                    .show();
             });
             menu::setup_menu(app)?;
             tray::setup_tray(app)?;
