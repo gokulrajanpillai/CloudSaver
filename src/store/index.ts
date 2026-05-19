@@ -36,6 +36,7 @@ interface AppStore {
   setDuplicateGroups: (groups: DuplicateGroup[]) => void
   setCrossSourceGroups: (groups: CrossSourceGroup[]) => void
   addReviewBatch: (batch: ReviewBatch) => void
+  removeReviewBatch: (id: string) => void
   setTheme: (theme: AppStore['theme']) => void
 }
 
@@ -93,6 +94,8 @@ export const useStore = create<AppStore>()(
   setCrossSourceGroups: (crossSourceGroups) => set({ crossSourceGroups }),
   addReviewBatch: (batch) =>
     set((state) => ({ reviewBatches: [batch, ...state.reviewBatches] })),
+  removeReviewBatch: (id) =>
+    set((state) => ({ reviewBatches: state.reviewBatches.filter((batch) => batch.id !== id) })),
   setTheme: (theme) => set({ theme }),
     }),
     {
