@@ -2,14 +2,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import asyncio
 import hashlib
+import threading
+import time
+import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from cloudsaver.audit import human_readable_size
+from cloudsaver.duplicates import find_perceptual_duplicates
 
 router = APIRouter()
+_jobs: dict[str, dict] = {}
+_jobs_lock = threading.Lock()
 
 
 @router.get("/health")
@@ -36,6 +43,11 @@ class CrossSourceRequest(BaseModel):
     source_results: list[dict]
 
 
+class PerceptualRequest(BaseModel):
+    scan_job_id: str
+    threshold: int = 10
+
+
 @router.post("/cross")
 async def find_cross_source_duplicates(req: CrossSourceRequest):
     all_files: list[UnifiedFile] = []
@@ -58,6 +70,73 @@ async def find_cross_source_duplicates(req: CrossSourceRequest):
                 )
             )
     return {"groups": _find_cross_source_groups(all_files)}
+
+
+@router.post("/perceptual")
+async def start_perceptual_duplicate_scan(req: PerceptualRequest):
+    from api.scan import job_snapshot
+
+    source_job = job_snapshot(req.scan_job_id)
+    if not source_job or source_job.get("status") != "complete" or not source_job.get("result"):
+        raise HTTPException(status_code=400, detail="A completed scan job id is required.")
+
+    job_id = str(uuid.uuid4())
+    with _jobs_lock:
+        _jobs[job_id] = {
+            "id": job_id,
+            "status": "queued",
+            "stage": "Waiting",
+            "files_scanned": 0,
+            "created_at": time.time(),
+            "updated_at": time.time(),
+            "source_job_id": req.scan_job_id,
+        }
+    threading.Thread(target=_run_perceptual_job, args=(job_id, source_job, req.threshold), daemon=True).start()
+    return {"job_id": job_id, "status": "queued"}
+
+
+@router.websocket("/perceptual/{job_id}/ws")
+async def perceptual_ws(websocket: WebSocket, job_id: str):
+    await websocket.accept()
+    try:
+        while True:
+            await asyncio.sleep(0.25)
+            with _jobs_lock:
+                job = dict(_jobs.get(job_id, {}))
+            status = job.get("status", "unknown")
+            message = {key: value for key, value in job.items() if key != "result"}
+            if status == "complete":
+                message["result"] = job.get("result")
+            await websocket.send_json(message)
+            if status in ("complete", "failed"):
+                break
+    except WebSocketDisconnect:
+        pass
+
+
+def _update_job(job_id: str, updates: dict):
+    with _jobs_lock:
+        if job_id in _jobs:
+            _jobs[job_id].update(updates)
+            _jobs[job_id]["updated_at"] = time.time()
+
+
+def _run_perceptual_job(job_id: str, source_job: dict, threshold: int):
+    try:
+        files = (source_job.get("result") or {}).get("files") or []
+        _update_job(job_id, {"status": "scanning", "stage": "Comparing images", "files_scanned": len(files)})
+        groups = find_perceptual_duplicates(files, threshold)
+        _update_job(
+            job_id,
+            {
+                "status": "complete",
+                "stage": "Complete",
+                "files_scanned": len(files),
+                "result": {"perceptual_duplicate_groups": groups},
+            },
+        )
+    except Exception as error:
+        _update_job(job_id, {"status": "failed", "error": str(error)})
 
 
 def _mtime(file: dict) -> float:
