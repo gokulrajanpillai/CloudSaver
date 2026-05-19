@@ -3,26 +3,13 @@ import os
 import pytest
 from unittest.mock import patch
 
-from cloudsaver.core import (
-    OUTPUT_DIR,
-    attach_duplicate_verification,
-    build_storage_audit,
-    convert_image_format,
-    estimate_audio_savings,
-    estimate_monthly_storage_cost_usd,
-    estimate_reduction_for_file,
-    estimate_video_savings,
-    export_storage_audit_dashboard,
-    export_to_json_file,
-    generate_business_report,
-    hash_file_partial,
-    find_perceptual_duplicates,
-    is_protected_path,
-    quarantine_selected_files,
-    reduce_selected_images,
-    restore_quarantine,
-    scan_local_folder,
-)
+from cloudsaver.audit import build_storage_audit, estimate_monthly_storage_cost_usd
+from cloudsaver.duplicates import attach_duplicate_verification, find_perceptual_duplicates
+from cloudsaver.media import estimate_audio_savings, estimate_video_savings
+from cloudsaver.optimize import convert_image_format, estimate_reduction_for_file, reduce_selected_images
+from cloudsaver.quarantine import quarantine_selected_files, restore_quarantine
+from cloudsaver.reports import export_storage_audit_dashboard, export_to_json_file, generate_business_report
+from cloudsaver.scan import hash_file_partial, is_protected_path, scan_local_folder
 from cloudsaver.history import list_scan_history, save_scan_history
 from cloudsaver.web_server import reveal_path_in_platform_file_manager
 
@@ -32,7 +19,7 @@ def test_export_to_json_file_creates_file(tmp_path):
     filename = "test.json"
     output_dir = tmp_path / "output"
     os.makedirs(output_dir, exist_ok=True)
-    with patch("cloudsaver.core.OUTPUT_DIR", str(output_dir)):
+    with patch("cloudsaver.reports.OUTPUT_DIR", str(output_dir)):
         export_to_json_file(data, filename)
         file_path = output_dir / filename
         assert file_path.exists()
@@ -45,7 +32,7 @@ def test_export_to_json_file_no_data(capsys, tmp_path):
     filename = "empty.json"
     output_dir = tmp_path / "output"
     os.makedirs(output_dir, exist_ok=True)
-    with patch("cloudsaver.core.OUTPUT_DIR", str(output_dir)):
+    with patch("cloudsaver.reports.OUTPUT_DIR", str(output_dir)):
         export_to_json_file([], filename)
         captured = capsys.readouterr()
         assert "No data to export" in captured.out
@@ -397,7 +384,7 @@ def test_export_storage_audit_dashboard_creates_json_and_html(tmp_path):
         }
     ]
 
-    with patch("cloudsaver.core.OUTPUT_DIR", str(output_dir)):
+    with patch("cloudsaver.reports.OUTPUT_DIR", str(output_dir)):
         audit = export_storage_audit_dashboard(files)
 
     json_path = output_dir / "storage_audit.json"
@@ -522,7 +509,7 @@ def test_perceptual_duplicates_gracefully_degrade_without_optional_dependency(tm
         }
     ]
 
-    with patch("cloudsaver.core.PERCEPTUAL_HASH_AVAILABLE", False):
+    with patch("cloudsaver.duplicates.PERCEPTUAL_HASH_AVAILABLE", False):
         assert find_perceptual_duplicates(files) == []
 
 
