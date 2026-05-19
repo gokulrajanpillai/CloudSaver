@@ -2,95 +2,43 @@ name: Release
 
 on:
   push:
-    tags: ['v*.*.*']
-
-permissions:
-  contents: write
+    tags: ["v*"]
 
 jobs:
-  source-release:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+          - os: macos-13
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Build source and wheel distributions
-        run: |
-          python -m pip install --upgrade pip build
-          python -m build
-      - uses: actions/upload-artifact@v4
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
         with:
-          name: source-build
-          path: dist/*
-
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+          node-version: "20"
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          python-version: '3.12'
-      - run: pip install pyinstaller pillow
-      - run: pyinstaller packaging/cloudsaver-desktop.spec --clean
-      - run: |
-          VERSION=$(cat cloudsaver/VERSION)
-          cd dist && zip -r "CloudSaver-${VERSION}-macos.zip" "CloudSaver.app"
-      - uses: actions/upload-artifact@v4
+          targets: ${{ matrix.target }}
+      - name: Build Python sidecar
+        run: bash scripts/build-sidecar.sh
+      - name: Install frontend deps
+        run: npm ci
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_KEY }}
         with:
-          name: macos-build
-          path: dist/CloudSaver-*.zip
-
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install pyinstaller pillow
-      - run: pyinstaller packaging/cloudsaver-desktop.spec --clean
-      - run: |
-          $version = Get-Content cloudsaver/VERSION -Raw
-          $version = $version.Trim()
-          Compress-Archive dist/CloudSaver "dist/CloudSaver-$version-windows.zip"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: dist/CloudSaver-*.zip
-
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install pyinstaller pillow
-      - run: pyinstaller packaging/cloudsaver-desktop.spec --clean
-      - run: |
-          VERSION=$(cat cloudsaver/VERSION)
-          tar -czf "dist/CloudSaver-${VERSION}-linux.tar.gz" -C dist CloudSaver
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-build
-          path: dist/CloudSaver-*.tar.gz
-
-  create-release:
-    needs: [source-release, build-macos, build-windows, build-linux]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-      - name: Generate checksums
-        run: |
-          find . -type f -maxdepth 2 -print0 | xargs -0 sha256sum > SHA256SUMS
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            source-build/*
-            macos-build/*
-            windows-build/*
-            linux-build/*
-            SHA256SUMS
-          generate_release_notes: true
+          tagName: ${{ github.ref_name }}
+          releaseName: CloudSaver ${{ github.ref_name }}
+          target: ${{ matrix.target }}
