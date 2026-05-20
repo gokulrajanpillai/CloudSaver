@@ -132,63 +132,6 @@ body {
   letter-spacing: 0;
 }
 
-.desktop-shell-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 0 auto 12px;
-  padding: 9px 14px;
-  max-width: 1840px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.76);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(18px);
-}
-
-:root[data-theme="dark"] .desktop-shell-bar {
-  background: rgba(15, 23, 40, 0.88);
-  border-color: rgba(71, 85, 105, 0.55);
-}
-
-.window-controls {
-  display: flex;
-  gap: 10px;
-}
-
-.window-control {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  background: #f87171;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
-}
-
-.window-control.minimize {
-  background: #fbbf24;
-}
-
-.window-control.maximize {
-  background: #34d399;
-}
-
-.desktop-shell-title {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.desktop-shell-title strong {
-  font-size: 14px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-.desktop-shell-title span {
-  font-size: 13px;
-  color: var(--text-tertiary);
-}
-
 html {
   scroll-behavior: smooth;
 }
@@ -263,37 +206,30 @@ svg {
   display: flex;
   gap: 10px;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .brand-mark {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
-  background: var(--accent-surface);
-  color: var(--accent);
   border-radius: 8px;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .brand-mark svg {
-  width: 22px;
-}
-
-.brand h1,
-.brand p {
-  margin: 0;
+  width: 34px;
+  height: 34px;
 }
 
 .brand h1 {
-  font-size: 17px;
-  line-height: 1.2;
-}
-
-.brand p {
-  color: var(--sidebar-muted);
-  font-size: 12px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--sidebar-strong-text);
 }
 
 .control-stack {
@@ -773,10 +709,6 @@ output {
 }
 
 .workspace-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 14px;
   margin-bottom: 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
@@ -804,33 +736,48 @@ output {
 
 .workspace-tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 2px;
 }
 
 .workspace-tabs button {
-  min-height: 30px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  border: 1px solid var(--line);
+  gap: 9px;
+  width: 100%;
+  min-height: 34px;
+  border: 0;
   border-radius: 7px;
   padding: 0 10px;
-  color: var(--text);
-  background: var(--surface);
-  font-size: 12px;
-  font-weight: 700;
-  text-decoration: none;
+  color: var(--sidebar-muted);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  transition: background-color 100ms ease, color 100ms ease;
 }
 
-.workspace-tabs button:hover,
-.workspace-tabs button.active {
-  background: var(--surface-overlay);
+.workspace-tabs button:hover {
+  background: var(--sidebar-control-hover);
+  color: var(--sidebar-text);
 }
 
 .workspace-tabs button.active {
-  border-color: var(--border-strong);
-  color: var(--accent);
+  background: var(--sidebar-control-bg);
+  color: var(--sidebar-accent-text);
+  border: 0;
+}
+
+.workspace-tabs button svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.workspace-tabs button.active svg {
+  opacity: 1;
 }
 
 .tab-badge {
@@ -839,7 +786,7 @@ output {
   justify-content: center;
   min-width: 18px;
   height: 18px;
-  margin-left: 5px;
+  margin-left: auto;
   padding: 0 4px;
   background: var(--accent);
   color: white;
@@ -847,7 +794,6 @@ output {
   font-weight: 800;
   border-radius: 999px;
   line-height: 1;
-  vertical-align: middle;
 }
 
 .summary-band {
@@ -2275,15 +2221,6 @@ tbody tr:hover {
     flex-direction: column;
   }
 
-  .workspace-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .workspace-tabs {
-    justify-content: flex-start;
-  }
-
   .action-strip {
     grid-template-columns: 1fr;
   }
@@ -2323,9 +2260,12 @@ tbody tr:hover {
   .plan-action,
   .table-action,
   .duplicate-action,
-  .workspace-tabs button,
   .quick-locations button {
     min-height: 44px;
+  }
+
+  .workspace-tabs button {
+    min-height: 40px;
   }
 }
 
