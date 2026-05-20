@@ -51,7 +51,7 @@ avif = [
   "pillow-avif-plugin>=1.4.3",
 ]
 desktop = [
-  "pywebview==5.4",
+  "pywebview==6.2.1",
 ]
 release = [
   "pyinstaller==6.17.0",
