@@ -26,10 +26,16 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <rect width="64" height="64" rx="12" fill="#0d9488"/>
-            <path d="M11 27a6 6 0 0 1 6-6h7l4 4h19a6 6 0 0 1 6 6v10a6 6 0 0 1-6 6H17a6 6 0 0 1-6-6z" fill="white" opacity="0.95"/>
-            <path d="M32 29v9" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M27.5 34.5L32 39l4.5-4.5" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <defs>
+              <linearGradient id="cloudsaver-mark-plasma" x1="15" y1="12" x2="49" y2="54" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#00d4b4"/>
+                <stop offset="1" stop-color="#00a896"/>
+              </linearGradient>
+            </defs>
+            <rect width="64" height="64" rx="16" fill="#0e1729"/>
+            <path d="M19 38c-4.7 0-8-3.1-8-7.1 0-3.7 2.9-6.7 6.8-7.1C20 17.4 25.5 13 32.2 13c7 0 12.8 4.9 14.5 11.3 4 .8 6.9 4.1 6.9 8.1 0 4.7-3.8 8.4-8.6 8.4H33.8l-5.4 6.4-5.5-6.4H19z" fill="url(#cloudsaver-mark-plasma)"/>
+            <path d="M38.8 21.7c-2.1-2.1-4.6-3.1-7.4-3.1-6.2 0-10.6 4.5-10.6 10.4s4.4 10.4 10.6 10.4c2.9 0 5.4-1 7.4-3.1" fill="none" stroke="#f9fafb" stroke-width="4.6" stroke-linecap="round"/>
+            <path d="M34.8 25.7c-1.1-1.2-2.6-1.8-4.4-1.8-2.5 0-4.2 1.2-4.2 3.1 0 4.8 9.2 2.3 9.2 7.2 0 2-1.8 3.4-4.9 3.4-2.2 0-4-.7-5.3-2.1" fill="none" stroke="#080e1c" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
         <div>
@@ -155,33 +161,33 @@
       <header class="workspace-header">
         <div>
           <p id="workspace-subtitle">Local scan · files stay on this device</p>
-          <h2>Storage Cleanup</h2>
+          <h2>Storage Intelligence</h2>
         </div>
       </header>
 
       <div id="view-overview" class="workspace-view active" data-view="overview">
         <section id="dashboard" class="summary-band" aria-label="Storage summary">
-          <div class="metric">
+          <div class="metric" data-metric="storage">
             <span>Total storage</span>
             <strong id="metric-total">-</strong>
             <small id="metric-total-detail">No scan yet</small>
           </div>
-          <div class="metric">
+          <div class="metric" data-metric="files">
             <span>Files scanned</span>
             <strong id="metric-files">-</strong>
             <small id="metric-files-detail">Choose a folder</small>
           </div>
-          <div class="metric">
+          <div class="metric" data-metric="savings">
             <span>Image copy savings</span>
             <strong id="metric-reducible">-</strong>
             <small>Safe copies only</small>
           </div>
-          <div class="metric">
+          <div class="metric" data-metric="duplicates">
             <span>Duplicate candidates</span>
             <strong id="metric-duplicates">-</strong>
             <small>Review before moving</small>
           </div>
-          <div class="metric">
+          <div class="metric" data-metric="cost">
             <span>Storage cost estimate</span>
             <strong id="metric-cost">-</strong>
             <small>Monthly estimate</small>
@@ -190,9 +196,15 @@
 
         <section id="overview-empty" class="panel overview-empty">
           <div class="empty-state overview-empty-state">
-            <svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 26 C8 22 11 20 14 20 L26 20 L30 24 L50 24 C53 24 56 27 56 30 L56 48 C56 51 53 54 50 54 L14 54 C11 54 8 51 8 48 Z"/><line x1="8" y1="32" x2="56" y2="32"/></svg>
-            <strong>Choose a folder to begin your storage audit</strong>
-            <p>CloudSaver will map large folders, duplicate candidates, and safe image-copy savings locally.</p>
+            <svg class="empty-art" viewBox="0 0 220 140" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="50" y="22" width="118" height="82" rx="16" fill="#0e1729"/>
+              <path d="M69 46h34v18H69zM109 46h43v18h-43zM69 70h21v18H69zM96 70h56v18H96zM69 94h48v18H69zM123 94h29v18h-29z" fill="#00d4b4" fill-opacity=".22"/>
+              <path d="M78 38h64M78 120h74" stroke="#00d4b4" stroke-opacity=".34" stroke-width="2" stroke-linecap="round"/>
+              <path d="M33 92l76 31 76-31-76-31-76 31z" fill="#00d4b4" fill-opacity=".12" stroke="#00d4b4" stroke-opacity=".3"/>
+              <path d="M65 91l24 10 22-9-24-10-22 9zM101 105l25 10 32-13-25-10-32 13zM107 80l35 14 25-10-35-14-25 10z" fill="#00d4b4" fill-opacity=".36"/>
+            </svg>
+            <strong>CloudSaver</strong>
+            <p>Ready to analyze your storage with a local, visual audit.</p>
             <button type="button" class="primary-action" data-focus-scan>Choose folder</button>
           </div>
         </section>
