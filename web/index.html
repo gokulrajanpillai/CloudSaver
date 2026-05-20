@@ -46,9 +46,8 @@
       <section class="sidebar-section" aria-label="Scan">
         <h2>Scan</h2>
         <form id="scan-form" class="control-stack">
-          <label for="path-input">Choose folder</label>
           <div class="path-row">
-            <input id="path-input" name="path" list="location-options" placeholder="Enter a folder path" autocomplete="off">
+            <input id="path-input" name="path" list="location-options" placeholder="Folder path, e.g. ~/Downloads" autocomplete="off">
             <datalist id="location-options"></datalist>
           </div>
           <div id="quick-locations" class="quick-locations" aria-label="Common scan locations"></div>
@@ -137,7 +136,7 @@
     <main class="workspace">
       <header class="workspace-header">
         <div>
-          <p id="workspace-subtitle">Private local storage review</p>
+          <p id="workspace-subtitle">Local scan · files stay on this device</p>
           <h2>Storage Cleanup</h2>
         </div>
         <nav class="workspace-tabs" aria-label="Workspace sections">

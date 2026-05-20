@@ -122,7 +122,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  padding: 20px 24px;
+  padding: 14px 18px;
   background: radial-gradient(circle at top left, rgba(13, 148, 136, 0.12), transparent 18%),
     radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.14), transparent 16%),
     var(--bg);
@@ -136,10 +136,10 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin: 0 auto 18px;
-  padding: 12px 16px;
+  margin: 0 auto 12px;
+  padding: 9px 14px;
   max-width: 1840px;
-  border-radius: 18px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.76);
   border: 1px solid rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(18px);
@@ -215,7 +215,7 @@ a:focus-visible {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.35;
 }
 
 button:not(:disabled):active {
@@ -229,11 +229,11 @@ svg {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 272px minmax(0, 1fr);
   min-height: calc(100vh - 40px);
   max-width: 1840px;
   margin: 0 auto;
-  gap: 24px;
+  gap: 14px;
 }
 
 .sidebar-toggle {
@@ -249,11 +249,11 @@ svg {
   flex-direction: column;
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
-  padding: 24px 20px;
+  padding: 18px 16px;
   position: sticky;
   top: 0;
   min-height: calc(100vh - 40px);
-  border-radius: 28px;
+  border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: var(--shadow);
   overflow: auto;
@@ -261,23 +261,24 @@ svg {
 
 .brand {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .brand-mark {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   background: var(--accent-surface);
   color: var(--accent);
   border-radius: 8px;
+  flex-shrink: 0;
 }
 
 .brand-mark svg {
-  width: 26px;
+  width: 22px;
 }
 
 .brand h1,
@@ -286,18 +287,18 @@ svg {
 }
 
 .brand h1 {
-  font-size: 21px;
+  font-size: 17px;
   line-height: 1.2;
 }
 
 .brand p {
   color: var(--sidebar-muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .control-stack {
   display: grid;
-  gap: 14px;
+  gap: 9px;
 }
 
 .scan-trust-note {
@@ -318,14 +319,14 @@ svg {
 }
 
 .sidebar-section {
-  padding: 18px 0;
+  padding: 12px 0;
   border-top: 1px solid var(--sidebar-border);
 }
 
 .sidebar-section h2 {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--sidebar-muted);
-  font-size: var(--caption-size);
+  font-size: 11px;
   font-weight: 750;
   text-transform: uppercase;
 }
@@ -341,12 +342,12 @@ label {
 input,
 select {
   width: 100%;
-  min-height: 42px;
+  min-height: 36px;
   border: 1px solid var(--line);
   border-radius: 7px;
   background: var(--surface);
   color: var(--text);
-  padding: 0 12px;
+  padding: 0 10px;
 }
 
 input[type="range"] {
@@ -382,15 +383,15 @@ output {
 
 .advanced-options {
   border: 1px solid var(--sidebar-border);
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 7px;
+  padding: 8px 10px;
   background: var(--sidebar-control-bg);
 }
 
 .advanced-options summary {
   color: var(--sidebar-subtle-text);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 750;
 }
 
@@ -405,13 +406,13 @@ output {
 }
 
 .quick-locations button {
-  min-height: 30px;
-  border-radius: 7px;
-  padding: 0 10px;
+  min-height: 24px;
+  border-radius: 6px;
+  padding: 0 8px;
   color: var(--sidebar-subtle-text);
   background: var(--sidebar-control-bg);
   border: 1px solid var(--sidebar-control-border);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 650;
 }
 
@@ -425,10 +426,10 @@ output {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 42px;
+  gap: 7px;
+  min-height: 36px;
   border-radius: 7px;
-  padding: 0 14px;
+  padding: 0 12px;
   font-weight: 700;
 }
 
@@ -457,12 +458,12 @@ output {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
+  min-height: 36px;
   border: 1px solid var(--danger-border);
   border-radius: 7px;
   background: var(--surface);
   color: var(--destructive);
-  padding: 0 14px;
+  padding: 0 12px;
   font-weight: 700;
 }
 
@@ -490,12 +491,12 @@ output {
 }
 
 .scan-state-card {
-  padding: 12px;
+  padding: 9px 10px;
   border: 1px solid var(--sidebar-control-border);
   border-radius: 8px;
   color: var(--sidebar-subtle-text);
   background: var(--sidebar-control-bg);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.45;
 }
 
@@ -516,8 +517,8 @@ output {
 
 .scan-state-card strong {
   color: var(--sidebar-strong-text);
-  font-size: 15px;
-  margin-top: 4px;
+  font-size: 14px;
+  margin-top: 3px;
 }
 
 .scan-state-card p {
@@ -563,17 +564,17 @@ output {
 
 .sidebar-footer {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   margin-top: auto;
-  padding-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid var(--sidebar-control-border);
 }
 
 .license-badge {
-  padding: 10px 0;
+  padding: 8px 0;
   border-top: 1px solid var(--sidebar-border);
   color: var(--sidebar-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .update-notice {
@@ -636,12 +637,12 @@ output {
 
 .sidebar-footer button,
 .sidebar-footer a {
-  min-height: 32px;
-  padding: 0 8px;
+  min-height: 28px;
+  padding: 0 7px;
   border-radius: 6px;
   color: var(--sidebar-subtle-text);
   background: transparent;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 750;
   text-decoration: none;
 }
@@ -748,9 +749,9 @@ output {
 
 .workspace {
   min-width: 0;
-  padding: 28px;
+  padding: 20px 22px;
   background: var(--surface);
-  border-radius: 28px;
+  border-radius: 22px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
 }
@@ -775,9 +776,9 @@ output {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -787,17 +788,18 @@ output {
 }
 
 .workspace-header p {
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 700;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .workspace-header h2 {
-  margin-top: 3px;
-  font-size: 28px;
+  margin-top: 2px;
+  font-size: 21px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
 .workspace-tabs {
@@ -808,15 +810,15 @@ output {
 }
 
 .workspace-tabs button {
-  min-height: 34px;
+  min-height: 30px;
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 7px;
-  padding: 0 11px;
+  padding: 0 10px;
   color: var(--text);
   background: var(--surface);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-decoration: none;
 }
@@ -850,8 +852,8 @@ output {
 
 .summary-band {
   display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  gap: 10px;
 }
 
 .metric,
@@ -860,12 +862,12 @@ output {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.05);
 }
 
 .metric {
-  padding: 16px;
-  min-height: 112px;
+  padding: 12px;
+  min-height: 82px;
 }
 
 .metric span,
@@ -874,24 +876,25 @@ output {
 }
 
 .metric span {
-  color: var(--text-secondary);
-  font-size: var(--caption-size);
-  font-weight: 650;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+  margin-bottom: 5px;
 }
 
 .metric strong {
   color: var(--text-primary);
-  font-size: var(--display-size);
+  font-size: 22px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
 .metric small {
-  margin-top: 8px;
+  margin-top: 4px;
   color: var(--text-tertiary);
-  font-size: var(--caption-size);
+  font-size: 11px;
 }
 
 .workspace-view > .panel:first-child,
@@ -900,10 +903,10 @@ output {
 }
 
 .action-bar {
-  margin-top: 16px;
-  padding: 16px;
+  margin-top: 12px;
+  padding: 12px 14px;
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .action-bar h2,
@@ -913,14 +916,15 @@ output {
 }
 
 .action-bar h2 {
-  font-size: 18px;
+  font-size: 15px;
+  font-weight: 700;
   word-break: break-word;
 }
 
 .action-bar p {
   color: var(--muted);
-  margin-top: 4px;
-  font-size: 13px;
+  margin-top: 3px;
+  font-size: 12px;
 }
 
 .scan-context {
@@ -929,15 +933,17 @@ output {
 
 .action-strip {
   display: grid;
-  grid-template-columns: minmax(180px, 260px) auto auto minmax(180px, 1fr);
-  gap: 10px;
+  grid-template-columns: minmax(160px, 220px) auto auto minmax(160px, 1fr);
+  gap: 8px;
   align-items: center;
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
 .action-strip p {
   margin: 0;
+  color: var(--text-tertiary);
+  font-size: 12px;
 }
 
 .compact-action {
@@ -1115,22 +1121,22 @@ output {
 
 .plan-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(160px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 10px;
 }
 
 .safe-next-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .safe-step {
   border: 1px solid var(--tile-border);
   border-radius: 7px;
   background: var(--surface);
-  padding: 13px;
+  padding: 11px;
 }
 
 .safe-step span,
@@ -1174,7 +1180,7 @@ output {
   border: 1px solid var(--tile-border);
   border-radius: 7px;
   background: var(--surface-2);
-  padding: 13px;
+  padding: 11px;
 }
 
 .plan-card span,
@@ -1197,10 +1203,10 @@ output {
 }
 
 .plan-card b {
-  margin-top: 10px;
+  margin-top: 8px;
   color: var(--accent);
-  font-size: 28px;
-  line-height: 1.05;
+  font-size: 20px;
+  line-height: 1.1;
 }
 
 .plan-card p {
@@ -1248,9 +1254,9 @@ output {
 
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
-  gap: 16px;
-  margin-top: 16px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(220px, 0.75fr);
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .treemap-panel {
@@ -1427,36 +1433,36 @@ output {
 
 .panel {
   min-width: 0;
-  padding: 16px;
+  padding: 14px;
 }
 
 .workspace-view > .panel,
 .workspace-view > .content-grid,
 .workspace-view > .action-bar {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .workspace-view > .summary-band + .action-bar {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .panel-heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .panel-heading h2 {
   color: var(--text-primary);
-  font-size: var(--heading-size);
+  font-size: 16px;
   font-weight: 650;
 }
 
 .panel-heading span {
-  color: var(--text-secondary);
-  font-size: var(--caption-size);
+  color: var(--text-tertiary);
+  font-size: 11px;
 }
 
 .panel-actions {
@@ -2183,7 +2189,7 @@ tbody tr:hover {
   }
 }
 
-@media (max-width: 1020px) {
+@media (max-width: 960px) {
   .app-shell {
     grid-template-columns: 1fr;
   }
