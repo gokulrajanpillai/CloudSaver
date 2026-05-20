@@ -849,7 +849,13 @@ output {
   min-height: 152px;
   padding: 20px;
   overflow: hidden;
+  animation: metric-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+
+.metric:nth-child(2) { animation-delay: 40ms; }
+.metric:nth-child(3) { animation-delay: 80ms; }
+.metric:nth-child(4) { animation-delay: 120ms; }
+.metric:nth-child(5) { animation-delay: 160ms; }
 
 .metric::before {
   content: "";
@@ -994,7 +1000,7 @@ output {
 .upgrade-nudge-body strong {
   display: block;
   color: var(--accent);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .upgrade-nudge-body p {
@@ -1290,7 +1296,7 @@ output {
   gap: 4px;
   background: var(--map-bg);
   border: 1px solid var(--map-border);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   overflow: hidden;
   padding: 4px;
 }
@@ -1298,7 +1304,7 @@ output {
 .map-detail {
   align-self: stretch;
   border: 1px solid var(--tile-border);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--surface-2);
   padding: 14px;
 }
@@ -1374,7 +1380,7 @@ output {
 .treemap-breadcrumbs button {
   min-height: 28px;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--surface-2);
   color: var(--text);
   padding: 0 9px;
@@ -1385,7 +1391,7 @@ output {
 .treemap-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 10px;
   color: var(--muted);
   font-size: 12px;
@@ -1463,14 +1469,14 @@ output {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 10px;
 }
 
 .panel-heading h2 {
   color: var(--text-primary);
   font-size: 16px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .panel-heading span {
@@ -1519,13 +1525,13 @@ output {
 
 .category-bars {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .category-row {
   display: grid;
   grid-template-columns: 110px minmax(80px, 1fr) 90px;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   font-size: 13px;
 }
@@ -1557,7 +1563,7 @@ output {
   padding: 10px;
   background: var(--surface-2);
   border: 1px solid var(--tile-border);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
 }
 
 .folder-item strong,
@@ -1587,12 +1593,12 @@ output {
 
 .duplicate-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .duplicate-group {
   border: 1px solid var(--tile-border);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--surface-2);
   padding: 12px;
 }
@@ -1655,7 +1661,7 @@ output {
 
 .duplicate-group li.recommended-keep {
   color: var(--success-text);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .duplicate-actions {
@@ -1668,12 +1674,12 @@ output {
 .duplicate-action {
   min-height: 32px;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--control-bg);
   color: var(--text);
   padding: 0 10px;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .duplicate-action.primary {
@@ -1711,7 +1717,7 @@ output {
   align-items: center;
   margin: 14px 0;
   border: 1px solid var(--success-border);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--success-surface);
   padding: 12px;
 }
@@ -1751,7 +1757,7 @@ output {
 .modal-close {
   min-height: 32px;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--surface-2);
   color: var(--text);
   padding: 0 10px;
@@ -1769,7 +1775,7 @@ output {
 .settings-grid div,
 .cleanup-grid div {
   border: 1px solid var(--tile-border);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--surface-2);
   padding: 12px;
 }
@@ -1796,26 +1802,26 @@ output {
 
 .settings-grid a {
   color: var(--accent);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .license-form {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   margin-top: 16px;
 }
 
 .license-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
 .onboarding-actions {
   display: grid;
   grid-template-columns: repeat(4, minmax(120px, 1fr));
-  gap: 10px;
+  gap: 12px;
   margin-top: 16px;
 }
 
@@ -1828,12 +1834,12 @@ output {
 
 .license-activation-status[data-tone="success"] {
   color: var(--success);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .license-activation-status[data-tone="error"] {
   color: var(--destructive);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .payment-options {
@@ -1843,7 +1849,7 @@ output {
 .payment-divider {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 12px;
   color: var(--text-tertiary);
   font-size: 12px;
@@ -1899,7 +1905,7 @@ output {
 .restore-row {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) auto;
-  gap: 10px;
+  gap: 12px;
   margin-top: 12px;
 }
 
@@ -1913,7 +1919,7 @@ output {
   color: var(--muted);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .review-batches {
@@ -1925,10 +1931,10 @@ output {
 .review-batch {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   border: 1px solid var(--tile-border);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--surface-2);
   padding: 10px;
 }
@@ -1964,7 +1970,7 @@ table {
 
 th,
 td {
-  padding: 11px 12px;
+  padding: 12px;
   border-bottom: 1px solid var(--table-border);
   text-align: left;
   vertical-align: middle;
@@ -2001,7 +2007,7 @@ tbody tr:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .file-path {
@@ -2022,7 +2028,7 @@ tbody tr:hover {
   padding: 0 9px;
   background: var(--accent-surface);
   color: var(--accent-hover);
-  font-weight: 650;
+  font-weight: 600;
   font-size: 12px;
 }
 
@@ -2039,12 +2045,12 @@ tbody tr:hover {
 .table-action {
   min-height: 30px;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: var(--radius-control);
   background: var(--control-bg);
   color: var(--text);
   padding: 0 10px;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .empty-state {
@@ -2113,9 +2119,9 @@ tbody tr:hover {
   align-items: center;
   min-height: 24px;
   border-radius: 999px;
-  padding: 0 9px;
+  padding: 0 8px;
   background: var(--accent-surface);
-  font-weight: 650;
+  font-weight: 600;
   font-size: 12px;
 }
 
@@ -2129,25 +2135,25 @@ tbody tr:hover {
 
 .toast-region {
   position: fixed;
-  right: 18px;
-  bottom: 18px;
+  right: 16px;
+  bottom: 16px;
   z-index: 50;
   display: grid;
-  gap: 10px;
-  width: min(360px, calc(100vw - 36px));
+  gap: 8px;
+  width: min(360px, calc(100vw - 32px));
 }
 
 .toast {
   position: relative;
-  padding: 12px 14px;
+  padding: 12px 16px;
   border: 1px solid var(--success-border);
-  border-radius: 8px;
+  border-radius: var(--radius-card);
   background: var(--success-surface);
   color: var(--success-text);
   box-shadow: 0 12px 28px rgba(17, 24, 39, 0.14);
   font-size: 13px;
-  font-weight: 650;
-  animation: toast-in 160ms ease-out both;
+  font-weight: 600;
+  animation: toast-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .toast::before {
@@ -2168,7 +2174,7 @@ tbody tr:hover {
 }
 
 .toast.leaving {
-  animation: toast-out 180ms ease-in both;
+  animation: toast-out 240ms cubic-bezier(0.7, 0, 0.84, 0) both;
 }
 
 @keyframes scan-progress {
@@ -2188,17 +2194,39 @@ tbody tr:hover {
   }
 }
 
+@keyframes metric-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translate(24px, 16px) scale(0.98);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(-2px, -2px) scale(1.01);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
   }
 }
 
 @keyframes toast-out {
   to {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translate(24px, 12px) scale(0.98);
   }
 }
 
@@ -2210,6 +2238,16 @@ tbody tr:hover {
 
   50% {
     opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric,
+  .toast,
+  .toast.leaving,
+  .workspace-view.active,
+  .scan-progress i {
+    animation: none;
   }
 }
 

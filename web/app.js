@@ -225,6 +225,61 @@ function setStatus(message, tone = "neutral", stage = "") {
   }[tone] || "Ready";
 }
 
+function setMetricText(element, nextText) {
+  if (!element) {
+    return;
+  }
+  const value = String(nextText ?? "-");
+  const previous = element.dataset.metricValue || element.textContent || "";
+  element.dataset.metricValue = value;
+
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  let from = parseAnimatedMetric(previous);
+  const to = parseAnimatedMetric(value);
+  if (!from && to) {
+    from = { ...to, number: 0 };
+  }
+  if (reducedMotion || !from || !to || from.suffix !== to.suffix || from.prefix !== to.prefix) {
+    element.textContent = value;
+    return;
+  }
+
+  const start = performance.now();
+  const duration = 600;
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+  function frame(now) {
+    const progress = Math.min(1, (now - start) / duration);
+    const current = from.number + (to.number - from.number) * ease(progress);
+    element.textContent = formatAnimatedMetric(current, to);
+    if (progress < 1 && element.dataset.metricValue === value) {
+      requestAnimationFrame(frame);
+    } else {
+      element.textContent = value;
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+function parseAnimatedMetric(text) {
+  const match = String(text).trim().match(/^([^0-9-]*)(-?\d+(?:\.\d+)?)(.*)$/);
+  if (!match) {
+    return null;
+  }
+  return {
+    prefix: match[1],
+    number: Number(match[2]),
+    suffix: match[3],
+    decimals: match[2].includes(".") ? match[2].split(".")[1].length : 0,
+  };
+}
+
+function formatAnimatedMetric(number, template) {
+  const formatted = template.decimals > 0 ? number.toFixed(template.decimals) : String(Math.round(number));
+  return `${template.prefix}${formatted}${template.suffix}`;
+}
+
 function showToast(message, tone = "success") {
   const toast = document.createElement("div");
   toast.className = `toast ${tone}`;
@@ -233,7 +288,7 @@ function showToast(message, tone = "success") {
   elements.toastRegion.append(toast);
   window.setTimeout(() => {
     toast.classList.add("leaving");
-    window.setTimeout(() => toast.remove(), 180);
+    window.setTimeout(() => toast.remove(), 240);
   }, 4000);
 }
 
@@ -247,7 +302,7 @@ function showUpgradeToast(message) {
   elements.toastRegion.append(toast);
   window.setTimeout(() => {
     toast.classList.add("leaving");
-    window.setTimeout(() => toast.remove(), 180);
+    window.setTimeout(() => toast.remove(), 240);
   }, 5000);
 }
 
@@ -553,13 +608,13 @@ function renderSidebarRecentScans(scans) {
 
 function renderSummary(data) {
   const audit = data.audit;
-  elements.metricTotal.textContent = audit.summary.total_human;
+  setMetricText(elements.metricTotal, audit.summary.total_human);
   elements.metricTotalDetail.textContent = `${audit.summary.file_count} files`;
-  elements.metricFiles.textContent = String(audit.summary.file_count);
+  setMetricText(elements.metricFiles, String(audit.summary.file_count));
   elements.metricFilesDetail.textContent = "Local scan complete";
-  elements.metricReducible.textContent = data.estimated_reducible_human;
-  elements.metricDuplicates.textContent = audit.opportunities.duplicate_human;
-  elements.metricCost.textContent = audit.opportunities.estimated_monthly_cost_avoided_human;
+  setMetricText(elements.metricReducible, data.estimated_reducible_human);
+  setMetricText(elements.metricDuplicates, audit.opportunities.duplicate_human);
+  setMetricText(elements.metricCost, audit.opportunities.estimated_monthly_cost_avoided_human);
   elements.currentRoot.textContent = data.root_path;
   elements.overviewEmpty.hidden = true;
   elements.scanMeta.textContent = `${audit.summary.file_count} files - scanned ${new Date().toLocaleString()}`;
@@ -770,9 +825,9 @@ function renderFolders(audit) {
 
 function categoryColor(category) {
   const colors = {
-    image: "#0d9488",
+    image: "#00d4b4",
     video: "#7c3aed",
-    audio: "#d97706",
+    audio: "#f59e0b",
     document: "#2563eb",
     archive: "#64748b",
     other: "#94a3b8",
