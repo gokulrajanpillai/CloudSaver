@@ -1453,17 +1453,17 @@ output {
 
 .panel {
   min-width: 0;
-  padding: 14px;
+  padding: 16px;
 }
 
 .workspace-view > .panel,
 .workspace-view > .content-grid,
 .workspace-view > .action-bar {
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 .workspace-view > .summary-band + .action-bar {
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 .panel-heading {
