@@ -118,6 +118,7 @@ const elements = {
   upgradeNudgeDismiss: document.querySelector(".upgrade-nudge-dismiss"),
   onboardingModal: document.querySelector("#onboarding-modal"),
   stopScanBtn: document.querySelector("#stop-scan-btn"),
+  scanControls: document.querySelector("#scan-controls"),
   scanActionBtn: document.querySelector("#scan-action-btn"),
   scanActionIcon: document.querySelector("#scan-action-icon"),
   scanActionLabel: document.querySelector("#scan-action-label"),
@@ -1236,19 +1237,33 @@ const SCAN_PHASE_LABELS = {
 
 function updateScanControls(phase) {
   state.scanPhase = phase;
+
   const icon = elements.scanActionIcon;
   const label = elements.scanActionLabel;
-  if (icon) icon.innerHTML = SCAN_PHASE_ICONS[phase] || SCAN_PHASE_ICONS.idle;
+
+  // Cross-fade the icon on every phase change
+  if (icon) {
+    icon.classList.add("fading");
+    setTimeout(() => {
+      icon.innerHTML = SCAN_PHASE_ICONS[phase] || SCAN_PHASE_ICONS.idle;
+      icon.classList.remove("fading");
+    }, 120);
+  }
   if (label) label.textContent = SCAN_PHASE_LABELS[phase] || "Start scan";
+
   if (elements.scanActionBtn) {
     elements.scanActionBtn.disabled = false;
     elements.scanActionBtn.dataset.phase = phase;
   }
+
+  // Toggle the container class — CSS handles the stop-button slide animation
   const isActive = phase === "scanning" || phase === "paused";
+  if (elements.scanControls) {
+    elements.scanControls.classList.toggle("active", isActive);
+  }
   if (elements.stopScanBtn) {
-    elements.stopScanBtn.hidden = !isActive;
     elements.stopScanBtn.disabled = false;
-    elements.stopScanBtn.querySelector("span").textContent = "Stop scan";
+    elements.stopScanBtn.querySelector("span").textContent = "Stop";
   }
 }
 
@@ -1343,6 +1358,10 @@ async function stopScan() {
   }
   if (state.lastScanJobId) {
     postJson("/api/scan/cancel", { job_id: state.lastScanJobId }).catch(() => {});
+    // If we were paused, unblock the thread so the cancel can propagate
+    if (state.scanPhase === "paused") {
+      postJson("/api/scan/resume", { job_id: state.lastScanJobId }).catch(() => {});
+    }
   }
 }
 

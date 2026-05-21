@@ -257,31 +257,68 @@ svg {
   gap: 8px;
 }
 
+.scan-controls {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  min-height: 44px;
+}
+
+#scan-action-btn {
+  flex: 1 1 100%;
+  min-width: 0;
+  min-height: 44px;
+}
+
+#scan-action-icon {
+  transition: opacity 120ms ease;
+}
+
+#scan-action-icon.fading {
+  opacity: 0;
+}
+
 .stop-scan-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 36px;
+  gap: 6px;
+  flex: 0 0 0;
+  overflow: hidden;
+  padding: 0;
+  min-height: 44px;
   border-radius: var(--radius-control);
   border: 1px solid rgba(239, 68, 68, 0.4);
   background: rgba(239, 68, 68, 0.08);
   color: #f87171;
   font-size: 13px;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    flex-basis 300ms cubic-bezier(0.34, 1.1, 0.64, 1),
+    padding 300ms cubic-bezier(0.34, 1.1, 0.64, 1),
+    opacity 180ms ease 60ms;
 }
 
-.stop-scan-btn:hover {
+.scan-controls.active .stop-scan-btn {
+  flex-basis: 88px;
+  padding: 0 14px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.stop-scan-btn:hover:not(:disabled) {
   background: rgba(239, 68, 68, 0.16);
   border-color: rgba(239, 68, 68, 0.6);
 }
 
 .stop-scan-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .scan-trust-note {
@@ -435,15 +472,19 @@ output {
 }
 
 #scan-action-btn[data-phase="scanning"] {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, 0 4px 12px rgba(59, 130, 246, 0.35);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, 0 4px 12px rgba(37, 99, 235, 0.4);
   color: #fff;
 }
 
 #scan-action-btn[data-phase="scanning"]:hover {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, 0 6px 20px rgba(59, 130, 246, 0.45);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, 0 6px 20px rgba(37, 99, 235, 0.5);
   transform: translateY(-1px);
+}
+
+#scan-action-btn {
+  transition: background 220ms ease, box-shadow 220ms ease, color 220ms ease, transform 120ms ease;
 }
 
 .secondary-action {
