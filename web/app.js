@@ -13,6 +13,7 @@ const state = {
   lastScanJobId: "",
   lastHistoryId: null,
   scanCancelling: false,
+  scanPhase: "idle", // "idle" | "scanning" | "paused"
   fileTablePage: 0,
   fileTablePageSize: 50,
 };
@@ -117,6 +118,9 @@ const elements = {
   upgradeNudgeDismiss: document.querySelector(".upgrade-nudge-dismiss"),
   onboardingModal: document.querySelector("#onboarding-modal"),
   stopScanBtn: document.querySelector("#stop-scan-btn"),
+  scanActionBtn: document.querySelector("#scan-action-btn"),
+  scanActionIcon: document.querySelector("#scan-action-icon"),
+  scanActionLabel: document.querySelector("#scan-action-label"),
 };
 
 const THEME_STORAGE_KEY = "cloudsaver-theme";
@@ -1218,14 +1222,65 @@ function exportCsvReport() {
   downloadText(reportFilename("csv"), `${csv}\n`, "text/csv");
 }
 
+const SCAN_PHASE_ICONS = {
+  idle: `<path d="M11 4a7 7 0 1 0 4.95 11.95l3.05 3.05 1.4-1.4-3.05-3.05A7 7 0 0 0 11 4Zm0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/>`,
+  scanning: `<rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/>`,
+  paused: `<path d="M6 4.5v15l13-7.5z"/>`,
+};
+
+const SCAN_PHASE_LABELS = {
+  idle: "Start scan",
+  scanning: "Pause",
+  paused: "Resume",
+};
+
+function updateScanControls(phase) {
+  state.scanPhase = phase;
+  const icon = elements.scanActionIcon;
+  const label = elements.scanActionLabel;
+  if (icon) icon.innerHTML = SCAN_PHASE_ICONS[phase] || SCAN_PHASE_ICONS.idle;
+  if (label) label.textContent = SCAN_PHASE_LABELS[phase] || "Start scan";
+  if (elements.scanActionBtn) {
+    elements.scanActionBtn.disabled = false;
+    elements.scanActionBtn.dataset.phase = phase;
+  }
+  const isActive = phase === "scanning" || phase === "paused";
+  if (elements.stopScanBtn) {
+    elements.stopScanBtn.hidden = !isActive;
+    elements.stopScanBtn.disabled = false;
+    elements.stopScanBtn.querySelector("span").textContent = "Stop scan";
+  }
+}
+
+async function pauseScan() {
+  updateScanControls("paused");
+  if (state.lastScanJobId) {
+    postJson("/api/scan/pause", { job_id: state.lastScanJobId }).catch(() => {});
+  }
+}
+
+async function resumeScan() {
+  updateScanControls("scanning");
+  if (state.lastScanJobId) {
+    postJson("/api/scan/resume", { job_id: state.lastScanJobId }).catch(() => {});
+  }
+}
+
 async function scan(event) {
   event.preventDefault();
+  if (state.scanPhase === "scanning") {
+    pauseScan();
+    return;
+  }
+  if (state.scanPhase === "paused") {
+    resumeScan();
+    return;
+  }
   const path = elements.pathInput.value.trim();
   if (!path) {
     setStatus("Enter a folder path to scan.", "error");
     return;
   }
-
   try {
     await runScanForPath(path, "Starting scan...");
   } catch {
@@ -1236,12 +1291,7 @@ async function scan(event) {
 async function runScanForPath(path, startingMessage = "Refreshing scan...") {
   setStatus(startingMessage, "scanning", "Starting scan");
   state.scanCancelling = false;
-  elements.form.querySelector("button[type=submit]").disabled = true;
-  if (elements.stopScanBtn) {
-    elements.stopScanBtn.hidden = false;
-    elements.stopScanBtn.disabled = false;
-    elements.stopScanBtn.querySelector("span").textContent = "Stop scan";
-  }
+  updateScanControls("scanning");
   try {
     const start = await postJson("/api/scan/start", {
       path,
@@ -1279,14 +1329,14 @@ async function runScanForPath(path, startingMessage = "Refreshing scan...") {
     showToast(error.message, "error");
     throw error;
   } finally {
-    elements.form.querySelector("button[type=submit]").disabled = false;
-    if (elements.stopScanBtn) elements.stopScanBtn.hidden = true;
+    updateScanControls("idle");
     state.scanCancelling = false;
   }
 }
 
 async function stopScan() {
   state.scanCancelling = true;
+  if (elements.scanActionBtn) elements.scanActionBtn.disabled = true;
   if (elements.stopScanBtn) {
     elements.stopScanBtn.disabled = true;
     elements.stopScanBtn.querySelector("span").textContent = "Stopping…";
@@ -1315,8 +1365,10 @@ async function waitForScan(jobId) {
       throw new Error(job.error || "Scan failed.");
     }
     if (job.status === "cancelled") return null;
-    if (job.status === "complete") {
-      return job.result;
+    if (job.status === "complete") return job.result;
+    if (job.status === "paused") {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      continue;
     }
     const stage = job.stage || "Scanning files";
     const current = job.current_folder || job.current_path || "Preparing scan...";

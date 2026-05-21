@@ -236,6 +236,12 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/scan/cancel":
                 self.handle_scan_cancel(payload)
                 return
+            if parsed.path == "/api/scan/pause":
+                self.handle_scan_pause(payload)
+                return
+            if parsed.path == "/api/scan/resume":
+                self.handle_scan_resume(payload)
+                return
             if parsed.path == "/api/reduce":
                 self.handle_reduce(payload)
                 return
@@ -526,6 +532,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 "id": job_id,
                 "status": "queued",
                 "cancelled": False,
+                "paused": False,
                 "created_at": time.time(),
                 "updated_at": time.time(),
                 "files_scanned": 0,
@@ -548,7 +555,10 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             job = SCAN_JOBS.get(job_id)
             if not job:
                 raise ValueError("Scan job was not found.")
-            self.write_json(job)
+            result = dict(job)
+        if result.get("paused") and result["status"] == "scanning":
+            result["status"] = "paused"
+        self.write_json(result)
 
     def handle_scan_cancel(self, payload: dict) -> None:
         job_id = payload.get("job_id", "").strip()
@@ -562,8 +572,36 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 self.write_json({"status": job["status"]})
                 return
             job["cancelled"] = True
+            job["paused"] = False  # unblock if paused so cancel propagates
             job["updated_at"] = time.time()
         self.write_json({"status": "cancelling"})
+
+    def handle_scan_pause(self, payload: dict) -> None:
+        job_id = payload.get("job_id", "").strip()
+        if not job_id:
+            raise ValueError("job_id is required.")
+        with SCAN_JOBS_LOCK:
+            job = SCAN_JOBS.get(job_id)
+            if not job:
+                raise ValueError("Scan job not found.")
+            if job["status"] in ("complete", "failed", "cancelled"):
+                self.write_json({"status": job["status"]})
+                return
+            job["paused"] = True
+            job["updated_at"] = time.time()
+        self.write_json({"status": "pausing"})
+
+    def handle_scan_resume(self, payload: dict) -> None:
+        job_id = payload.get("job_id", "").strip()
+        if not job_id:
+            raise ValueError("job_id is required.")
+        with SCAN_JOBS_LOCK:
+            job = SCAN_JOBS.get(job_id)
+            if not job:
+                raise ValueError("Scan job not found.")
+            job["paused"] = False
+            job["updated_at"] = time.time()
+        self.write_json({"status": "resuming"})
 
     def handle_reduce(self, payload: dict) -> None:
         root_path = payload.get("root_path", "").strip()
@@ -735,8 +773,23 @@ def _check_cancelled(job_id: str | None) -> None:
             raise ScanCancelled()
 
 
+def _wait_if_paused(job_id: str | None) -> None:
+    """Block while the job is paused. Raises ScanCancelled if cancelled while waiting."""
+    if not job_id:
+        return
+    while True:
+        with SCAN_JOBS_LOCK:
+            job = SCAN_JOBS.get(job_id, {})
+            if job.get("cancelled"):
+                raise ScanCancelled()
+            if not job.get("paused"):
+                return
+        time.sleep(0.2)
+
+
 def run_scan(payload: dict, job_id: str | None = None) -> dict:
     def update_progress(progress: dict) -> None:
+        _wait_if_paused(job_id)
         _check_cancelled(job_id)
         progress["status"] = "scanning"
         progress["stage"] = "Reading files"
