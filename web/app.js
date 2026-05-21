@@ -12,6 +12,7 @@ const state = {
   capabilities: {},
   lastScanJobId: "",
   lastHistoryId: null,
+  scanCancelling: false,
   fileTablePage: 0,
   fileTablePageSize: 50,
 };
@@ -115,6 +116,7 @@ const elements = {
   upgradeNudgeMessage: document.querySelector("#upgrade-nudge-message"),
   upgradeNudgeDismiss: document.querySelector(".upgrade-nudge-dismiss"),
   onboardingModal: document.querySelector("#onboarding-modal"),
+  stopScanBtn: document.querySelector("#stop-scan-btn"),
 };
 
 const THEME_STORAGE_KEY = "cloudsaver-theme";
@@ -1233,7 +1235,13 @@ async function scan(event) {
 
 async function runScanForPath(path, startingMessage = "Refreshing scan...") {
   setStatus(startingMessage, "scanning", "Starting scan");
-  elements.form.querySelector("button").disabled = true;
+  state.scanCancelling = false;
+  elements.form.querySelector("button[type=submit]").disabled = true;
+  if (elements.stopScanBtn) {
+    elements.stopScanBtn.hidden = false;
+    elements.stopScanBtn.disabled = false;
+    elements.stopScanBtn.querySelector("span").textContent = "Stop scan";
+  }
   try {
     const start = await postJson("/api/scan/start", {
       path,
@@ -1242,6 +1250,10 @@ async function runScanForPath(path, startingMessage = "Refreshing scan...") {
     });
     state.lastScanJobId = start.job_id;
     const data = await waitForScan(start.job_id);
+    if (data === null) {
+      setStatus("Scan stopped.", "idle");
+      return null;
+    }
     state.rootPath = data.root_path;
     state.files = data.files;
     state.filteredFiles = [...data.files];
@@ -1267,7 +1279,20 @@ async function runScanForPath(path, startingMessage = "Refreshing scan...") {
     showToast(error.message, "error");
     throw error;
   } finally {
-    elements.form.querySelector("button").disabled = false;
+    elements.form.querySelector("button[type=submit]").disabled = false;
+    if (elements.stopScanBtn) elements.stopScanBtn.hidden = true;
+    state.scanCancelling = false;
+  }
+}
+
+async function stopScan() {
+  state.scanCancelling = true;
+  if (elements.stopScanBtn) {
+    elements.stopScanBtn.disabled = true;
+    elements.stopScanBtn.querySelector("span").textContent = "Stopping…";
+  }
+  if (state.lastScanJobId) {
+    postJson("/api/scan/cancel", { job_id: state.lastScanJobId }).catch(() => {});
   }
 }
 
@@ -1280,6 +1305,7 @@ async function refreshCurrentScan(message = "Refreshing scan results...") {
 
 async function waitForScan(jobId) {
   while (true) {
+    if (state.scanCancelling) return null;
     const response = await fetch(`/api/scan/status?job_id=${encodeURIComponent(jobId)}`);
     const job = await response.json();
     if (!response.ok) {
@@ -1288,6 +1314,7 @@ async function waitForScan(jobId) {
     if (job.status === "failed") {
       throw new Error(job.error || "Scan failed.");
     }
+    if (job.status === "cancelled") return null;
     if (job.status === "complete") {
       return job.result;
     }
@@ -1482,6 +1509,7 @@ async function restoreManifest() {
 }
 
 elements.form.addEventListener("submit", scan);
+elements.stopScanBtn?.addEventListener("click", stopScan);
 elements.qualityInput.addEventListener("input", () => {
   elements.qualityOutput.value = elements.qualityInput.value;
   elements.qualityOutput.textContent = elements.qualityInput.value;

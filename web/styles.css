@@ -257,6 +257,33 @@ svg {
   gap: 8px;
 }
 
+.stop-scan-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  border-radius: var(--radius-control);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.stop-scan-btn:hover {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.stop-scan-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .scan-trust-note {
   margin: -2px 0 0;
   color: var(--sidebar-subtle-text);
@@ -488,6 +515,9 @@ output {
 
 .scan-state-card p {
   margin-top: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scan-state-card small {
@@ -495,6 +525,9 @@ output {
   color: var(--sidebar-accent-text);
   font-size: 12px;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scan-progress {

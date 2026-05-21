@@ -59,6 +59,10 @@ SCAN_JOBS_LOCK = threading.Lock()
 ADVISOR_JOBS: dict[str, dict] = {}
 
 
+class ScanCancelled(Exception):
+    pass
+
+
 def common_scan_locations() -> list[dict]:
     """Return useful local and mounted folder suggestions."""
 
@@ -228,6 +232,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 return
             if parsed.path == "/api/scan/start":
                 self.handle_scan_start(payload)
+                return
+            if parsed.path == "/api/scan/cancel":
+                self.handle_scan_cancel(payload)
                 return
             if parsed.path == "/api/reduce":
                 self.handle_reduce(payload)
@@ -518,6 +525,7 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             SCAN_JOBS[job_id] = {
                 "id": job_id,
                 "status": "queued",
+                "cancelled": False,
                 "created_at": time.time(),
                 "updated_at": time.time(),
                 "files_scanned": 0,
@@ -541,6 +549,21 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if not job:
                 raise ValueError("Scan job was not found.")
             self.write_json(job)
+
+    def handle_scan_cancel(self, payload: dict) -> None:
+        job_id = payload.get("job_id", "").strip()
+        if not job_id:
+            raise ValueError("job_id is required.")
+        with SCAN_JOBS_LOCK:
+            job = SCAN_JOBS.get(job_id)
+            if not job:
+                raise ValueError("Scan job not found.")
+            if job["status"] in ("complete", "failed", "cancelled"):
+                self.write_json({"status": job["status"]})
+                return
+            job["cancelled"] = True
+            job["updated_at"] = time.time()
+        self.write_json({"status": "cancelling"})
 
     def handle_reduce(self, payload: dict) -> None:
         root_path = payload.get("root_path", "").strip()
@@ -704,8 +727,17 @@ def update_scan_job(job_id: str | None, updates: dict) -> None:
             job["updated_at"] = time.time()
 
 
+def _check_cancelled(job_id: str | None) -> None:
+    if not job_id:
+        return
+    with SCAN_JOBS_LOCK:
+        if SCAN_JOBS.get(job_id, {}).get("cancelled"):
+            raise ScanCancelled()
+
+
 def run_scan(payload: dict, job_id: str | None = None) -> dict:
     def update_progress(progress: dict) -> None:
+        _check_cancelled(job_id)
         progress["status"] = "scanning"
         progress["stage"] = "Reading files"
         update_scan_job(job_id, progress)
@@ -719,10 +751,13 @@ def run_scan(payload: dict, job_id: str | None = None) -> dict:
 
     update_scan_job(job_id, {"status": "scanning", "stage": "Reading files"})
     files = scan_local_folder(root_path, update_progress)
+    _check_cancelled(job_id)
     update_scan_job(job_id, {"status": "scanning", "stage": "Hashing duplicates"})
     files = attach_duplicate_verification(files)
+    _check_cancelled(job_id)
     update_scan_job(job_id, {"status": "scanning", "stage": "Estimating reductions"})
     files_with_estimates = attach_reduction_estimates(files, (max_width, max_height), quality)
+    _check_cancelled(job_id)
     update_scan_job(job_id, {"status": "scanning", "stage": "Building summary"})
     audit = build_storage_audit(files_with_estimates)
     estimated_reducible_bytes = sum(
@@ -757,6 +792,16 @@ def run_scan_job(job_id: str, payload: dict) -> None:
         SCAN_JOBS[job_id]["updated_at"] = time.time()
     try:
         result = run_scan(payload, job_id)
+    except ScanCancelled:
+        with SCAN_JOBS_LOCK:
+            SCAN_JOBS[job_id].update(
+                {
+                    "status": "cancelled",
+                    "stage": "Cancelled",
+                    "updated_at": time.time(),
+                }
+            )
+        return
     except Exception as error:
         with SCAN_JOBS_LOCK:
             SCAN_JOBS[job_id].update(
