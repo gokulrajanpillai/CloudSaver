@@ -259,19 +259,21 @@ svg {
 
 .scan-controls {
   display: flex;
-  gap: 8px;
+  gap: 0; /* gap is animated via stop-btn margin-left — no permanent gap */
   align-items: stretch;
   min-height: 44px;
 }
 
 #scan-action-btn {
-  flex: 1 1 100%;
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 44px;
+  transition: background 220ms ease, box-shadow 220ms ease, color 220ms ease, transform 120ms ease;
 }
 
 #scan-action-icon {
   transition: opacity 120ms ease;
+  display: block;
 }
 
 #scan-action-icon.fading {
@@ -279,14 +281,19 @@ svg {
 }
 
 .stop-scan-btn {
+  /* layout */
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  flex: 0 0 0;
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 0px; /* explicit px so transition interpolates correctly */
   overflow: hidden;
   padding: 0;
+  margin-left: 0;
   min-height: 44px;
+  /* appearance */
   border-radius: var(--radius-control);
   border: 1px solid rgba(239, 68, 68, 0.4);
   background: rgba(239, 68, 68, 0.08);
@@ -295,16 +302,20 @@ svg {
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
+  /* hidden state */
   opacity: 0;
   pointer-events: none;
+  /* animate all layout changes together */
   transition:
-    flex-basis 300ms cubic-bezier(0.34, 1.1, 0.64, 1),
-    padding 300ms cubic-bezier(0.34, 1.1, 0.64, 1),
-    opacity 180ms ease 60ms;
+    flex-basis 280ms cubic-bezier(0.34, 1.1, 0.64, 1),
+    margin-left 280ms cubic-bezier(0.34, 1.1, 0.64, 1),
+    padding 280ms cubic-bezier(0.34, 1.1, 0.64, 1),
+    opacity 160ms ease 80ms;
 }
 
 .scan-controls.active .stop-scan-btn {
-  flex-basis: 88px;
+  flex-basis: 84px;
+  margin-left: 8px;
   padding: 0 14px;
   opacity: 1;
   pointer-events: auto;
@@ -316,7 +327,7 @@ svg {
 }
 
 .stop-scan-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.4 !important;
   cursor: not-allowed;
   pointer-events: none;
 }
@@ -481,10 +492,6 @@ output {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, 0 6px 20px rgba(37, 99, 235, 0.5);
   transform: translateY(-1px);
-}
-
-#scan-action-btn {
-  transition: background 220ms ease, box-shadow 220ms ease, color 220ms ease, transform 120ms ease;
 }
 
 .secondary-action {
