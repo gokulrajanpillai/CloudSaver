@@ -56,12 +56,12 @@ export function Overview() {
         </Select>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <Metric icon={HardDrive} label="Total storage" value={formatBytes(metrics.totalBytes)} />
         <Metric icon={HardDrive} label="Total files" value={metrics.fileCount.toLocaleString()} />
-        <Metric icon={Copy} label="Cross-source duplicates" value={crossSourceGroups.length.toString()} />
+        <Metric icon={Copy} label="Duplicates" value={crossSourceGroups.length.toString()} />
         <Metric icon={Image} label="Image savings" value={formatBytes(metrics.imageSavings)} />
-        <Metric icon={PiggyBank} label="Estimated monthly cost" value={`$${monthlyCost}`} />
+        <Metric icon={PiggyBank} label="Monthly cost" value={`$${monthlyCost}`} />
       </div>
 
       <div className="space-y-3">
@@ -109,8 +109,8 @@ function Metric({
   return (
     <div className="rounded-lg border border-border bg-surface-raised p-4">
       <Icon className="h-4 w-4 text-accent" />
-      <div className="mt-3 text-xl font-semibold">{value}</div>
-      <div className="text-xs text-text-muted">{label}</div>
+      <div className="mt-3 text-xl font-semibold leading-tight">{value}</div>
+      <div className="mt-1 text-xs text-text-muted leading-snug">{label}</div>
     </div>
   )
 }

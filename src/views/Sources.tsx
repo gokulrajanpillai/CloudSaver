@@ -197,8 +197,8 @@ export function Sources() {
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">Suggested — not yet added</h2>
         <div
           className={[
-            'mb-3 min-h-20 rounded-lg border-2 border-dashed transition-colors',
-            dragOver ? 'border-accent bg-accent/5' : 'border-border bg-surface-raised',
+            'mb-3 min-h-20 rounded-lg border-2 transition-colors',
+            dragOver ? 'border-dashed border-accent bg-accent/5' : 'border-border bg-surface-raised',
           ].join(' ')}
         >
           {dragOver && (
@@ -208,7 +208,7 @@ export function Sources() {
         <div className="grid gap-3 md:grid-cols-3">
           {suggested.slice(0, 6).map((source) => (
             <button
-              className="rounded-lg border border-dashed border-border bg-surface-raised p-4 text-left hover:border-accent"
+              className="rounded-lg border border-border bg-surface-raised p-4 text-left transition-colors hover:border-accent hover:bg-surface-overlay"
               key={source.path}
               onClick={() => addDetectedSource(source)}
               type="button"
