@@ -23,7 +23,7 @@ export function Settings() {
               </Button>
             </div>
           ))}
-          <p className="text-sm text-text-muted">iCloud status: {icloud ? 'Connected' : 'Not detected'}</p>
+          <p className="text-sm text-text-muted">{icloud ? 'iCloud Drive connected' : 'No iCloud account detected'}</p>
         </div>
       </SettingsSection>
       <SettingsSection title="License">
