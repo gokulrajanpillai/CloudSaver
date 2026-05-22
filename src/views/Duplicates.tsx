@@ -71,7 +71,7 @@ export function Duplicates() {
       </div>
 
       <section className="space-y-3">
-        <header className="border-l-4 border-destructive pl-3">
+        <header className={`pl-3 ${crossSourceGroups.length ? 'border-l-4 border-destructive' : 'border-l-4 border-border'}`}>
           <h1 className="text-[18px] font-semibold">Cross-Source Duplicates</h1>
           <p className="text-sm text-text-secondary">
             Found across multiple sources · {crossSourceGroups.length} groups · {formatBytes(totalRecoverable)} recoverable
