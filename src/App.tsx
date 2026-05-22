@@ -42,7 +42,7 @@ function AppShell() {
     <div className="flex h-screen w-screen overflow-hidden bg-surface text-text-primary">
       <TitleBar />
       <NavRail />
-      <main className="ml-16 mt-7 flex-1 overflow-y-auto">
+      <main className="ml-16 mt-9 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1200px] px-6 py-6">
           <View />
         </div>

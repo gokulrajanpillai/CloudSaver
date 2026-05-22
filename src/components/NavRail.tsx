@@ -25,7 +25,7 @@ export function NavRail() {
   const reviewBatchCount = useStore((state) => state.reviewBatches.length)
 
   return (
-    <aside className="fixed left-0 top-7 z-40 flex h-[calc(100vh-28px)] w-16 flex-col bg-sidebar py-3 text-sidebar-text">
+    <aside className="fixed left-0 top-9 z-40 flex h-[calc(100vh-36px)] w-16 flex-col bg-sidebar py-3 text-sidebar-text">
       <nav className="flex flex-1 flex-col items-center gap-1">
         {items.map((item) => (
           <NavButton

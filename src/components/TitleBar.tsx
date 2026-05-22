@@ -7,7 +7,7 @@ export function TitleBar() {
 
   return (
     <header
-      className="fixed left-0 right-0 top-0 z-50 flex h-7 items-center justify-center border-b border-border bg-surface/95 text-xs text-text-secondary backdrop-blur"
+      className="fixed left-0 right-0 top-0 z-50 flex h-9 items-center justify-center border-b border-border bg-surface/95 text-xs text-text-secondary backdrop-blur"
       data-tauri-drag-region
     >
       <span className="font-medium" data-tauri-drag-region>
