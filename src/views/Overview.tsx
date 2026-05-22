@@ -1,4 +1,4 @@
-import { Copy, HardDrive, Image, PiggyBank } from 'lucide-react'
+import { ArrowRight, Copy, HardDrive, Image, PiggyBank } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
@@ -64,36 +64,48 @@ export function Overview() {
         <Metric icon={PiggyBank} label="Monthly cost" value={`$${monthlyCost}`} />
       </div>
 
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-text-secondary">Recommended Next Steps</h2>
-        <div className="grid gap-3 md:grid-cols-4">
-          <PlanCard
-            action="Review duplicates"
-            amount={metrics.duplicateBytes}
-            onClick={() => setView('duplicates')}
-            title="Remove extra copies"
-          />
-          <PlanCard
-            action="Optimize images"
-            amount={metrics.imageSavings}
-            onClick={() => setView('cleanup')}
-            title="Create reduced image copies"
-          />
-          <PlanCard
-            action="Add sources"
-            amount={0}
-            onClick={() => setView('sources')}
-            title="Scan more storage locations"
-          />
-          <PlanCard
-            action="Learn how to unlock"
-            amount={0}
-            disabled
-            onClick={() => undefined}
-            title="Re-encode video and audio"
-          />
+      {!sources.length ? (
+        <div className="flex flex-col items-center rounded-lg border border-dashed border-border bg-surface-raised px-8 py-14 text-center">
+          <HardDrive className="h-12 w-12 text-text-muted" />
+          <h2 className="mt-5 text-base font-semibold">Scan your first source to get started</h2>
+          <p className="mt-2 max-w-sm text-sm text-text-muted">Connect a local folder, iCloud Drive, or Google Drive account. CloudSaver will analyse your files, find duplicates, and show you exactly how much you can recover.</p>
+          <Button className="mt-6" onClick={() => setView('sources')} type="button">
+            Connect a source
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-text-secondary">Recommended Next Steps</h2>
+          <div className="grid gap-3 md:grid-cols-4">
+            <PlanCard
+              action="Review duplicates"
+              amount={metrics.duplicateBytes}
+              onClick={() => setView('duplicates')}
+              title="Remove extra copies"
+            />
+            <PlanCard
+              action="Optimize images"
+              amount={metrics.imageSavings}
+              onClick={() => setView('cleanup')}
+              title="Create reduced image copies"
+            />
+            <PlanCard
+              action="Add sources"
+              amount={0}
+              onClick={() => setView('sources')}
+              title="Scan more storage locations"
+            />
+            <PlanCard
+              action="Learn how to unlock"
+              amount={0}
+              disabled
+              onClick={() => undefined}
+              title="Re-encode video and audio"
+            />
+          </div>
+        </div>
+      )}
     </section>
   )
 }
