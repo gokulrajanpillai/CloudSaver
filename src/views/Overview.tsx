@@ -86,8 +86,9 @@ export function Overview() {
             title="Scan more storage locations"
           />
           <PlanCard
-            action="Install ffmpeg to enable"
+            action="Learn how to unlock"
             amount={0}
+            disabled
             onClick={() => undefined}
             title="Re-encode video and audio"
           />
@@ -118,19 +119,23 @@ function Metric({
 function PlanCard({
   action,
   amount,
+  disabled,
   onClick,
   title,
 }: {
   action: string
   amount: number
+  disabled?: boolean
   onClick: () => void
   title: string
 }) {
   return (
-    <article className="rounded-lg border border-border bg-surface-raised p-4">
+    <article className={`rounded-lg border p-4 ${disabled ? 'border-border bg-surface opacity-60' : 'border-border bg-surface-raised'}`}>
       <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="mt-2 text-xs text-text-muted">{amount ? `${formatBytes(amount)} available` : 'Ready when needed'}</p>
-      <Button className="mt-4" onClick={onClick} size="sm" type="button">
+      <p className="mt-2 text-xs text-text-muted">
+        {disabled ? 'Requires additional setup' : amount ? `${formatBytes(amount)} available` : 'Ready when needed'}
+      </p>
+      <Button className="mt-4" disabled={disabled} onClick={onClick} size="sm" type="button" variant={disabled ? 'outline' : 'default'}>
         {action}
       </Button>
     </article>
