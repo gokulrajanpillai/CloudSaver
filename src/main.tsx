@@ -1,3 +1,7 @@
+// Must run before any @tauri-apps imports so the IPC mock is in place first.
+import { initBrowserCompat } from '@/lib/browser-compat'
+initBrowserCompat()
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'

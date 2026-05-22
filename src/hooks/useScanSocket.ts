@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { emit } from '@tauri-apps/api/event'
+import { isTauri } from '@/lib/platform'
 import { ScanJob, ScanResult, useStore } from '@/store'
 
 interface ScanSocketMessage {
@@ -53,8 +53,11 @@ export function useScanSocket(jobId: string | null) {
             (message.result.audit?.summary as { total_bytes?: number } | undefined)?.total_bytes ?? 0,
           ),
         })
-        if (message.notify && message.notification_body) {
-          void emit('scan-complete-notify', message.notification_body)
+        // Tauri-only: fire a native event so other listeners can react
+        if (isTauri() && message.notify && message.notification_body) {
+          import('@tauri-apps/api/event')
+            .then(({ emit }) => emit('scan-complete-notify', message.notification_body))
+            .catch(() => undefined)
         }
       }
       if (message.status === 'failed' && sourceId) {

@@ -1,6 +1,3 @@
-import { listen } from '@tauri-apps/api/event'
-import { open } from '@tauri-apps/plugin-dialog'
-import { sendNotification } from '@tauri-apps/plugin-notification'
 import { ChevronDown, FolderPlus, HardDrive } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { SourceCard } from '@/components/SourceCard'
@@ -8,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useApi } from '@/hooks/useApi'
 import { useGoogleAuth } from '@/hooks/useGoogleAuth'
 import { useScanSocket } from '@/hooks/useScanSocket'
+import { isTauri, openDirectory, pathsFromDrop, showNotification } from '@/lib/platform'
 import { useStore } from '@/store'
 import type { Source, SourceType } from '@/types'
 
@@ -74,20 +72,26 @@ export function Sources() {
   }
 
   async function addLocalFolder() {
-    const selected = await open({ directory: true, multiple: false })
-    if (typeof selected !== 'string') return
+    const selected = await openDirectory()
+    if (!selected) return
     addLocalSource(selected)
     setMenuOpen(false)
   }
 
+  // Tauri: native drag-drop event carries full paths
   useEffect(() => {
-    const unlisten = listen<{ paths: string[] }>('tauri://drag-drop', (event) => {
-      event.payload.paths.forEach((path) => addLocalSource(path))
-      setDragOver(false)
-    })
-    return () => {
-      void unlisten.then((dispose) => dispose())
-    }
+    if (!isTauri()) return
+    let dispose: (() => void) | undefined
+
+    import('@tauri-apps/api/event').then(({ listen }) => {
+      listen<{ paths: string[] }>('tauri://drag-drop', (event) => {
+        event.payload.paths.forEach((path) => addLocalSource(path))
+        setDragOver(false)
+      }).then((fn) => { dispose = fn })
+    }).catch(() => undefined)
+
+    return () => dispose?.()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sources])
 
   async function scanSource(source: Source) {
@@ -127,13 +131,21 @@ export function Sources() {
   useEffect(() => {
     Object.values(scanJobs).forEach((job) => {
       if (job.status === 'complete' && job.result) {
-        sendNotification({
-          title: 'CloudSaver scan complete',
-          body: `${job.sourceName || 'Source'} · ${job.result.files.length} files scanned`,
-        })
+        showNotification(
+          'CloudSaver scan complete',
+          `${job.sourceName || 'Source'} · ${job.result.files.length} files scanned`,
+        )
       }
     })
   }, [scanJobs])
+
+  function handleDrop(event: React.DragEvent<HTMLElement>) {
+    event.preventDefault()
+    setDragOver(false)
+    if (isTauri()) return // Tauri handles this via the native event listener above
+    const paths = pathsFromDrop(event.nativeEvent)
+    paths.forEach((p) => addLocalSource(p))
+  }
 
   return (
     <section
@@ -143,10 +155,7 @@ export function Sources() {
         event.preventDefault()
         setDragOver(true)
       }}
-      onDrop={(event) => {
-        event.preventDefault()
-        setDragOver(false)
-      }}
+      onDrop={handleDrop}
     >
       {activeJobIds.map((jobId) => (
         <ScanWatcher jobId={jobId} key={jobId} />
