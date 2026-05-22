@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
+import {
+  DEMO_CROSS_SOURCE_GROUPS,
+  DEMO_DUPLICATE_GROUPS,
+  DEMO_SCAN_RESULTS,
+  DEMO_SOURCES,
+} from '@/lib/demo'
 import { useStore } from '@/store'
 
 export function Settings() {
@@ -8,9 +14,29 @@ export function Settings() {
   const theme = useStore((state) => state.theme)
   const setTheme = useStore((state) => state.setTheme)
   const removeSource = useStore((state) => state.removeSource)
+  const addSource = useStore((state) => state.addSource)
+  const setScanResult = useStore((state) => state.setScanResult)
+  const setCrossSourceGroups = useStore((state) => state.setCrossSourceGroups)
+  const setDuplicateGroups = useStore((state) => state.setDuplicateGroups)
   const driveAccounts = sources.filter((source) => source.type === 'google_drive')
   const icloud = sources.find((source) => source.type === 'icloud')
   const [disableDiagnostics, setDisableDiagnostics] = useState(false)
+  const [autoUpdate, setAutoUpdate] = useState(true)
+
+  const isDemoActive = sources.some((s) => s.id.startsWith('demo-'))
+
+  function loadDemo() {
+    DEMO_SOURCES.forEach((s) => addSource(s))
+    Object.entries(DEMO_SCAN_RESULTS).forEach(([id, result]) => setScanResult(id, result))
+    setCrossSourceGroups(DEMO_CROSS_SOURCE_GROUPS)
+    setDuplicateGroups(DEMO_DUPLICATE_GROUPS)
+  }
+
+  function clearDemo() {
+    DEMO_SOURCES.forEach((s) => removeSource(s.id))
+    setCrossSourceGroups([])
+    setDuplicateGroups([])
+  }
 
   return (
     <section className="space-y-4">
@@ -42,26 +68,13 @@ export function Settings() {
         </Select>
       </SettingsSection>
       <SettingsSection title="Privacy">
-        <div className="flex items-center justify-between">
-          <span className="text-sm">Disable local diagnostics</span>
-          <button
-            aria-checked={disableDiagnostics}
-            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${disableDiagnostics ? 'bg-accent' : 'bg-border'}`}
-            onClick={() => setDisableDiagnostics((v) => !v)}
-            role="switch"
-            type="button"
-          >
-            <span
-              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ${disableDiagnostics ? 'translate-x-4' : 'translate-x-0'}`}
-            />
-          </button>
-        </div>
+        <Toggle checked={disableDiagnostics} label="Disable local diagnostics" onChange={setDisableDiagnostics} />
         <a className="mt-3 block text-sm text-accent hover:text-accent-hover" href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/PRIVACY.md">
           Privacy policy
         </a>
       </SettingsSection>
       <SettingsSection title="AI Advisor">
-        <p className="text-sm text-text-muted">Status: unavailable until configured</p>
+        <p className="text-sm text-text-muted">Enter an API key to enable AI-powered storage recommendations.</p>
         <input className="mt-2 h-9 w-full rounded-md border border-border bg-surface px-3 text-sm" placeholder="API key" />
       </SettingsSection>
       <SettingsSection title="Updates">
@@ -69,9 +82,21 @@ export function Settings() {
           <span className="text-sm text-text-muted">Version 1.1.0</span>
           <Button size="sm" type="button" variant="outline">Check for updates</Button>
         </div>
-        <label className="mt-3 flex items-center gap-2 text-sm">
-          <input type="checkbox" /> Auto-update
-        </label>
+        <div className="mt-3">
+          <Toggle checked={autoUpdate} label="Auto-update" onChange={setAutoUpdate} />
+        </div>
+      </SettingsSection>
+      <SettingsSection title="Demo Mode">
+        <p className="text-sm text-text-muted">Load sample data to explore the app without scanning real files.</p>
+        <div className="mt-3 flex gap-2">
+          <Button disabled={isDemoActive} onClick={loadDemo} size="sm" type="button">
+            Load demo data
+          </Button>
+          <Button disabled={!isDemoActive} onClick={clearDemo} size="sm" type="button" variant="outline">
+            Clear demo data
+          </Button>
+        </div>
+        {isDemoActive && <p className="mt-2 text-xs text-accent">Demo data is active — figures shown are illustrative.</p>}
       </SettingsSection>
       <SettingsSection title="About">
         <div className="space-x-4 text-sm">
@@ -80,6 +105,25 @@ export function Settings() {
         </div>
       </SettingsSection>
     </section>
+  )
+}
+
+function Toggle({ checked, label, onChange }: { checked: boolean; label: string; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm">{label}</span>
+      <button
+        aria-checked={checked}
+        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${checked ? 'bg-accent' : 'bg-border'}`}
+        onClick={() => onChange(!checked)}
+        role="switch"
+        type="button"
+      >
+        <span
+          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ${checked ? 'translate-x-4' : 'translate-x-0'}`}
+        />
+      </button>
+    </div>
   )
 }
 
