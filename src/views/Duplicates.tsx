@@ -142,14 +142,19 @@ export function Duplicates() {
         </div>
       </section>
 
-      <section>
+      <section className="rounded-lg border border-border bg-surface-raised p-4">
         <h2 className="text-lg font-semibold">Within-Source Exact Duplicates</h2>
-        <p className="mt-2 text-sm text-text-muted">{duplicateGroups.length} groups ready for review.</p>
+        {duplicateGroups.length ? (
+          <p className="mt-2 text-sm text-text-muted">{duplicateGroups.length} groups ready for review.</p>
+        ) : (
+          <p className="mt-2 text-sm text-text-muted">Identical files within a single source will appear here after scanning.</p>
+        )}
       </section>
 
-      <section>
+      <section className="rounded-lg border border-border bg-surface-raised p-4">
         <h2 className="text-lg font-semibold">Visually Similar Images</h2>
-        <Button className="mt-3" type="button" variant="outline">
+        <p className="mt-2 text-sm text-text-muted">Detect near-duplicate photos and screenshots using perceptual hashing.</p>
+        <Button className="mt-4" type="button" variant="outline">
           Find similar images
         </Button>
       </section>
