@@ -1,4 +1,4 @@
-import { Check, Folder, HardDrive, X } from 'lucide-react'
+import { Check, Copy, Folder, HardDrive, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ICloudStateBadge, canRevealICloudFile } from '@/components/ICloudStateBadge'
 import { Badge } from '@/components/ui/badge'
@@ -133,9 +133,11 @@ export function Duplicates() {
             )
           })}
           {!crossSourceGroups.length && (
-            <p className="rounded-lg border border-border bg-surface-raised p-4 text-sm text-text-muted">
-              No cross-source duplicates found yet.
-            </p>
+            <div className="flex flex-col items-center rounded-lg border border-dashed border-border bg-surface-raised px-6 py-10 text-center">
+              <Copy className="h-8 w-8 text-text-muted" />
+              <h3 className="mt-3 text-sm font-semibold">No duplicates found yet</h3>
+              <p className="mt-1 max-w-xs text-xs text-text-muted">Scan at least two sources to detect files that exist in multiple places. Recoverable space will appear here.</p>
+            </div>
           )}
         </div>
       </section>

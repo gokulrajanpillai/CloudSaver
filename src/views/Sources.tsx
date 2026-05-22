@@ -1,7 +1,7 @@
 import { listen } from '@tauri-apps/api/event'
 import { open } from '@tauri-apps/plugin-dialog'
 import { sendNotification } from '@tauri-apps/plugin-notification'
-import { ChevronDown, FolderPlus } from 'lucide-react'
+import { ChevronDown, FolderPlus, HardDrive } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { SourceCard } from '@/components/SourceCard'
 import { Button } from '@/components/ui/button'
@@ -237,9 +237,15 @@ export function Sources() {
             />
           ))}
           {!sources.length && (
-            <p className="rounded-lg border border-border bg-surface-raised p-4 text-sm text-text-muted">
-              Add a folder or detected cloud source to start scanning.
-            </p>
+            <div className="col-span-2 flex flex-col items-center rounded-lg border border-dashed border-border bg-surface-raised px-6 py-12 text-center">
+              <HardDrive className="h-10 w-10 text-text-muted" />
+              <h3 className="mt-4 text-sm font-semibold">No sources connected</h3>
+              <p className="mt-1 max-w-xs text-xs text-text-muted">Add a local folder or cloud account to start scanning. CloudSaver will find duplicates and calculate your storage costs.</p>
+              <Button className="mt-5" onClick={() => setMenuOpen(true)} type="button">
+                <FolderPlus className="h-4 w-4" />
+                Add your first source
+              </Button>
+            </div>
           )}
         </div>
       </div>

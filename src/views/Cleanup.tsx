@@ -1,4 +1,4 @@
-import { RotateCcw, Trash2 } from 'lucide-react'
+import { CheckCircle, RotateCcw, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useApi } from '@/hooks/useApi'
@@ -84,9 +84,11 @@ export function Cleanup() {
           </article>
         ))}
         {!batches.length && (
-          <p className="rounded-lg border border-border bg-surface-raised p-4 text-sm text-text-muted">
-            No review batches yet.
-          </p>
+          <div className="flex flex-col items-center rounded-lg border border-dashed border-border bg-surface-raised px-6 py-12 text-center">
+            <CheckCircle className="h-10 w-10 text-text-muted" />
+            <h3 className="mt-4 text-sm font-semibold">Your cleanup queue is empty</h3>
+            <p className="mt-1 max-w-xs text-xs text-text-muted">Files you choose to remove from the Duplicates view will appear here for review before being permanently deleted.</p>
+          </div>
         )}
       </div>
     </section>

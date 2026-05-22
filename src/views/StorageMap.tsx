@@ -1,4 +1,5 @@
 import { ResponsiveTreeMap } from '@nivo/treemap'
+import { BarChart3 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { formatBytes } from '@/lib/format'
@@ -69,8 +70,12 @@ export function StorageMap() {
               onClick={(node) => setSelectedFile(node.data as FileNode)}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-text-muted">
-              Scan a source to populate the storage map.
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+              <BarChart3 className="h-10 w-10 text-text-muted" />
+              <div>
+                <p className="text-sm font-medium">Your storage map will appear here</p>
+                <p className="mt-1 text-xs text-text-muted">Scan a source to visualize how your storage is used by file type and size.</p>
+              </div>
             </div>
           )}
         </div>
