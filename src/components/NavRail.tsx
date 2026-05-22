@@ -64,7 +64,7 @@ function NavButton({
   return (
     <button
       className={cn(
-        'relative flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-md text-[11px] text-sidebar-muted transition-colors hover:bg-white/10 hover:text-sidebar-text',
+        'relative flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-md text-xs text-sidebar-muted transition-colors hover:bg-white/10 hover:text-sidebar-text',
         active && 'bg-white/12 text-sidebar-text',
       )}
       onClick={onClick}
