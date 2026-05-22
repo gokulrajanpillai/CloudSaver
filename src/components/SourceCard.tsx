@@ -1,6 +1,8 @@
 import { Cloud, Folder, HardDrive, MoreHorizontal, Play } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { formatBytes, relativeTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Source } from '@/types'
@@ -14,10 +16,17 @@ export function SourceCard({
   onRemove?: () => void
   onScan?: () => void
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const quotaPercent = source.quota?.total
     ? Math.min(100, Math.round((source.quota.used / source.quota.total) * 100))
     : 0
   const Icon = source.type === 'icloud' ? Cloud : source.type === 'google_drive' ? HardDrive : Folder
+
+  function handleRemove() {
+    setMenuOpen(false)
+    onRemove?.()
+  }
 
   return (
     <article className="rounded-lg border border-border bg-surface-raised p-4">
@@ -39,9 +48,29 @@ export function SourceCard({
             </p>
           </div>
         </div>
-        <Button aria-label="Source menu" onClick={onRemove} size="icon" type="button" variant="ghost">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <div ref={menuRef} className="relative">
+            <Button
+              aria-label="Source menu"
+              onClick={() => setMenuOpen((v) => !v)}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+            {menuOpen && (
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  className="text-destructive hover:bg-destructive/10"
+                  onClick={handleRemove}
+                >
+                  Remove source
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            )}
+          </div>
+        </DropdownMenu>
       </div>
 
       {source.quota && (

@@ -1,11 +1,14 @@
+import { useShallow } from 'zustand/react/shallow'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useStore } from '@/store'
 
 export function ProgressBar() {
-  const jobs = useStore((state) =>
-    Object.values(state.scanJobs).filter((job) => job.status === 'queued' || job.status === 'scanning'),
+  const jobs = useStore(
+    useShallow((state) =>
+      Object.values(state.scanJobs).filter((job) => job.status === 'queued' || job.status === 'scanning'),
+    ),
   )
 
   if (!jobs.length) return null
