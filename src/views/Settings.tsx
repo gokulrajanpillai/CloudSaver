@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { useStore } from '@/store'
@@ -9,6 +10,7 @@ export function Settings() {
   const removeSource = useStore((state) => state.removeSource)
   const driveAccounts = sources.filter((source) => source.type === 'google_drive')
   const icloud = sources.find((source) => source.type === 'icloud')
+  const [disableDiagnostics, setDisableDiagnostics] = useState(false)
 
   return (
     <section className="space-y-4">
@@ -40,10 +42,21 @@ export function Settings() {
         </Select>
       </SettingsSection>
       <SettingsSection title="Privacy">
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" /> Disable local diagnostics
-        </label>
-        <a className="text-sm text-accent" href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/PRIVACY.md">
+        <div className="flex items-center justify-between">
+          <span className="text-sm">Disable local diagnostics</span>
+          <button
+            aria-checked={disableDiagnostics}
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${disableDiagnostics ? 'bg-accent' : 'bg-border'}`}
+            onClick={() => setDisableDiagnostics((v) => !v)}
+            role="switch"
+            type="button"
+          >
+            <span
+              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ${disableDiagnostics ? 'translate-x-4' : 'translate-x-0'}`}
+            />
+          </button>
+        </div>
+        <a className="mt-3 block text-sm text-accent hover:text-accent-hover" href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/PRIVACY.md">
           Privacy policy
         </a>
       </SettingsSection>
