@@ -41,7 +41,7 @@ export function StorageMap() {
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[18px] font-semibold">Storage Map</h1>
+        <h1 className="text-lg font-semibold">Storage Map</h1>
         <div className="inline-flex rounded-md bg-surface-overlay p-1">
           {sourceOptions.map((source) => (
             <button

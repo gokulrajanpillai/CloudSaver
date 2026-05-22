@@ -12,7 +12,7 @@ export function Settings() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-[18px] font-semibold">Settings</h1>
+      <h1 className="text-lg font-semibold">Settings</h1>
       <SettingsSection title="Connected Accounts">
         <div className="space-y-2">
           {driveAccounts.map((source) => (

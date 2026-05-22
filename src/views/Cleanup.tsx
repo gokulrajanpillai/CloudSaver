@@ -29,7 +29,7 @@ export function Cleanup() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-[18px] font-semibold">Cleanup Queue</h1>
+      <h1 className="text-lg font-semibold">Cleanup Queue</h1>
       <div className="space-y-3">
         {batches.map((batch) => (
           <article className="rounded-lg border border-border bg-surface-raised p-4" key={batch.id}>

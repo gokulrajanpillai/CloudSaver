@@ -72,7 +72,7 @@ export function Duplicates() {
 
       <section className="space-y-3">
         <header className={`pl-3 ${crossSourceGroups.length ? 'border-l-4 border-destructive' : 'border-l-4 border-border'}`}>
-          <h1 className="text-[18px] font-semibold">Cross-Source Duplicates</h1>
+          <h1 className="text-lg font-semibold">Cross-Source Duplicates</h1>
           <p className="text-sm text-text-secondary">
             Found across multiple sources · {crossSourceGroups.length} groups · {formatBytes(totalRecoverable)} recoverable
           </p>
@@ -141,12 +141,12 @@ export function Duplicates() {
       </section>
 
       <section>
-        <h2 className="text-[18px] font-semibold">Within-Source Exact Duplicates</h2>
+        <h2 className="text-lg font-semibold">Within-Source Exact Duplicates</h2>
         <p className="mt-2 text-sm text-text-muted">{duplicateGroups.length} groups ready for review.</p>
       </section>
 
       <section>
-        <h2 className="text-[18px] font-semibold">Visually Similar Images</h2>
+        <h2 className="text-lg font-semibold">Visually Similar Images</h2>
         <Button className="mt-3" type="button" variant="outline">
           Find similar images
         </Button>

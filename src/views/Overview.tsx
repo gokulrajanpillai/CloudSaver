@@ -46,7 +46,7 @@ export function Overview() {
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[18px] font-semibold">Overview</h1>
+        <h1 className="text-lg font-semibold">Overview</h1>
         <Select value={provider} onChange={(event) => setProvider(event.target.value)}>
           {Object.entries(PROVIDER_RATES).map(([key, value]) => (
             <option key={key} value={key}>

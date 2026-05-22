@@ -152,7 +152,7 @@ export function Sources() {
         <ScanWatcher jobId={jobId} key={jobId} />
       ))}
       <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
-        <h1 className="text-[18px] font-semibold">Sources</h1>
+        <h1 className="text-lg font-semibold">Sources</h1>
         <div className="relative">
           <Button onClick={() => setMenuOpen((open) => !open)} type="button">
             <FolderPlus className="h-4 w-4" />
