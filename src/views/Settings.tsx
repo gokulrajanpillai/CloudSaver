@@ -6,6 +6,7 @@ import {
   DEMO_DUPLICATE_GROUPS,
   DEMO_SCAN_RESULTS,
   DEMO_SOURCES,
+  DEMO_VISUAL_GROUPS,
 } from '@/lib/demo'
 import { useStore } from '@/store'
 
@@ -18,6 +19,7 @@ export function Settings() {
   const setScanResult = useStore((state) => state.setScanResult)
   const setCrossSourceGroups = useStore((state) => state.setCrossSourceGroups)
   const setDuplicateGroups = useStore((state) => state.setDuplicateGroups)
+  const setVisualGroups = useStore((state) => state.setVisualGroups)
   const driveAccounts = sources.filter((source) => source.type === 'google_drive')
   const icloud = sources.find((source) => source.type === 'icloud')
   const [disableDiagnostics, setDisableDiagnostics] = useState(false)
@@ -30,12 +32,14 @@ export function Settings() {
     Object.entries(DEMO_SCAN_RESULTS).forEach(([id, result]) => setScanResult(id, result))
     setCrossSourceGroups(DEMO_CROSS_SOURCE_GROUPS)
     setDuplicateGroups(DEMO_DUPLICATE_GROUPS)
+    setVisualGroups(DEMO_VISUAL_GROUPS)
   }
 
   function clearDemo() {
     DEMO_SOURCES.forEach((s) => removeSource(s.id))
     setCrossSourceGroups([])
     setDuplicateGroups([])
+    setVisualGroups([])
   }
 
   return (

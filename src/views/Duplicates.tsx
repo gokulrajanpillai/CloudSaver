@@ -1,4 +1,4 @@
-import { Check, Copy, Folder, HardDrive, X } from 'lucide-react'
+import { Check, Copy, Folder, HardDrive, Images, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ICloudStateBadge, canRevealICloudFile } from '@/components/ICloudStateBadge'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +24,7 @@ export function Duplicates() {
   const sources = useStore((state) => state.sources)
   const crossSourceGroups = useStore((state) => state.crossSourceGroups)
   const duplicateGroups = useStore((state) => state.duplicateGroups)
+  const visualGroups = useStore((state) => state.visualGroups)
   const [keepByGroup, setKeepByGroup] = useState<Record<string, string>>({})
 
   const totalRecoverable = useMemo(
@@ -151,12 +152,83 @@ export function Duplicates() {
         )}
       </section>
 
-      <section className="rounded-lg border border-border bg-surface-raised p-4">
-        <h2 className="text-lg font-semibold">Visually Similar Images</h2>
-        <p className="mt-2 text-sm text-text-muted">Detect near-duplicate photos and screenshots using perceptual hashing.</p>
-        <Button className="mt-4" type="button" variant="outline">
-          Find similar images
-        </Button>
+      <section className="space-y-3">
+        <header className={`pl-3 ${visualGroups.length ? 'border-l-4 border-warning' : 'border-l-4 border-border'}`}>
+          <h1 className="text-lg font-semibold">Visually Similar Images</h1>
+          <p className="text-sm text-text-secondary">
+            Near-duplicate photos detected via perceptual hashing · {visualGroups.length} groups
+          </p>
+        </header>
+        {visualGroups.length ? (
+          <div className="space-y-3">
+            {visualGroups.map((group) => {
+              const keepId = keepByGroup[group.id] || group.files[0]?.file_id
+              return (
+                <article className="rounded-lg border border-border bg-surface-raised p-4" key={group.id}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <Badge>{group.similarity}% similar</Badge>
+                      <p className="mt-1 text-xs text-text-muted">{formatBytes(group.recoverableBytes)} recoverable</p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const keepFile = group.files.find((f) => f.file_id === keepId)
+                        const removeFiles = group.files.filter((f) => f.file_id !== keepId)
+                        void Promise.all(
+                          removeFiles.map((f) => api.post('/cleanup/move', { root_path: '/', file_ids: [f.path] }))
+                        ).catch(() => undefined)
+                        keepFile
+                      }}
+                      size="sm"
+                      type="button"
+                    >
+                      Keep best · remove {group.files.length - 1}
+                    </Button>
+                  </div>
+                  <div className="mt-4 grid gap-3" style={{ gridTemplateColumns: `repeat(${group.files.length}, 1fr)` }}>
+                    {group.files.map((file) => {
+                      const source = sources.find((s) => s.id === file.source_id)
+                      const isKeep = keepId === file.file_id
+                      return (
+                        <button
+                          className={`group relative overflow-hidden rounded-lg border-2 text-left transition-all ${isKeep ? 'border-accent' : 'border-transparent hover:border-border'}`}
+                          key={file.file_id}
+                          onClick={() => setKeepByGroup((prev) => ({ ...prev, [group.id]: file.file_id }))}
+                          type="button"
+                        >
+                          <img
+                            alt={file.name}
+                            className="aspect-video w-full object-cover"
+                            src={file.thumbnail}
+                          />
+                          <div className="bg-surface-raised p-2">
+                            <div className="truncate text-xs font-medium">{file.name}</div>
+                            <div className="truncate text-xs text-text-muted">{source?.label ?? file.source_id}</div>
+                            <div className="text-xs text-text-muted">{formatBytes(file.size_bytes)}</div>
+                          </div>
+                          {isKeep && (
+                            <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center rounded-lg border border-dashed border-border bg-surface-raised px-6 py-10 text-center">
+            <Images className="h-8 w-8 text-text-muted" />
+            <h3 className="mt-3 text-sm font-semibold">No similar images found yet</h3>
+            <p className="mt-1 max-w-xs text-xs text-text-muted">Scan a source containing photos to detect near-duplicate images using perceptual hashing.</p>
+            <Button className="mt-4" type="button" variant="outline">
+              Find similar images
+            </Button>
+          </div>
+        )}
       </section>
     </section>
   )

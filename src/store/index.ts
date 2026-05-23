@@ -7,10 +7,11 @@ import type {
   ScanJob,
   ScanResult,
   Source,
+  VisualGroup,
 } from '@/types'
 
 export type ActiveView = 'overview' | 'sources' | 'duplicates' | 'map' | 'cleanup' | 'settings'
-export type { CrossSourceGroup, DuplicateGroup, ReviewBatch, ScanJob, ScanResult, Source }
+export type { CrossSourceGroup, DuplicateGroup, ReviewBatch, ScanJob, ScanResult, Source, VisualGroup }
 
 interface AppStore {
   activeView: ActiveView
@@ -21,6 +22,7 @@ interface AppStore {
   scanResults: Record<string, ScanResult>
   duplicateGroups: DuplicateGroup[]
   crossSourceGroups: CrossSourceGroup[]
+  visualGroups: VisualGroup[]
   reviewBatches: ReviewBatch[]
   commandPaletteOpen: boolean
   theme: 'system' | 'light' | 'dark'
@@ -35,6 +37,7 @@ interface AppStore {
   setScanResult: (sourceId: string, result: ScanResult) => void
   setDuplicateGroups: (groups: DuplicateGroup[]) => void
   setCrossSourceGroups: (groups: CrossSourceGroup[]) => void
+  setVisualGroups: (groups: VisualGroup[]) => void
   addReviewBatch: (batch: ReviewBatch) => void
   removeReviewBatch: (id: string) => void
   setTheme: (theme: AppStore['theme']) => void
@@ -51,6 +54,7 @@ export const useStore = create<AppStore>()(
   scanResults: {},
   duplicateGroups: [],
   crossSourceGroups: [],
+  visualGroups: [],
   reviewBatches: [],
   commandPaletteOpen: false,
   theme: 'system',
@@ -92,6 +96,7 @@ export const useStore = create<AppStore>()(
     set((state) => ({ scanResults: { ...state.scanResults, [sourceId]: result } })),
   setDuplicateGroups: (duplicateGroups) => set({ duplicateGroups }),
   setCrossSourceGroups: (crossSourceGroups) => set({ crossSourceGroups }),
+  setVisualGroups: (visualGroups) => set({ visualGroups }),
   addReviewBatch: (batch) =>
     set((state) => ({ reviewBatches: [batch, ...state.reviewBatches] })),
   removeReviewBatch: (id) =>

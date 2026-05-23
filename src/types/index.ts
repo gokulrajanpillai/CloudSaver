@@ -55,3 +55,19 @@ export interface ReviewBatch {
   manifestPath: string
   createdAt: string
 }
+
+export interface VisualFile {
+  file_id: string
+  source_id: string
+  name: string
+  size_bytes: number
+  path: string
+  thumbnail: string  // URL or local /demo/... path
+}
+
+export interface VisualGroup {
+  id: string
+  recoverableBytes: number
+  similarity: number  // 0-100
+  files: VisualFile[]
+}
