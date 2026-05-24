@@ -9,7 +9,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "check:js": "node --check web/app.js",
-    "test:e2e": "playwright test"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:frontend": "playwright test --config playwright.frontend.config.js"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
