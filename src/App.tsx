@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { CommandPalette } from '@/components/CommandPalette'
+import { FirstRunOnboarding } from '@/components/FirstRunOnboarding'
 import { NavRail } from '@/components/NavRail'
 import { ProgressBar } from '@/components/ProgressBar'
 import { TauriProvider } from '@/components/TauriProvider'
@@ -49,6 +50,7 @@ function AppShell() {
       </main>
       <ProgressBar />
       <CommandPalette />
+      <FirstRunOnboarding />
     </div>
   )
 }

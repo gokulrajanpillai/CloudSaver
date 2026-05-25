@@ -26,10 +26,12 @@ interface AppStore {
   reviewBatches: ReviewBatch[]
   commandPaletteOpen: boolean
   theme: 'system' | 'light' | 'dark'
+  onboardingComplete: boolean
 
   setView: (view: ActiveView) => void
   setSidecarPort: (port: number) => void
   setCommandPaletteOpen: (open: boolean) => void
+  setOnboardingComplete: (complete: boolean) => void
   addSource: (source: Source) => void
   updateSource: (id: string, updates: Partial<Source>) => void
   removeSource: (id: string) => void
@@ -58,10 +60,12 @@ export const useStore = create<AppStore>()(
   reviewBatches: [],
   commandPaletteOpen: false,
   theme: 'system',
+  onboardingComplete: false,
 
   setView: (activeView) => set({ activeView }),
   setSidecarPort: (sidecarPort) => set({ sidecarPort, sidecarReady: true }),
   setCommandPaletteOpen: (commandPaletteOpen) => set({ commandPaletteOpen }),
+  setOnboardingComplete: (onboardingComplete) => set({ onboardingComplete }),
   addSource: (source) =>
     set((state) => ({
       sources: state.sources.some((existing) => existing.id === source.id)
@@ -109,6 +113,7 @@ export const useStore = create<AppStore>()(
       partialize: (state) => ({
         sources: state.sources.map(({ accessToken, ...source }) => source),
         theme: state.theme,
+        onboardingComplete: state.onboardingComplete,
       }),
     },
   ),
