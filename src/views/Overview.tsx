@@ -2,6 +2,7 @@ import { ArrowRight, Copy, HardDrive, Image, PiggyBank } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
+import { ProductContract } from '@/components/ProductContract'
 import { formatBytes } from '@/lib/format'
 import { useStore } from '@/store'
 
@@ -55,6 +56,7 @@ export function Overview() {
           ))}
         </Select>
       </div>
+      <ProductContract />
 
       <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <Metric icon={HardDrive} label="Total storage" value={formatBytes(metrics.totalBytes)} />
