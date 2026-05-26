@@ -10,7 +10,7 @@ import type {
   VisualGroup,
 } from '@/types'
 
-export type ActiveView = 'overview' | 'sources' | 'duplicates' | 'map' | 'cleanup' | 'settings'
+export type ActiveView = 'overview' | 'sources' | 'duplicates' | 'map' | 'cleanup' | 'trust' | 'settings'
 export type { CrossSourceGroup, DuplicateGroup, ReviewBatch, ScanJob, ScanResult, Source, VisualGroup }
 
 interface AppStore {

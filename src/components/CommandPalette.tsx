@@ -2,7 +2,7 @@ import { Command } from 'cmdk'
 import { useEffect } from 'react'
 import { useStore, type ActiveView } from '@/store'
 
-const views: ActiveView[] = ['overview', 'sources', 'duplicates', 'map', 'cleanup', 'settings']
+const views: ActiveView[] = ['overview', 'sources', 'duplicates', 'map', 'cleanup', 'trust', 'settings']
 
 const labels: Record<ActiveView, string> = {
   overview: 'Overview',
@@ -10,6 +10,7 @@ const labels: Record<ActiveView, string> = {
   duplicates: 'Duplicates',
   map: 'Storage Map',
   cleanup: 'Cleanup',
+  trust: 'Trust Center',
   settings: 'Settings',
 }
 

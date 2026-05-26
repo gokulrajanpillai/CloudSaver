@@ -12,6 +12,7 @@ import { Overview } from '@/views/Overview'
 import { Settings } from '@/views/Settings'
 import { Sources } from '@/views/Sources'
 import { StorageMap } from '@/views/StorageMap'
+import { TrustCenter } from '@/views/TrustCenter'
 import { useStore } from './store'
 
 const views = {
@@ -20,6 +21,7 @@ const views = {
   duplicates: Duplicates,
   map: StorageMap,
   cleanup: Cleanup,
+  trust: TrustCenter,
   settings: Settings,
 }
 

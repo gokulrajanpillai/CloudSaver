@@ -4,6 +4,7 @@ import {
   HardDrive,
   LayoutDashboard,
   Settings,
+  ShieldCheck,
   Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -16,6 +17,7 @@ const items: Array<{ view: ActiveView; label: string; icon: typeof LayoutDashboa
   { view: 'duplicates', label: 'Dupes', icon: Copy },
   { view: 'map', label: 'Map', icon: BarChart3 },
   { view: 'cleanup', label: 'Cleanup', icon: Trash2 },
+  { view: 'trust', label: 'Trust', icon: ShieldCheck },
 ]
 
 export function NavRail() {
