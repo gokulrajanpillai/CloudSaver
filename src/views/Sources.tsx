@@ -1,5 +1,6 @@
 import { ChevronDown, FolderPlus, HardDrive } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { ProviderLimitations } from '@/components/ProviderLimitations'
 import { SourceCard } from '@/components/SourceCard'
 import { Button } from '@/components/ui/button'
 import { useApi } from '@/hooks/useApi'
@@ -201,6 +202,7 @@ export function Sources() {
           )}
         </div>
       </div>
+      <ProviderLimitations />
 
       <div>
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">Suggested — not yet added</h2>

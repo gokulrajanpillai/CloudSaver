@@ -1,6 +1,7 @@
 import { Brain, CreditCard, RefreshCw, ShieldCheck, Users } from 'lucide-react'
 import { ProductContract } from '@/components/ProductContract'
 import { ProviderCapabilityMatrix } from '@/components/ProviderCapabilityMatrix'
+import { ProviderLimitations } from '@/components/ProviderLimitations'
 import { Badge } from '@/components/ui/badge'
 
 const networkPaths = [
@@ -44,6 +45,7 @@ export function TrustCenter() {
       </div>
 
       <ProductContract />
+      <ProviderLimitations />
       <ProviderCapabilityMatrix />
 
       <section className="rounded-lg border border-border bg-surface-raised p-4">
