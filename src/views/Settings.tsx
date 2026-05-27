@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MaturityBadge } from '@/components/MaturityBadge'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import {
@@ -58,30 +59,30 @@ export function Settings() {
           <p className="text-sm text-text-muted">{icloud ? 'iCloud Drive connected' : 'No iCloud account detected'}</p>
         </div>
       </SettingsSection>
-      <SettingsSection title="License">
+      <SettingsSection maturity="preview" title="License">
         <div className="flex gap-2">
           <input className="h-9 flex-1 rounded-md border border-border bg-surface px-3 text-sm" placeholder="License key" />
           <Button type="button">Activate</Button>
         </div>
       </SettingsSection>
-      <SettingsSection title="Appearance">
+      <SettingsSection maturity="production" title="Appearance">
         <Select value={theme} onChange={(event) => setTheme(event.target.value as typeof theme)}>
           <option value="system">System</option>
           <option value="light">Light</option>
           <option value="dark">Dark</option>
         </Select>
       </SettingsSection>
-      <SettingsSection title="Privacy">
+      <SettingsSection maturity="preview" title="Privacy">
         <Toggle checked={disableDiagnostics} label="Disable local diagnostics" onChange={setDisableDiagnostics} />
         <a className="mt-3 block text-sm text-accent hover:text-accent-hover" href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/PRIVACY.md">
           Privacy policy
         </a>
       </SettingsSection>
-      <SettingsSection title="AI Advisor">
+      <SettingsSection maturity="preview" title="AI Advisor">
         <p className="text-sm text-text-muted">Enter an API key to enable AI-powered storage recommendations.</p>
         <input className="mt-2 h-9 w-full rounded-md border border-border bg-surface px-3 text-sm" placeholder="API key" />
       </SettingsSection>
-      <SettingsSection title="Updates">
+      <SettingsSection maturity="preview" title="Updates">
         <div className="flex items-center justify-between">
           <span className="text-sm text-text-muted">Version 1.1.0</span>
           <Button size="sm" type="button" variant="outline">Check for updates</Button>
@@ -90,7 +91,7 @@ export function Settings() {
           <Toggle checked={autoUpdate} label="Auto-update" onChange={setAutoUpdate} />
         </div>
       </SettingsSection>
-      <SettingsSection title="Demo Mode">
+      <SettingsSection maturity="production" title="Demo Mode">
         <p className="text-sm text-text-muted">Load sample data to explore the app without scanning real files.</p>
         <div className="mt-3 flex gap-2">
           <Button disabled={isDemoActive} onClick={loadDemo} size="sm" type="button">
@@ -102,7 +103,7 @@ export function Settings() {
         </div>
         {isDemoActive && <p className="mt-2 text-xs text-accent">Demo data is active — figures shown are illustrative.</p>}
       </SettingsSection>
-      <SettingsSection title="About">
+      <SettingsSection maturity="production" title="About">
         <div className="space-x-4 text-sm">
           <a className="text-accent" href="https://github.com/gokulrajanpillai/CloudSaver">GitHub</a>
           <a className="text-accent" href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/CHANGELOG.md">Changelog</a>
@@ -131,10 +132,21 @@ function Toggle({ checked, label, onChange }: { checked: boolean; label: string;
   )
 }
 
-function SettingsSection({ children, title }: { children: React.ReactNode; title: string }) {
+function SettingsSection({
+  children,
+  maturity,
+  title,
+}: {
+  children: React.ReactNode
+  maturity?: React.ComponentProps<typeof MaturityBadge>['maturity']
+  title: string
+}) {
   return (
     <section className="rounded-lg border border-border bg-surface-raised p-4">
-      <h2 className="mb-3 text-sm font-semibold">{title}</h2>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold">{title}</h2>
+        {maturity && <MaturityBadge maturity={maturity} />}
+      </div>
       {children}
     </section>
   )

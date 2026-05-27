@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge'
+import { MaturityBadge } from '@/components/MaturityBadge'
 import { PROVIDER_CAPABILITIES, type ProviderCapabilityState } from '@/lib/provider-capabilities'
 import { cn } from '@/lib/utils'
 
@@ -46,7 +47,9 @@ export function ProviderCapabilityMatrix() {
             {PROVIDER_CAPABILITIES.map((provider) => (
               <tr className="border-b border-border last:border-0" key={provider.key}>
                 <td className="py-3 pr-3 font-medium">{provider.label}</td>
-                <td className="px-3 py-3 capitalize text-text-secondary">{provider.maturity}</td>
+                <td className="px-3 py-3">
+                  <MaturityBadge maturity={provider.maturity} />
+                </td>
                 <CapabilityCell state={provider.scan} />
                 <CapabilityCell state={provider.quota} />
                 <CapabilityCell state={provider.duplicates} />
