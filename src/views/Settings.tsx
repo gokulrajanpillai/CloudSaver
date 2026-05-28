@@ -28,6 +28,7 @@ export function Settings() {
   const icloud = sources.find((source) => source.type === 'icloud')
   const [disableDiagnostics, setDisableDiagnostics] = useState(false)
   const [autoUpdate, setAutoUpdate] = useState(true)
+  const [exportingDiagnostics, setExportingDiagnostics] = useState(false)
 
   const isDemoActive = sources.some((s) => s.id.startsWith('demo-'))
 
@@ -49,6 +50,23 @@ export function Settings() {
       setDisableDiagnostics(!settings.local_diagnostics_enabled)
     } catch {
       setDisableDiagnostics(!disabled)
+    }
+  }
+
+  async function exportDiagnostics() {
+    if (!sidecarReady) return
+    setExportingDiagnostics(true)
+    try {
+      const bundle = await api.get<Record<string, unknown>>('/diagnostics/export')
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `cloudsaver-diagnostics-${new Date().toISOString().slice(0, 10)}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExportingDiagnostics(false)
     }
   }
 
@@ -98,6 +116,15 @@ export function Settings() {
       </SettingsSection>
       <SettingsSection maturity="preview" title="Privacy">
         <Toggle checked={disableDiagnostics} label="Disable local diagnostics" onChange={(value) => void updateDiagnosticsDisabled(value)} />
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-border p-3">
+          <div>
+            <p className="text-sm font-medium">Redacted diagnostics export</p>
+            <p className="mt-1 text-xs text-text-muted">Includes runtime and feature state. File names, paths, emails, and scan results are excluded or redacted.</p>
+          </div>
+          <Button disabled={!sidecarReady || exportingDiagnostics} onClick={() => void exportDiagnostics()} size="sm" type="button" variant="outline">
+            {exportingDiagnostics ? 'Exporting...' : 'Export'}
+          </Button>
+        </div>
         <a className="mt-3 block text-sm text-accent hover:text-accent-hover" href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/PRIVACY.md">
           Privacy policy
         </a>

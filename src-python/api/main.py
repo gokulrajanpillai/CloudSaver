@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from cloudsaver import advisor, payments, team, updater
 from cloudsaver.analytics import analytics_summary, record_event
 from cloudsaver.config import load_privacy_settings, save_privacy_settings
+from cloudsaver.diagnostics import diagnostics_export
 from cloudsaver.history import (
     get_license_delivery,
     list_scan_history,
@@ -184,6 +185,11 @@ async def privacy_settings_update(payload: dict):
         {"local_diagnostics_enabled": settings["local_diagnostics_enabled"]},
     )
     return settings
+
+
+@app.get("/diagnostics/export")
+async def diagnostics_export_endpoint():
+    return diagnostics_export()
 
 
 def require_biz_state():

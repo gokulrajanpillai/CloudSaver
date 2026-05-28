@@ -36,6 +36,7 @@ from cloudsaver import payments
 from cloudsaver import team
 from cloudsaver import updater
 from cloudsaver.config import load_privacy_settings, save_privacy_settings
+from cloudsaver.diagnostics import diagnostics_export
 from cloudsaver.history import (
     get_license_delivery,
     list_scan_history,
@@ -213,6 +214,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 return
             if parsed.path == "/api/privacy/settings":
                 self.write_json(load_privacy_settings())
+                return
+            if parsed.path == "/api/diagnostics/export":
+                self.write_json(diagnostics_export())
                 return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
