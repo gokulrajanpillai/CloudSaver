@@ -1,5 +1,6 @@
 import { useApi } from '@/hooks/useApi'
 import { setKeyringValue } from '@/lib/keyring'
+import { requestOutboundConsent } from '@/lib/outbound-consent'
 import { isTauri, openUrl } from '@/lib/platform'
 
 interface AuthUrlResponse {
@@ -114,6 +115,16 @@ export function useGoogleAuth() {
     accessToken: string
     refreshToken: string
   }> {
+    if (
+      !requestOutboundConsent({
+        action: 'Google Drive sign-in',
+        destination: 'Google OAuth and Google Drive APIs',
+        dataShared: 'OAuth client metadata and the Google account you choose. File contents are not sent by CloudSaver.',
+      })
+    ) {
+      throw new Error('Google Drive sign-in cancelled')
+    }
+
     const { url, state } = await api.get<AuthUrlResponse>('/auth/gdrive/url')
 
     let callbackUrl: string

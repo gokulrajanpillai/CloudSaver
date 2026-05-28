@@ -3,6 +3,7 @@ import { MaturityBadge } from '@/components/MaturityBadge'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { useApi } from '@/hooks/useApi'
+import { guardExternalLink, requestOutboundConsent } from '@/lib/outbound-consent'
 import {
   DEMO_CROSS_SOURCE_GROUPS,
   DEMO_DUPLICATE_GROUPS,
@@ -29,6 +30,7 @@ export function Settings() {
   const [disableDiagnostics, setDisableDiagnostics] = useState(false)
   const [autoUpdate, setAutoUpdate] = useState(true)
   const [exportingDiagnostics, setExportingDiagnostics] = useState(false)
+  const [checkingUpdates, setCheckingUpdates] = useState(false)
 
   const isDemoActive = sources.some((s) => s.id.startsWith('demo-'))
 
@@ -67,6 +69,24 @@ export function Settings() {
       URL.revokeObjectURL(url)
     } finally {
       setExportingDiagnostics(false)
+    }
+  }
+
+  async function checkForUpdates() {
+    if (
+      !requestOutboundConsent({
+        action: 'Update check',
+        destination: 'CloudSaver release metadata endpoint',
+        dataShared: 'App version and update channel only.',
+      })
+    ) {
+      return
+    }
+    setCheckingUpdates(true)
+    try {
+      await api.get('/update/status')
+    } finally {
+      setCheckingUpdates(false)
     }
   }
 
@@ -125,7 +145,15 @@ export function Settings() {
             {exportingDiagnostics ? 'Exporting...' : 'Export'}
           </Button>
         </div>
-        <a className="mt-3 block text-sm text-accent hover:text-accent-hover" href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/PRIVACY.md">
+        <a
+          className="mt-3 block text-sm text-accent hover:text-accent-hover"
+          href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/PRIVACY.md"
+          onClick={(event) => guardExternalLink(event, {
+            action: 'Open privacy policy',
+            destination: 'GitHub',
+            dataShared: 'Your browser may share standard request metadata with GitHub.',
+          })}
+        >
           Privacy policy
         </a>
       </SettingsSection>
@@ -136,7 +164,9 @@ export function Settings() {
       <SettingsSection maturity="preview" title="Updates">
         <div className="flex items-center justify-between">
           <span className="text-sm text-text-muted">Version 1.1.0</span>
-          <Button size="sm" type="button" variant="outline">Check for updates</Button>
+          <Button disabled={checkingUpdates} onClick={() => void checkForUpdates()} size="sm" type="button" variant="outline">
+            {checkingUpdates ? 'Checking...' : 'Check for updates'}
+          </Button>
         </div>
         <div className="mt-3">
           <Toggle checked={autoUpdate} label="Auto-update" onChange={setAutoUpdate} />
@@ -156,8 +186,28 @@ export function Settings() {
       </SettingsSection>
       <SettingsSection maturity="production" title="About">
         <div className="space-x-4 text-sm">
-          <a className="text-accent" href="https://github.com/gokulrajanpillai/CloudSaver">GitHub</a>
-          <a className="text-accent" href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/CHANGELOG.md">Changelog</a>
+          <a
+            className="text-accent"
+            href="https://github.com/gokulrajanpillai/CloudSaver"
+            onClick={(event) => guardExternalLink(event, {
+              action: 'Open project repository',
+              destination: 'GitHub',
+              dataShared: 'Your browser may share standard request metadata with GitHub.',
+            })}
+          >
+            GitHub
+          </a>
+          <a
+            className="text-accent"
+            href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/CHANGELOG.md"
+            onClick={(event) => guardExternalLink(event, {
+              action: 'Open changelog',
+              destination: 'GitHub',
+              dataShared: 'Your browser may share standard request metadata with GitHub.',
+            })}
+          >
+            Changelog
+          </a>
         </div>
       </SettingsSection>
     </section>
