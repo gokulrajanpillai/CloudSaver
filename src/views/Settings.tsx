@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CredentialInventory } from '@/components/CredentialInventory'
 import { MaturityBadge } from '@/components/MaturityBadge'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
@@ -121,6 +122,7 @@ export function Settings() {
           <p className="text-sm text-text-muted">{icloud ? 'iCloud Drive connected' : 'No iCloud account detected'}</p>
         </div>
       </SettingsSection>
+      <CredentialInventory />
       <SettingsSection maturity="preview" title="License">
         <div className="flex gap-2">
           <input className="h-9 flex-1 rounded-md border border-border bg-surface px-3 text-sm" placeholder="License key" />

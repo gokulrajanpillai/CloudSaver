@@ -1,4 +1,5 @@
 import { Brain, CreditCard, RefreshCw, ShieldCheck, Users } from 'lucide-react'
+import { CredentialInventory } from '@/components/CredentialInventory'
 import { ProductContract } from '@/components/ProductContract'
 import { ProviderCapabilityMatrix } from '@/components/ProviderCapabilityMatrix'
 import { ProviderLimitations } from '@/components/ProviderLimitations'
@@ -45,6 +46,7 @@ export function TrustCenter() {
       </div>
 
       <ProductContract />
+      <CredentialInventory />
       <ProviderLimitations />
       <ProviderCapabilityMatrix />
 
