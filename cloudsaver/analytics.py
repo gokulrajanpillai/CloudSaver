@@ -13,7 +13,7 @@ import sqlite3
 import time
 import uuid
 
-from cloudsaver.config import app_data_path
+from cloudsaver.config import app_data_path, local_diagnostics_enabled
 
 ANALYTICS_ENABLED = os.environ.get("CLOUDSAVER_NO_ANALYTICS", "") != "1"
 ANALYTICS_DB = app_data_path("analytics.sqlite3")
@@ -36,7 +36,7 @@ def get_install_id() -> str:
 def record_event(event_name: str, properties: dict | None = None) -> None:
     """Record an anonymous event to local SQLite."""
 
-    if not ANALYTICS_ENABLED:
+    if not ANALYTICS_ENABLED or not local_diagnostics_enabled():
         return
     props = properties or {}
     safe_props = {

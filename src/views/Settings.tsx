@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MaturityBadge } from '@/components/MaturityBadge'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
+import { useApi } from '@/hooks/useApi'
 import {
   DEMO_CROSS_SOURCE_GROUPS,
   DEMO_DUPLICATE_GROUPS,
@@ -12,7 +13,9 @@ import {
 import { useStore } from '@/store'
 
 export function Settings() {
+  const api = useApi()
   const sources = useStore((state) => state.sources)
+  const sidecarReady = useStore((state) => state.sidecarReady)
   const theme = useStore((state) => state.theme)
   const setTheme = useStore((state) => state.setTheme)
   const removeSource = useStore((state) => state.removeSource)
@@ -27,6 +30,27 @@ export function Settings() {
   const [autoUpdate, setAutoUpdate] = useState(true)
 
   const isDemoActive = sources.some((s) => s.id.startsWith('demo-'))
+
+  useEffect(() => {
+    if (!sidecarReady) return
+    api
+      .get<{ local_diagnostics_enabled: boolean }>('/privacy/settings')
+      .then((settings) => setDisableDiagnostics(!settings.local_diagnostics_enabled))
+      .catch(() => undefined)
+  }, [api, sidecarReady])
+
+  async function updateDiagnosticsDisabled(disabled: boolean) {
+    setDisableDiagnostics(disabled)
+    if (!sidecarReady) return
+    try {
+      const settings = await api.post<{ local_diagnostics_enabled: boolean }>('/privacy/settings', {
+        local_diagnostics_enabled: !disabled,
+      })
+      setDisableDiagnostics(!settings.local_diagnostics_enabled)
+    } catch {
+      setDisableDiagnostics(!disabled)
+    }
+  }
 
   function loadDemo() {
     DEMO_SOURCES.forEach((s) => addSource(s))
@@ -73,7 +97,7 @@ export function Settings() {
         </Select>
       </SettingsSection>
       <SettingsSection maturity="preview" title="Privacy">
-        <Toggle checked={disableDiagnostics} label="Disable local diagnostics" onChange={setDisableDiagnostics} />
+        <Toggle checked={disableDiagnostics} label="Disable local diagnostics" onChange={(value) => void updateDiagnosticsDisabled(value)} />
         <a className="mt-3 block text-sm text-accent hover:text-accent-hover" href="https://github.com/gokulrajanpillai/CloudSaver/blob/main/PRIVACY.md">
           Privacy policy
         </a>

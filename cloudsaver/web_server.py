@@ -35,6 +35,7 @@ from cloudsaver import advisor
 from cloudsaver import payments
 from cloudsaver import team
 from cloudsaver import updater
+from cloudsaver.config import load_privacy_settings, save_privacy_settings
 from cloudsaver.history import (
     get_license_delivery,
     list_scan_history,
@@ -210,6 +211,9 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
             if parsed.path == "/api/analytics/summary":
                 self.write_json(analytics_summary())
                 return
+            if parsed.path == "/api/privacy/settings":
+                self.write_json(load_privacy_settings())
+                return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
@@ -289,6 +293,14 @@ class CloudSaverRequestHandler(SimpleHTTPRequestHandler):
                 return
             if parsed.path == "/api/team/leave":
                 self.handle_team_leave(payload)
+                return
+            if parsed.path == "/api/privacy/settings":
+                settings = save_privacy_settings(payload)
+                record_event(
+                    "privacy_settings_updated",
+                    {"local_diagnostics_enabled": settings["local_diagnostics_enabled"]},
+                )
+                self.write_json(settings)
                 return
         except ValueError as error:
             self.write_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)

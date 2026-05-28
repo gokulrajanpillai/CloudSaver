@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from cloudsaver import advisor, payments, team, updater
 from cloudsaver.analytics import analytics_summary, record_event
+from cloudsaver.config import load_privacy_settings, save_privacy_settings
 from cloudsaver.history import (
     get_license_delivery,
     list_scan_history,
@@ -168,6 +169,21 @@ async def update_status():
 @app.get("/analytics/summary")
 async def analytics():
     return analytics_summary()
+
+
+@app.get("/privacy/settings")
+async def privacy_settings():
+    return load_privacy_settings()
+
+
+@app.post("/privacy/settings")
+async def privacy_settings_update(payload: dict):
+    settings = save_privacy_settings(payload)
+    record_event(
+        "privacy_settings_updated",
+        {"local_diagnostics_enabled": settings["local_diagnostics_enabled"]},
+    )
+    return settings
 
 
 def require_biz_state():
