@@ -96,9 +96,13 @@ export function Sources() {
   }, [sources])
 
   async function scanSource(source: Source) {
-    if (!source.path) return
     updateSource(source.id, { status: 'scanning', errorMessage: undefined })
-    const response = await api.post<ScanStartResponse>('/scan/local/start', { path: source.path })
+    const response = await api.post<ScanStartResponse>('/scan/provider/start', {
+      source_id: source.id,
+      source_type: source.type,
+      path: source.path,
+      access_token: source.accessToken,
+    })
     updateScanJob(response.job_id, {
       id: response.job_id,
       sourceId: source.id,
