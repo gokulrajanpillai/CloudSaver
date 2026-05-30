@@ -108,7 +108,13 @@ def local_scan_file_to_provider_file(file: dict, source_id: str, source_type: st
         modified_time=file.get("mtime"),
         mime_type=file.get("mimeType"),
         checksum=file.get("sha256") or file.get("md5"),
-        provider_state={"availability": "local", "sync": "available"},
+        provider_state={
+            "availability": "local",
+            "sync": "available",
+            "available_offline": True,
+            "cloud_only": False,
+            "remote_trash": False,
+        },
         raw=file,
     )
 
@@ -129,8 +135,14 @@ def google_drive_file_to_provider_file(file: dict, source_id: str) -> ProviderFi
         provider_state={
             "availability": "remote",
             "sync": "remote_only",
-            "trashed": bool(file.get("trashed", False)),
+            "available_offline": False,
+            "cloud_only": True,
+            "remote_trash": bool(file.get("trashed", False)),
             "starred": bool(file.get("starred", False)),
+            "pinned": bool(file.get("starred", False)),
+            "shared": len(file.get("parents", [])) > 1,
+            "modified_time": file.get("modifiedTime"),
+            "checksum": file.get("md5Checksum"),
         },
         raw={
             "drive_id": raw_id,
