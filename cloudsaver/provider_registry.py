@@ -96,8 +96,10 @@ class GoogleDriveRemoteAdapter:
 
 def local_scan_file_to_provider_file(file: dict, source_id: str, source_type: str) -> ProviderFile:
     path = file.get("path")
+    raw_id = str(file.get("file_id") or path or file.get("name"))
     return ProviderFile(
-        id=str(file.get("file_id") or path or file.get("name")),
+        id=normalize_provider_file_id(source_type, source_id, raw_id),
+        provider_file_id=raw_id,
         source_id=source_id,
         source_type=source_type,
         name=str(file.get("name") or Path(path or "").name or "Untitled"),
@@ -112,8 +114,10 @@ def local_scan_file_to_provider_file(file: dict, source_id: str, source_type: st
 
 
 def google_drive_file_to_provider_file(file: dict, source_id: str) -> ProviderFile:
+    raw_id = file["id"]
     return ProviderFile(
-        id=file["id"],
+        id=normalize_provider_file_id("google_drive", source_id, raw_id),
+        provider_file_id=raw_id,
         source_id=source_id,
         source_type="google_drive",
         name=file.get("name", "Untitled"),
@@ -129,10 +133,15 @@ def google_drive_file_to_provider_file(file: dict, source_id: str) -> ProviderFi
             "starred": bool(file.get("starred", False)),
         },
         raw={
-            "drive_id": file["id"],
+            "drive_id": raw_id,
             "parents": file.get("parents", []),
         },
     )
+
+
+def normalize_provider_file_id(source_type: str, source_id: str, raw_id: str) -> str:
+    safe_raw = raw_id.replace("\\", "/")
+    return f"{source_type}:{source_id}:{safe_raw}"
 
 
 def google_drive_service(access_token: str):

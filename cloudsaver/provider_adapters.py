@@ -30,6 +30,7 @@ class ProviderScanContext:
 @dataclass(frozen=True)
 class ProviderFile:
     id: str
+    provider_file_id: str
     source_id: str
     source_type: str
     name: str
@@ -45,7 +46,13 @@ class ProviderFile:
         data = {
             "id": self.id,
             "file_id": self.id,
-            "provider_file_id": self.id,
+            "provider_file_id": self.provider_file_id,
+            "provider_identity": {
+                "namespace": f"{self.source_type}:{self.source_id}",
+                "source_type": self.source_type,
+                "raw_id": self.provider_file_id,
+                "normalized_id": self.id,
+            },
             "source_id": self.source_id,
             "source_type": self.source_type,
             "name": self.name,
