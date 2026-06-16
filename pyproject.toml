@@ -54,7 +54,7 @@ desktop = [
   "pywebview==5.4",
 ]
 release = [
-  "pyinstaller==6.17.0",
+  "pyinstaller==6.21.0",
 ]
 payments = [
   "stripe>=13.0.0",
